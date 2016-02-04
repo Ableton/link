@@ -1,0 +1,34 @@
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   fun:strlen
+   fun:*basic_string*
+   fun:*Catch8toStrin*
+}
+## libstdc++ 6.0.21 on ubuntu 14.04 - 15.10
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:malloc
+   obj:/usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.21
+   fun:call_init.part.0
+   ... 
+   fun:_dl_init
+   obj:/lib/x86_64-linux-gnu/ld-*.so
+}
+{
+   <travis_ci_catch_suppression> 
+   Memcheck:Cond
+   fun:__GI_strlen
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN5Catch8toStringEPKc
+   fun:_ZN5Catch8toStringEPc
+   fun:_ZN5Catch13ExpressionLhsIRKPcE17captureExpressionILNS_8Internal8OperatorE0ES1_EERNS_13ResultBuilderERKT0_
+   fun:_ZN5Catch13ExpressionLhsIRKPcEeqIS1_EERNS_13ResultBuilderERKT_
+   ...
+   fun:_ZNK5Catch20FreeFunctionTestCase6invokeEv
+   fun:_ZNK5Catch8TestCase6invokeEv
+   fun:_ZN5Catch10RunContext20invokeActiveTestCaseEv
+   fun:_ZN5Catch10RunContext14runCurrentTestERSsS1_
+   fun:_ZN5Catch10RunContext7runTestERKNS_8TestCaseE
+}
