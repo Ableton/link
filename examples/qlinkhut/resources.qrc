@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/">
+        <file>BeatTile.qml</file>
+        <file>main.qml</file>
+    </qresource>
+</RCC>

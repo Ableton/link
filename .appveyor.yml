@@ -1,0 +1,56 @@
+clone_depth: 50
+
+branches:
+  only:
+    - master
+
+# Also includes VS2013 pre-installed
+image: Visual Studio 2015
+
+environment:
+  matrix:
+    # Visual Studio 2013, 32-bit Release, Asio driver
+    - WORDSIZE: 32
+      AUDIO_DRIVER: Asio
+      CONFIGURATION: Release
+      GENERATOR: Visual Studio 12 2013
+    # Visual Studio 2013, 64-bit Release, Asio driver
+    - WORDSIZE: 64
+      AUDIO_DRIVER: Asio
+      CONFIGURATION: Release
+      GENERATOR: Visual Studio 12 2013 Win64
+    # Visual Studio 2015, 32-bit Release, Asio driver
+    - WORDSIZE: 32
+      AUDIO_DRIVER: Asio
+      CONFIGURATION: Release
+      GENERATOR: Visual Studio 14 2015
+    # Visual Studio 2015, 64-bit Debug, Asio driver
+    - WORDSIZE: 64
+      AUDIO_DRIVER: Asio
+      CONFIGURATION: Debug
+      GENERATOR: Visual Studio 14 2015 Win64
+    # Visual Studio 2015, 64-bit Release, Asio driver
+    - WORDSIZE: 64
+      AUDIO_DRIVER: Asio
+      CONFIGURATION: Release
+      GENERATOR: Visual Studio 14 2015 Win64
+    # Visual Studio 2015, 64-bit Release, Wasapi driver
+    - WORDSIZE: 64
+      AUDIO_DRIVER: Wasapi
+      CONFIGURATION: Release
+      GENERATOR: Visual Studio 14 2015 Win64
+
+install:
+  - git submodule update --init --recursive
+  - if %WORDSIZE% == 32 (set QT=msvc2013)
+  - if %WORDSIZE% == 64 (set QT=msvc2013_64)
+  - set PATH=%PATH%;C:\Qt\5.5\%QT%\bin
+
+build_script:
+  - if %WORDSIZE% == 64 ( python ci/configure.py -w %WORDSIZE% -q -a %AUDIO_DRIVER% -g "%GENERATOR%" )
+  - if %WORDSIZE% == 32 ( python ci/configure.py -w %WORDSIZE% -q -g "%GENERATOR%" )
+  - python ci/build.py --configuration %CONFIGURATION%
+
+test_script:
+  - python ci/run-tests.py --target LinkCoreTest
+  - python ci/run-tests.py --target LinkDiscoveryTest
