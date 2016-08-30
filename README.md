@@ -27,6 +27,7 @@ unit-tests and the example applications.
 $ mkdir build
 $ cd build
 $ cmake ..
+$ cmake --build .
 ```
 
 In order to build the GUI example application **QLinkHut**, the [Qt][qt] installation
