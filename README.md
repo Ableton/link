@@ -9,9 +9,9 @@ can join or leave without disrupting the session.
 
 # License
 
-Ableton Link is dual [licensed][license] under GNU GPL version 2 and a proprietary license.
-If you would like to incorporate Link into a proprietary software application,
-please contact <link-devs@ableton.com>.
+Ableton Link is dual [licensed][license] under GPLv2+ and a proprietary license. If you
+would like to incorporate Link into a proprietary software application, please contact
+<link-devs@ableton.com>.
 
 # Building and Running Link Examples
 
