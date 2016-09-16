@@ -92,7 +92,7 @@ If you are not using CMake, then you must do the following:
    depending on which platform you are building on.
 
 If you get any compiler errors/warnings, have a look at
-[compile-flags.cmake](cmake_include/ConfigireCompileFlags.cmake), which might provide some
+[compile-flags.cmake](cmake_include/ConfigureCompileFlags.cmake), which might provide some
 insight as to the compiler flags needed to build Link.
 
 ### Build Requirements
