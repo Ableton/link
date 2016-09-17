@@ -72,10 +72,17 @@ elseif(WIN32)
     )
   endif()
 elseif(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-  set(linkhut_audio_SOURCES
-    linkaudio/AudioPlatform_Portaudio.hpp
-    linkaudio/AudioPlatform_Portaudio.cpp
-  )
+  if(LINK_BUILD_JACK)
+    set(linkhut_audio_SOURCES
+      linkaudio/AudioPlatform_Jack.hpp
+      linkaudio/AudioPlatform_Jack.cpp
+    )
+  else()
+    set(linkhut_audio_SOURCES
+      linkaudio/AudioPlatform_Portaudio.hpp
+      linkaudio/AudioPlatform_Portaudio.cpp
+    )
+  endif()
 endif()
 
 include_directories(linkaudio)
@@ -105,10 +112,17 @@ function(configure_linkhut_audio_sources target)
       -DLINKHUT_AUDIO_PLATFORM_COREAUDIO=1
     )
   elseif(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-    target_link_libraries(${target} asound portaudio)
-    target_compile_definitions(${target} PRIVATE
-      -DLINKHUT_AUDIO_PLATFORM_PORTAUDIO=1
-    )
+    if(LINK_BUILD_JACK)
+      target_link_libraries(${target} jack)
+      target_compile_definitions(${target} PRIVATE
+        -DLINKHUT_AUDIO_PLATFORM_JACK=1
+      )
+    else()
+      target_link_libraries(${target} asound portaudio)
+      target_compile_definitions(${target} PRIVATE
+        -DLINKHUT_AUDIO_PLATFORM_PORTAUDIO=1
+      )
+    endif()
   elseif(WIN32)
     if(LINK_BUILD_ASIO)
       # ASIO uses lots of old-school string APIs from the C stdlib
