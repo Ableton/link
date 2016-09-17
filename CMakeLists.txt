@@ -15,6 +15,7 @@ option(LINK_BUILD_QT_EXAMPLES "Build examples (Requires Qt)" OFF)
 
 if(UNIX)
   option(LINK_ENABLE_ASAN "Build with Address Sanitizier (ASan)" OFF)
+  option(LINK_BUILD_JACK "Build example applications with JACK support" ON)
 endif()
 
 if(WIN32)

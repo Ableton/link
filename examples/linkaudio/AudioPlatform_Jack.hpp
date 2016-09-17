@@ -19,26 +19,37 @@
 
 #pragma once
 
-#if LINKHUT_AUDIO_PLATFORM_ASIO
-#include "AudioPlatform_Asio.hpp"
-#endif
+#include "AudioEngine.hpp"
+#include <ableton/link/HostTimeFilter.hpp>
+#include <jack/jack.h>
 
-#if LINKHUT_AUDIO_PLATFORM_COREAUDIO
-#include "AudioPlatform_CoreAudio.hpp"
-#endif
+namespace ableton
+{
+namespace linkaudio
+{
 
-#if LINKHUT_AUDIO_PLATFORM_DUMMY
-#include "AudioPlatform_Dummy.hpp"
-#endif
+class AudioPlatform
+{
+public:
+  AudioPlatform(Link& link);
+  ~AudioPlatform();
 
-#if LINKHUT_AUDIO_PLATFORM_JACK
-#include "AudioPlatform_Jack.hpp"
-#endif
+  AudioEngine mEngine;
 
-#if LINKHUT_AUDIO_PLATFORM_PORTAUDIO
-#include "AudioPlatform_Portaudio.hpp"
-#endif
+private:
+  static int audioCallback(jack_nframes_t nframes, void* pvUserData);
+  int audioCallback(jack_nframes_t nframes);
 
-#if LINKHUT_AUDIO_PLATFORM_WASAPI
-#include "AudioPlatform_Wasapi.hpp"
-#endif
+  void initialize();
+  void uninitialize();
+  void start();
+  void stop();
+
+  link::HostTimeFilter<platforms::stl::Clock> mHostTimeFilter;
+  double mSampleTime;
+  jack_client_t* mpJackClient;
+  jack_port_t** mpJackPorts;
+};
+
+} // namespace linkaudio
+} // namespace ableton
