@@ -87,7 +87,8 @@ Link's CMakeLists.txt.
 
 If you are not using CMake, then you must do the following:
 
- - Add the `link/include` directory to your list of include paths
+ - Add the `link/include` and `modules/asio-standalone/asio/include` directories to your
+   list of include paths
  - Define `LINK_PLATFORM_MACOSX=1`, `LINK_PLATFORM_LINUX=1`, or `LINK_PLATFORM_WINDOWS=1`,
    depending on which platform you are building on.
 
