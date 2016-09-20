@@ -85,7 +85,7 @@ Link's CMakeLists.txt.
 
 ### Other Build Systems
 
-If you are not using CMake, then you must do the following:
+To include the Link library in your non CMake project, you must do the following:
 
  - Add the `link/include` and `modules/asio-standalone/asio/include` directories to your
    list of include paths
@@ -98,13 +98,13 @@ insight as to the compiler flags needed to build Link.
 
 ### Build Requirements
 
-| Platform | Minimum Required | Optional               |
-|----------|------------------|------------------------|
-| **All**  | CMake 3.0        | Qt 5.5                 |
-| Windows  | MSVC 2013        |                        |
-| Mac      | Xcode 7.0        |                        |
-| Linux    | Clang 3.6        | libportaudio19-dev     |
-| Linux    | GCC 5.2          |                        |
+| Platform | Minimum Required     | Optional (only required for examples) |
+|----------|----------------------|---------------------------------------|
+| **All**  | CMake 3.0            | Qt 5.5                                |
+| Windows  | MSVC 2013            | Steinberg ASIO SDK 2.3                |
+| Mac      | Xcode 7.0            |                                       |
+| Linux    | Clang 3.6 or GCC 5.2 | libportaudio19-dev                    |
+
 
 Other compilers with good C++11 support should work, but are not verified.
 
