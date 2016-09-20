@@ -186,7 +186,8 @@ public:
     newTimeline = clampTempo(newTimeline);
     // Cache the new timeline for serving back to the client
     mRtClientTimeline = newTimeline;
-    mRtClientTimelineTimestamp = mClock.micros();
+    mRtClientTimelineTimestamp =
+      isEnabled() ? mClock.micros() : std::chrono::microseconds(0);
 
     // Update the session timeline from the new client timeline
     mRealtimeIo.async([this, newTimeline, atTime] {
