@@ -39,5 +39,5 @@ SpacesBeforeTrailingComments: 1
 SpacesInAngles: false
 SpacesInCStyleCastParentheses: false
 SpacesInParentheses: false
-Standard: C++11
+Standard: Cpp11
 UseTab: Never
