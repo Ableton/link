@@ -1,8 +1,9 @@
 Language: Cpp
-BasedOnStyle: LLVM
+
 AccessModifierOffset: -2
 AlignAfterOpenBracket: false
 AlignEscapedNewlinesLeft: false
+AlignOperands: true
 AlignTrailingComments: true
 AllowAllParametersOfDeclarationOnNextLine: true
 AllowShortBlocksOnASingleLine: false
@@ -10,8 +11,10 @@ AllowShortCaseLabelsOnASingleLine: false
 AllowShortFunctionsOnASingleLine: None
 AllowShortIfStatementsOnASingleLine: false
 AllowShortLoopsOnASingleLine: false
+AlwaysBreakAfterDefinitionReturnType: false
 AlwaysBreakBeforeMultilineStrings: true
 AlwaysBreakTemplateDeclarations: true
+BinPackArguments: true
 BinPackParameters: false
 BreakBeforeBinaryOperators: NonAssignment
 BreakBeforeBraces: Allman
@@ -26,12 +29,14 @@ DerivePointerAlignment: false
 IndentCaseLabels: false
 IndentFunctionDeclarationAfterType: false
 IndentWidth: 2
+IndentWrappedFunctionNames: false
 KeepEmptyLinesAtTheStartOfBlocks: true
 MaxEmptyLinesToKeep: 2
 NamespaceIndentation: None
 PenaltyBreakBeforeFirstCallParameter: 0
 PenaltyReturnTypeOnItsOwnLine: 1000
 PointerAlignment: Left
+SpaceAfterCStyleCast: false
 SpaceBeforeAssignmentOperators: true
 SpaceBeforeParens: ControlStatements
 SpaceInEmptyParentheses: false
@@ -39,5 +44,6 @@ SpacesBeforeTrailingComments: 1
 SpacesInAngles: false
 SpacesInCStyleCastParentheses: false
 SpacesInParentheses: false
+SpacesInSquareBrackets: false
 Standard: Cpp11
 UseTab: Never
