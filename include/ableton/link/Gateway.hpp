@@ -85,10 +85,9 @@ public:
 private:
   util::Injected<IoContext> mIo;
   MeasurementService<Clock, typename util::Injected<IoContext>::type::Log> mMeasurement;
-  discovery::IpV4Gateway<PeerObserver,
-    PeerState,
-    typename util::Injected<IoContext>::type&>
-    mPeerGateway;
+  discovery::
+    IpV4Gateway<PeerObserver, PeerState, typename util::Injected<IoContext>::type&>
+      mPeerGateway;
 };
 
 } // namespace link
