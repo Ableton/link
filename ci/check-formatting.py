@@ -31,7 +31,7 @@ def check_files_in_path(args, path):
 
     for (path, dirs, files) in os.walk(path):
         for file in files:
-            if file.endswith('cpp') or file.endswith('hpp'):
+            if file.endswith('cpp') or file.endswith('hpp') or file.endswith('.ipp'):
                 file_absolute_path = path + os.path.sep + file
                 clang_format_args = [
                     args.clang_format, '-style=file',

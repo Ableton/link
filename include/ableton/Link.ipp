@@ -25,21 +25,15 @@ namespace ableton
 {
 
 inline Link::Link(const double bpm)
-  : mPeerCountCallback([](std::size_t)
-      {
-      })
-  , mTempoCallback([](link::Tempo)
-      {
-      })
+  : mPeerCountCallback([](std::size_t) {})
+  , mTempoCallback([](link::Tempo) {})
   , mClock{}
   , mController(link::Tempo(bpm),
-      [this](const std::size_t peers)
-      {
+      [this](const std::size_t peers) {
         std::lock_guard<std::mutex> lock(mCallbackMutex);
         mPeerCountCallback(peers);
       },
-      [this](const link::Tempo tempo)
-      {
+      [this](const link::Tempo tempo) {
         std::lock_guard<std::mutex> lock(mCallbackMutex);
         mTempoCallback(tempo);
       },
@@ -67,20 +61,14 @@ template <typename Callback>
 void Link::setNumPeersCallback(Callback callback)
 {
   std::lock_guard<std::mutex> lock(mCallbackMutex);
-  mPeerCountCallback = [callback](const std::size_t numPeers)
-  {
-    callback(numPeers);
-  };
+  mPeerCountCallback = [callback](const std::size_t numPeers) { callback(numPeers); };
 }
 
 template <typename Callback>
 void Link::setTempoCallback(Callback callback)
 {
   std::lock_guard<std::mutex> lock(mCallbackMutex);
-  mTempoCallback = [callback](const link::Tempo tempo)
-  {
-    callback(tempo.bpm());
-  };
+  mTempoCallback = [callback](const link::Tempo tempo) { callback(tempo.bpm()); };
 }
 
 inline Link::Clock Link::clock() const
