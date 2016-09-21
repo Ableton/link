@@ -1,7 +1,7 @@
 Language: Cpp
 
 AccessModifierOffset: -2
-AlignAfterOpenBracket: false
+AlignAfterOpenBracket: DontAlign
 AlignEscapedNewlinesLeft: false
 AlignOperands: true
 AlignTrailingComments: true
@@ -11,7 +11,8 @@ AllowShortCaseLabelsOnASingleLine: false
 AllowShortFunctionsOnASingleLine: None
 AllowShortIfStatementsOnASingleLine: false
 AllowShortLoopsOnASingleLine: false
-AlwaysBreakAfterDefinitionReturnType: false
+AlwaysBreakAfterDefinitionReturnType: None
+AlwaysBreakAfterReturnType: None
 AlwaysBreakBeforeMultilineStrings: true
 AlwaysBreakTemplateDeclarations: true
 BinPackArguments: true
