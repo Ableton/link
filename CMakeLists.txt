@@ -14,17 +14,10 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 option(LINK_BUILD_QT_EXAMPLES "Build examples (Requires Qt)" OFF)
 
 if(UNIX)
-  set(LINK_WORD_SIZE "64" CACHE STRING "Set the word size (must be either 32 or 64)")
   option(LINK_ENABLE_ASAN "Build with Address Sanitizier (ASan)" OFF)
 endif()
 
 if(WIN32)
-  if(${CMAKE_GENERATOR} MATCHES "Win64")
-    set(LINK_WORD_SIZE "64")
-  else()
-    set(LINK_WORD_SIZE "32")
-  endif()
-
   option(LINK_BUILD_ASIO "Build example applications with ASIO driver" ON)
   option(LINK_BUILD_VLD "Build with VLD support (VLD must be installed separately)" OFF)
 endif()
@@ -38,7 +31,6 @@ endif()
 
 # Other CMake files must be included only after declaring build options
 include(cmake_include/ConfigureCompileFlags.cmake)
-include(cmake_include/ConfigureWordSize.cmake)
 include(cmake_include/CatchConfig.cmake)
 include(AbletonLinkConfig.cmake)
 

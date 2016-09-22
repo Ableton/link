@@ -41,21 +41,6 @@ if(UNIX)
     )
   endif()
 
-  # Set word size
-  if(${LINK_WORD_SIZE} EQUAL 32)
-    set(build_flags_COMMON_LIST
-      ${build_flags_COMMON_LIST}
-      "-m32"
-    )
-  elseif(${LINK_WORD_SIZE} EQUAL 64)
-    set(build_flags_COMMON_LIST
-      ${build_flags_COMMON_LIST}
-      "-m64"
-    )
-  else()
-    message(FATAL_ERROR "Invalid word size '${LINK_WORD_SIZE}', must be either 32 or 64.")
-  endif()
-
   # ASan support
   if(LINK_ENABLE_ASAN)
     set(build_flags_COMMON_LIST

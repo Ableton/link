@@ -96,15 +96,19 @@ script:
     set -e
     if [ "$TRAVIS_OS_NAME" = "osx" ]; then
       PATH=`brew --prefix qt5`/bin:${PATH}
-      python ci/configure.py --configuration $CONFIGURATION --generator Ninja --with-qt
+      if [ "$WORDSIZE" -eq 64 ]; then
+        python ci/configure.py --configuration $CONFIGURATION --generator Ninja --with-qt
+      else
+        python ci/configure.py --configuration $CONFIGURATION --generator Ninja --flags "\-DCMAKE_OSX_ARCHITECTURES=i386"
+      fi
       python ci/build.py --configuration $CONFIGURATION --arguments "all -v"
     else
       if [ "$WORDSIZE" -eq 64 ]; then
         PATH=$PWD/5.5/gcc_64:${PATH}
-        python ci/configure.py --configuration $CONFIGURATION --wordsize $WORDSIZE --with-qt
+        python ci/configure.py --configuration $CONFIGURATION --with-qt
       else
         PATH=$PWD/5.5/gcc:${PATH}
-        python ci/configure.py --configuration $CONFIGURATION --wordsize $WORDSIZE --with-qt
+        python ci/configure.py --configuration $CONFIGURATION --flags "\-DCMAKE_CXX_FLAGS=\"\-m32\""
       fi
       python ci/build.py --configuration $CONFIGURATION --arguments "VERBOSE=1 -j8"
     fi
