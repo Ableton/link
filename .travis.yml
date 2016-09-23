@@ -24,6 +24,12 @@ matrix:
       osx_image: xcode7.1
       compiler: clang
 
+    # Mac OS X / XCode 7.1, 32-bit Release
+    - os: osx
+      env: WORDSIZE=32 CONFIGURATION=Release
+      osx_image: xcode7.1
+      compiler: clang
+
     # Linux with Clang 3.6, 64-bit Debug
     - os: linux
       compiler: clang
