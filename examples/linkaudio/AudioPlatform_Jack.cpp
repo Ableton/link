@@ -20,6 +20,7 @@
 #include "AudioPlatform_Jack.hpp"
 #include <chrono>
 #include <iostream>
+#include <string>
 
 namespace ableton
 {
@@ -110,11 +111,12 @@ void AudioPlatform::initialize()
   };
 
   mpJackPorts = new jack_port_t* [2];
-  char port_name[32];
-  for (int k = 0; k < 2; ++k) {
-	snprintf(port_name, sizeof(port_name), "out_%d", k + 1);
+  for (int k = 0; k < 2; ++k)
+  {
+	const std::string port_name
+		= "out_" + std::to_string(k + 1);
 	mpJackPorts[k] = jack_port_register(mpJackClient,
-		port_name, JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0);
+		port_name.c_str(), JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0);
 	if (mpJackPorts[k] == NULL)
 	{
 		std::cerr << "Could not get Audio Device. " << std::endl;
@@ -130,7 +132,8 @@ void AudioPlatform::initialize()
 
 void AudioPlatform::uninitialize()
 {
-  for (int k = 0; k < 2; ++k) {
+  for (int k = 0; k < 2; ++k)
+  {
 	jack_port_unregister(mpJackClient, mpJackPorts[k]);
 	mpJackPorts[k] = NULL;
   }
@@ -149,15 +152,18 @@ void AudioPlatform::start()
 	= jack_get_ports(mpJackClient,
 		0, JACK_DEFAULT_AUDIO_TYPE,
 		JackPortIsInput | JackPortIsPhysical);
+
   if (playback_ports) {
-	char client_port[64];
-	const char *client_name
+	const std::string client_name
 		= jack_get_client_name(mpJackClient);
-	for (int k = 0; k < 2; ++k) {
-		snprintf(client_port, sizeof(client_port),
-			"%s:out_%d", client_name, k + 1);
+	for (int k = 0; k < 2; ++k)
+	{
+		const std::string port_name
+			= "out_" + std::to_string(k + 1);
+		const std::string client_port
+			= client_name + ':' + port_name; 
 		jack_connect(mpJackClient, 
-			client_port, playback_ports[k]);
+			client_port.c_str(), playback_ports[k]);
 	}
 	jack_free(playback_ports);
   }
