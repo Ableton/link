@@ -45,20 +45,18 @@ AudioPlatform::~AudioPlatform()
   uninitialize();
 }
 
-int AudioPlatform::audioCallback ( jack_nframes_t nframes, void *pvUserData )
+int AudioPlatform::audioCallback(jack_nframes_t nframes, void* pvUserData)
 {
-	AudioPlatform *pAudioPlatform
-		= static_cast<AudioPlatform *> (pvUserData);
-	return pAudioPlatform->audioCallback(nframes);
+  AudioPlatform* pAudioPlatform = static_cast<AudioPlatform*>(pvUserData);
+  return pAudioPlatform->audioCallback(nframes);
 }
 
-int AudioPlatform::audioCallback ( jack_nframes_t nframes )
+int AudioPlatform::audioCallback(jack_nframes_t nframes)
 {
   using namespace std::chrono;
   AudioEngine& engine = mEngine;
 
-  const auto hostTime =
-    mHostTimeFilter.sampleTimeToHostTime(mSampleTime);
+  const auto hostTime = mHostTimeFilter.sampleTimeToHostTime(mSampleTime);
 
   mSampleTime += nframes;
 
@@ -68,9 +66,9 @@ int AudioPlatform::audioCallback ( jack_nframes_t nframes )
 
   for (int k = 0; k < 2; ++k)
   {
-	float* buffer = static_cast<float*>(jack_port_get_buffer(mpJackPorts[k], nframes));
-	for (unsigned long i = 0; i < nframes; ++i)
-		buffer[i] = engine.mBuffer[i];
+    float* buffer = static_cast<float*>(jack_port_get_buffer(mpJackPorts[k], nframes));
+    for (unsigned long i = 0; i < nframes; ++i)
+      buffer[i] = engine.mBuffer[i];
   }
 
   return 0;
@@ -83,46 +81,45 @@ void AudioPlatform::initialize()
   if (mpJackClient == NULL)
   {
     std::cerr << "Could not initialize Audio Engine. ";
-	std::cerr << "JACK: " << std::endl;
-	if (status & JackFailure)
-		std::cerr << "Overall operation failed." << std::endl;
-	if (status & JackInvalidOption)
-		std::cerr << "Invalid or unsupported option." << std::endl;
-	if (status & JackNameNotUnique)
-		std::cerr << "Client name not unique." << std::endl;
-	if (status & JackServerStarted)
-		std::cerr << "Server is started." << std::endl;
-	if (status & JackServerFailed)
-		std::cerr << "Unable to connect to server." << std::endl;
-	if (status & JackServerError)
-		std::cerr << "Server communication error." << std::endl;
-	if (status & JackNoSuchClient)
-		std::cerr << "Client does not exist." << std::endl;
-	if (status & JackLoadFailure)
-		std::cerr << "Unable to load internal client." << std::endl;
-	if (status & JackInitFailure)
-		std::cerr << "Unable to initialize client." << std::endl;
-	if (status & JackShmFailure)
-		std::cerr << "Unable to access shared memory." << std::endl;
-	if (status & JackVersionError)
-		std::cerr << "Client protocol version mismatch." << std::endl;
+    std::cerr << "JACK: " << std::endl;
+    if (status & JackFailure)
+      std::cerr << "Overall operation failed." << std::endl;
+    if (status & JackInvalidOption)
+      std::cerr << "Invalid or unsupported option." << std::endl;
+    if (status & JackNameNotUnique)
+      std::cerr << "Client name not unique." << std::endl;
+    if (status & JackServerStarted)
+      std::cerr << "Server is started." << std::endl;
+    if (status & JackServerFailed)
+      std::cerr << "Unable to connect to server." << std::endl;
+    if (status & JackServerError)
+      std::cerr << "Server communication error." << std::endl;
+    if (status & JackNoSuchClient)
+      std::cerr << "Client does not exist." << std::endl;
+    if (status & JackLoadFailure)
+      std::cerr << "Unable to load internal client." << std::endl;
+    if (status & JackInitFailure)
+      std::cerr << "Unable to initialize client." << std::endl;
+    if (status & JackShmFailure)
+      std::cerr << "Unable to access shared memory." << std::endl;
+    if (status & JackVersionError)
+      std::cerr << "Client protocol version mismatch." << std::endl;
     std::cerr << std::endl;
     std::terminate();
   };
 
-  mpJackPorts = new jack_port_t* [2];
+  mpJackPorts = new jack_port_t*[2];
   for (int k = 0; k < 2; ++k)
   {
-	const std::string port_name
-		= "out_" + std::to_string(k + 1);
-	mpJackPorts[k] = jack_port_register(mpJackClient,
-		port_name.c_str(), JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0);
-	if (mpJackPorts[k] == NULL)
-	{
-		std::cerr << "Could not get Audio Device. " << std::endl;
-		jack_client_close(mpJackClient);
-		std::terminate();
-	}
+    const std::string port_name = "out_" + std::to_string(k + 1);
+    mpJackPorts[k] = jack_port_register(
+      mpJackClient, port_name.c_str(), JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0);
+    if (mpJackPorts[k] == NULL)
+    {
+      std::cerr << "Could not get Audio Device. " << std::endl;
+      jack_client_close(mpJackClient);
+      std::terminate();
+    }
   }
 
   jack_set_process_callback(mpJackClient, AudioPlatform::audioCallback, this);
@@ -134,10 +131,10 @@ void AudioPlatform::uninitialize()
 {
   for (int k = 0; k < 2; ++k)
   {
-	jack_port_unregister(mpJackClient, mpJackPorts[k]);
-	mpJackPorts[k] = NULL;
+    jack_port_unregister(mpJackClient, mpJackPorts[k]);
+    mpJackPorts[k] = NULL;
   }
-  delete [] mpJackPorts;
+  delete[] mpJackPorts;
   mpJackPorts = NULL;
 
   jack_client_close(mpJackClient);
@@ -148,24 +145,19 @@ void AudioPlatform::start()
 {
   jack_activate(mpJackClient);
 
-  const char **playback_ports
-	= jack_get_ports(mpJackClient,
-		0, JACK_DEFAULT_AUDIO_TYPE,
-		JackPortIsInput | JackPortIsPhysical);
+  const char** playback_ports = jack_get_ports(
+    mpJackClient, 0, JACK_DEFAULT_AUDIO_TYPE, JackPortIsInput | JackPortIsPhysical);
 
-  if (playback_ports) {
-	const std::string client_name
-		= jack_get_client_name(mpJackClient);
-	for (int k = 0; k < 2; ++k)
-	{
-		const std::string port_name
-			= "out_" + std::to_string(k + 1);
-		const std::string client_port
-			= client_name + ':' + port_name; 
-		jack_connect(mpJackClient, 
-			client_port.c_str(), playback_ports[k]);
-	}
-	jack_free(playback_ports);
+  if (playback_ports)
+  {
+    const std::string client_name = jack_get_client_name(mpJackClient);
+    for (int k = 0; k < 2; ++k)
+    {
+      const std::string port_name = "out_" + std::to_string(k + 1);
+      const std::string client_port = client_name + ':' + port_name;
+      jack_connect(mpJackClient, client_port.c_str(), playback_ports[k]);
+    }
+    jack_free(playback_ports);
   }
 }
 

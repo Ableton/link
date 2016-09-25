@@ -37,7 +37,7 @@ public:
   AudioEngine mEngine;
 
 private:
-  static int audioCallback(jack_nframes_t nframes, void *pvUserData);
+  static int audioCallback(jack_nframes_t nframes, void* pvUserData);
   int audioCallback(jack_nframes_t nframes);
 
   void initialize();

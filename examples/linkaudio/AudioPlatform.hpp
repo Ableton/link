@@ -42,4 +42,3 @@
 #if LINKHUT_AUDIO_PLATFORM_JACK
 #include "AudioPlatform_Jack.hpp"
 #endif
-
