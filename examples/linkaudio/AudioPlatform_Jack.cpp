@@ -124,7 +124,13 @@ void AudioPlatform::initialize()
 
   jack_set_process_callback(mpJackClient, AudioPlatform::audioCallback, this);
 
-  mEngine.setSampleRate(double(jack_get_sample_rate(mpJackClient)));
+  const double bufferSize = jack_get_buffer_size(mpJackClient);
+  const double sampleRate = jack_get_sample_rate(mpJackClient);
+
+  mEngine.setSampleRate(sampleRate);
+
+  mEngine.mOutputLatency =
+    std::chrono::microseconds(llround(1.0e6 * bufferSize / sampleRate));
 }
 
 void AudioPlatform::uninitialize()
