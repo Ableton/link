@@ -12,22 +12,22 @@ matrix:
     ###########################################################################
     #     Build with the main configuration on all the supported compilers
     ###########################################################################
-    # Mac OS X / XCode 7.1, 64-bit Debug
+    # Mac OS X / XCode 7.3, 64-bit Debug
     - os: osx
       env: WORDSIZE=64 CONFIGURATION=Debug
-      osx_image: xcode7.1
+      osx_image: xcode7.3
       compiler: clang
 
-    # Mac OS X / XCode 7.1, 64-bit Release
+    # Mac OS X / XCode 7.3, 64-bit Release
     - os: osx
       env: WORDSIZE=64 CONFIGURATION=Release
-      osx_image: xcode7.1
+      osx_image: xcode7.3
       compiler: clang
 
-    # Mac OS X / XCode 7.1, 32-bit Release
+    # Mac OS X / XCode 7.3, 32-bit Release
     - os: osx
       env: WORDSIZE=32 CONFIGURATION=Release
-      osx_image: xcode7.1
+      osx_image: xcode7.3
       compiler: clang
 
     # Linux with Clang 3.6, 64-bit Debug, Alsa
