@@ -37,22 +37,21 @@ std::pair<double, double> linearRegression(It begin, It end)
 
   const double numPoints = static_cast<double>(distance(begin, end));
 
-  const double meanX =
-    accumulate(begin, end, 0.0, [](double a, Point b) { return a + b.first; })
-    / numPoints;
+  const double meanX = accumulate(begin, end, 0.0, [](double a, Point b) {
+    return a + b.first;
+  }) / numPoints;
 
   const double productXX = accumulate(begin, end, 0.0,
     [&meanX](double a, Point b) { return a + pow(b.first - meanX, 2.0); });
 
-  const double meanY =
-    accumulate(begin, end, 0.0, [](double a, Point b) { return a + b.second; })
-    / numPoints;
+  const double meanY = accumulate(begin, end, 0.0, [](double a, Point b) {
+    return a + b.second;
+  }) / numPoints;
 
   const double productXY =
     inner_product(begin, end, begin, 0.0, [](double a, double b) { return a + b; },
-      [&meanX, &meanY](Point a, Point b) {
-        return ((a.first - meanX) * (b.second - meanY));
-      });
+      [&meanX, &meanY](
+        Point a, Point b) { return ((a.first - meanX) * (b.second - meanY)); });
 
   const double slope = productXX == 0.0 ? 0.0 : productXY / productXX;
 

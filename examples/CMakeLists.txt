@@ -101,8 +101,6 @@ function(configure_linkhut_executable target)
   endif()
 
   target_link_libraries(${target} Ableton::Link)
-
-  target_set_word_size(${target})
 endfunction()
 
 function(configure_linkhut_audio_sources target)

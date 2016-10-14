@@ -45,8 +45,7 @@ struct MeasurementEndpointV4
   template <typename It>
   friend It toNetworkByteStream(const MeasurementEndpointV4 mep, It out)
   {
-    return discovery::toNetworkByteStream(
-      mep.ep.port(),
+    return discovery::toNetworkByteStream(mep.ep.port(),
       discovery::toNetworkByteStream(
         static_cast<std::uint32_t>(mep.ep.address().to_v4().to_ulong()), std::move(out)));
   }

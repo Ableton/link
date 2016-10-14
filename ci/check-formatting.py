@@ -12,7 +12,7 @@ def parse_args():
 
     arg_parser.add_argument(
         '-c', '--clang-format',
-        default='clang-format-3.7',
+        default='clang-format-3.9',
         help='Path to clang-format executable')
 
     return arg_parser.parse_args(sys.argv[1:])
@@ -31,7 +31,7 @@ def check_files_in_path(args, path):
 
     for (path, dirs, files) in os.walk(path):
         for file in files:
-            if file.endswith('cpp') or file.endswith('hpp'):
+            if file.endswith('cpp') or file.endswith('hpp') or file.endswith('.ipp'):
                 file_absolute_path = path + os.path.sep + file
                 clang_format_args = [
                     args.clang_format, '-style=file',

@@ -300,11 +300,9 @@ private:
     bool sessionTimelineExists(const SessionId& session, const Timeline& tl)
     {
       using namespace std;
-      return find_if(begin(mPeers), end(mPeers),
-               [&](const Peer& peer) {
-                 return peer.first.sessionId() == session && peer.first.timeline() == tl;
-               })
-             != end(mPeers);
+      return find_if(begin(mPeers), end(mPeers), [&](const Peer& peer) {
+        return peer.first.sessionId() == session && peer.first.timeline() == tl;
+      }) != end(mPeers);
     }
 
     struct PeerIdComp

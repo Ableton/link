@@ -77,8 +77,6 @@ function(configure_link_test_executable target)
     target_link_libraries(${target} pthread)
   endif()
   target_link_libraries(${target} Catch::Catch Ableton::Link)
-
-  target_set_word_size(${target})
 endfunction()
 
 # For the LinkCore test suite, we add header dependencies individually so that

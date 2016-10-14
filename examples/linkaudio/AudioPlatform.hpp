@@ -31,6 +31,10 @@
 #include "AudioPlatform_Dummy.hpp"
 #endif
 
+#if LINKHUT_AUDIO_PLATFORM_JACK
+#include "AudioPlatform_Jack.hpp"
+#endif
+
 #if LINKHUT_AUDIO_PLATFORM_PORTAUDIO
 #include "AudioPlatform_Portaudio.hpp"
 #endif

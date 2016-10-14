@@ -61,11 +61,10 @@ struct MessageHeader
   template <typename It>
   friend It toNetworkByteStream(const MessageHeader& header, It out)
   {
-    return discovery::toNetworkByteStream(
-      header.ident, discovery::toNetworkByteStream(
-                      header.groupId, discovery::toNetworkByteStream(header.ttl,
-                                        discovery::toNetworkByteStream(header.messageType,
-                                                                       std::move(out)))));
+    return discovery::toNetworkByteStream(header.ident,
+      discovery::toNetworkByteStream(header.groupId,
+        discovery::toNetworkByteStream(header.ttl,
+          discovery::toNetworkByteStream(header.messageType, std::move(out)))));
   }
 
   template <typename It>

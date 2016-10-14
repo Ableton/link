@@ -24,6 +24,12 @@ matrix:
       osx_image: xcode7.1
       compiler: clang
 
+    # Mac OS X / XCode 7.1, 32-bit Release
+    - os: osx
+      env: WORDSIZE=32 CONFIGURATION=Release
+      osx_image: xcode7.1
+      compiler: clang
+
     # Linux with Clang 3.6, 64-bit Debug
     - os: linux
       compiler: clang
@@ -66,16 +72,16 @@ matrix:
     # Code formatting verification
     - os: linux
       compiler: clang
-      env: CONFIGURATION=Formatting LLVM_VERSION=3.8.0
+      env: CONFIGURATION=Formatting LLVM_VERSION=3.9.0
 
 before_install:
   # Do indentation check
   - |
     if [ "$CONFIGURATION" = "Formatting" ]; then
       wget -O - http://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
-      echo deb http://apt.llvm.org/trusty/ llvm-toolchain-trusty-3.8 main | sudo tee --append /etc/apt/sources.list
-      sudo apt-get update && sudo apt-get -y install clang-format-3.8
-      python ci/check-formatting.py -c $(which clang-format-3.8)
+      echo deb http://apt.llvm.org/trusty/ llvm-toolchain-trusty-3.9 main | sudo tee --append /etc/apt/sources.list
+      sudo apt-get update && sudo apt-get -y install clang-format-3.9
+      python ci/check-formatting.py -c $(which clang-format-3.9)
       exit $?
     fi
 
@@ -96,15 +102,19 @@ script:
     set -e
     if [ "$TRAVIS_OS_NAME" = "osx" ]; then
       PATH=`brew --prefix qt5`/bin:${PATH}
-      python ci/configure.py --configuration $CONFIGURATION --generator Ninja --with-qt
+      if [ "$WORDSIZE" -eq 64 ]; then
+        python ci/configure.py --configuration $CONFIGURATION --generator Ninja --with-qt
+      else
+        python ci/configure.py --configuration $CONFIGURATION --generator Ninja --flags "\-DCMAKE_OSX_ARCHITECTURES=i386"
+      fi
       python ci/build.py --configuration $CONFIGURATION --arguments "all -v"
     else
       if [ "$WORDSIZE" -eq 64 ]; then
         PATH=$PWD/5.5/gcc_64:${PATH}
-        python ci/configure.py --configuration $CONFIGURATION --wordsize $WORDSIZE --with-qt
+        python ci/configure.py --configuration $CONFIGURATION --with-qt
       else
         PATH=$PWD/5.5/gcc:${PATH}
-        python ci/configure.py --configuration $CONFIGURATION --wordsize $WORDSIZE --with-qt
+        python ci/configure.py --configuration $CONFIGURATION --flags "\-DCMAKE_CXX_FLAGS=\"\-m32\""
       fi
       python ci/build.py --configuration $CONFIGURATION --arguments "VERBOSE=1 -j8"
     fi
