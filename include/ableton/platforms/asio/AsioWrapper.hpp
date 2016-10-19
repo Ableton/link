@@ -37,6 +37,13 @@
 #define INCL_EXTRA_HTON_FUNCTIONS 1
 #endif
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#if __has_warning("-Wcomma")
+#pragma clang diagnostic ignored "-Wcomma"
+#endif
+#endif
+
 #if defined(_MSC_VER)
 #pragma warning(push)
 // C4191: 'operator/operation': unsafe conversion from 'type of expression' to
@@ -62,4 +69,8 @@
 
 #if defined(_MSC_VER)
 #pragma warning(pop)
+#endif
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
 #endif
