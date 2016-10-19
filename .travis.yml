@@ -118,6 +118,7 @@ script:
       fi
       python ci/build.py --configuration $CONFIGURATION --arguments "VERBOSE=1 -j8"
     fi
+    set +e
 
   # Build Tests and run with Valgrind (Linux 64-bit only). Mac OSX supports
   # valgrind via homebrew, but there is no bottle formula, so it must be
@@ -131,3 +132,4 @@ script:
       python ci/run-tests.py --target LinkCoreTest
       python ci/run-tests.py --target LinkDiscoveryTest
     fi
+    set +e
