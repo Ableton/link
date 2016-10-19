@@ -37,7 +37,6 @@
 #define INCL_EXTRA_HTON_FUNCTIONS 1
 #endif
 
-// Visual Studio: Disable Warnings
 #if defined(_MSC_VER)
 #pragma warning(push)
 // C4191: 'operator/operation': unsafe conversion from 'type of expression' to
@@ -61,7 +60,6 @@
 #pragma pop_macro("ASIO_STANDALONE")
 #pragma pop_macro("ASIO_NO_TYPEID")
 
-// Visual Studio: Disable Warnings
 #if defined(_MSC_VER)
 #pragma warning(pop)
 #endif
