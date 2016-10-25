@@ -33,7 +33,6 @@ AudioPlatform::AudioPlatform(Link& link)
   , mpJackClient(NULL)
   , mpJackPorts(NULL)
 {
-  mEngine.setSampleRate(44100.);
   mEngine.setBufferSize(512);
   initialize();
   start();
