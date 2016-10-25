@@ -15,7 +15,6 @@ def parse_args():
 
     arg_parser.add_argument(
         '-a', '--audio-driver',
-        default='Asio',
         help='Audio driver to build (Windows only, default: %(default)s)')
 
     arg_parser.add_argument(
@@ -69,6 +68,11 @@ def build_cmake_args(args):
             cmake_args.append('-DLINK_BUILD_ASIO=ON')
         else:
             cmake_args.append('-DLINK_BUILD_ASIO=OFF')
+    elif 'linux' in sys.platform:
+       if args.audio_driver == 'Jack':
+           cmake_args.append('-DLINK_BUILD_JACK=ON')
+
+    print sys.platform
 
     # This must always be last
     cmake_args.append('..')

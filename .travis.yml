@@ -30,23 +30,23 @@ matrix:
       osx_image: xcode7.1
       compiler: clang
 
-    # Linux with Clang 3.6, 64-bit Debug
+    # Linux with Clang 3.6, 64-bit Debug, Alsa
     - os: linux
       compiler: clang
       addons:
         apt:
           sources: ['ubuntu-toolchain-r-test']
           packages: ['clang-3.6', 'g++-5', 'valgrind', 'p7zip-full', 'portaudio19-dev', 'cmake', 'cmake-data']
-      env: COMPILER=clang++-3.6 WORDSIZE=64 CONFIGURATION=Debug
+      env: COMPILER=clang++-3.6 WORDSIZE=64 CONFIGURATION=Debug AUDIO=Alsa
 
-    # Linux with Clang 3.6, 64-bit Release
+    # Linux with Clang 3.6, 64-bit Release, Jack
     - os: linux
       compiler: clang
       addons:
         apt:
           sources: ['ubuntu-toolchain-r-test']
-          packages: ['clang-3.6', 'g++-5', 'valgrind', 'p7zip-full', 'portaudio19-dev', 'cmake', 'cmake-data']
-      env: COMPILER=clang++-3.6 WORDSIZE=64 CONFIGURATION=Release
+          packages: ['clang-3.6', 'g++-5', 'valgrind', 'p7zip-full', 'libjack-jackd2-dev', 'cmake', 'cmake-data']
+      env: COMPILER=clang++-3.6 WORDSIZE=64 CONFIGURATION=Release AUDIO=Jack
 
     # Linux with GCC 5.x, 32-bit Release
 #    - os: linux
@@ -60,14 +60,14 @@ matrix:
 #                     'portaudio19-dev:i386', 'libglib2.0-0:i386', 'cmake', 'cmake-data']
 #      env: COMPILER=g++-5 WORDSIZE=32 CONFIGURATION=Release
 
-    # Linux with GCC 5.x, 64-bit Release
+    # Linux with GCC 5.x, 64-bit Release, Alsa
     - os: linux
       compiler: gcc
       addons:
         apt:
           sources: ['ubuntu-toolchain-r-test', 'george-edison55-precise-backports']
           packages: ['g++-5', 'valgrind', 'p7zip-full', 'portaudio19-dev', 'cmake', 'cmake-data']
-      env: COMPILER=g++-5 WORDSIZE=64 CONFIGURATION=Release
+      env: COMPILER=g++-5 WORDSIZE=64 CONFIGURATION=Release AUDIO=Alsa
 
     # Code formatting verification
     - os: linux
@@ -111,10 +111,10 @@ script:
     else
       if [ "$WORDSIZE" -eq 64 ]; then
         PATH=$PWD/5.5/gcc_64:${PATH}
-        python ci/configure.py --configuration $CONFIGURATION --with-qt
+        python ci/configure.py --configuration $CONFIGURATION --with-qt -a $AUDIO
       else
         PATH=$PWD/5.5/gcc:${PATH}
-        python ci/configure.py --configuration $CONFIGURATION --flags "\-DCMAKE_CXX_FLAGS=\"\-m32\""
+        python ci/configure.py --configuration $CONFIGURATION -a AUDIO --flags "\-DCMAKE_CXX_FLAGS=\"\-m32\""
       fi
       python ci/build.py --configuration $CONFIGURATION --arguments "VERBOSE=1 -j8"
     fi
