@@ -33,7 +33,6 @@ AudioPlatform::AudioPlatform(Link& link)
   , mpJackClient(NULL)
   , mpJackPorts(NULL)
 {
-  mEngine.setBufferSize(512);
   initialize();
   start();
 }
@@ -126,6 +125,7 @@ void AudioPlatform::initialize()
   const double bufferSize = jack_get_buffer_size(mpJackClient);
   const double sampleRate = jack_get_sample_rate(mpJackClient);
 
+  mEngine.setBufferSize(static_cast<std::size_t>(bufferSize));
   mEngine.setSampleRate(sampleRate);
 
   mEngine.mOutputLatency =
