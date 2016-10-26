@@ -40,7 +40,7 @@ TEST_CASE("LinearRegression | OnePoint", "[LinearRegression]")
 {
   using Array = std::array<std::pair<double, double>, 1>;
   Array data;
-  data[0] = {};
+  data[0] = {{}, {}};
   const auto result = linearRegression(data.begin(), data.end());
   CHECK(0 == Approx(result.first));
   CHECK(0 == Approx(result.second));
