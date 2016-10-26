@@ -44,9 +44,9 @@ matrix:
       compiler: clang
       addons:
         apt:
-          sources: ['ubuntu-toolchain-r-test']
-          packages: ['clang-3.6', 'g++-5', 'valgrind', 'p7zip-full', 'libjack-jackd2-dev', 'cmake', 'cmake-data']
-      env: COMPILER=clang++-3.6 WORDSIZE=64 CONFIGURATION=Release AUDIO=Jack
+          sources: ['llvm-toolchain-precise-3.8', 'ubuntu-toolchain-r-test']
+          packages: ['clang-3.8', 'g++-5', 'valgrind', 'p7zip-full', 'portaudio19-dev', 'cmake', 'cmake-data']
+      env: COMPILER=clang++-3.8 WORDSIZE=64 CONFIGURATION=Release AUDIO=Jack
 
     # Linux with GCC 5.x, 32-bit Release
 #    - os: linux
@@ -68,6 +68,15 @@ matrix:
           sources: ['ubuntu-toolchain-r-test', 'george-edison55-precise-backports']
           packages: ['g++-5', 'valgrind', 'p7zip-full', 'portaudio19-dev', 'cmake', 'cmake-data']
       env: COMPILER=g++-5 WORDSIZE=64 CONFIGURATION=Release AUDIO=Alsa
+
+    # Linux with GCC 6.x, 64-bit Release, Alsa
+    - os: linux
+      compiler: gcc
+      addons:
+        apt:
+          sources: ['ubuntu-toolchain-r-test', 'george-edison55-precise-backports']
+          packages: ['g++-6', 'valgrind', 'p7zip-full', 'portaudio19-dev', 'cmake', 'cmake-data']
+      env: COMPILER=g++-6 WORDSIZE=64 CONFIGURATION=Release AUDIO=Alsa
 
     # Code formatting verification
     - os: linux
