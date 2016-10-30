@@ -97,7 +97,7 @@ source_group("Audio Sources" FILES ${linkhut_audio_SOURCES})
 
 function(configure_linkhut_executable target)
   if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-    target_link_libraries(${target} pthread)
+    target_link_libraries(${target} atomic pthread)
   endif()
 
   target_link_libraries(${target} Ableton::Link)

@@ -19,6 +19,7 @@ set(link_discovery_test_SOURCES
 
 set(link_core_test_SOURCES
   ableton/link/tst_Beats.cpp
+  ableton/link/tst_CircularFifo.cpp
   ableton/link/tst_ClientSessionTimelines.cpp
   ableton/link/tst_Controller.cpp
   ableton/link/tst_HostTimeFilter.cpp
@@ -74,7 +75,7 @@ source_group("Test Utils" FILES
 
 function(configure_link_test_executable target)
   if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-    target_link_libraries(${target} pthread)
+    target_link_libraries(${target} atomic pthread)
   endif()
   target_link_libraries(${target} Catch::Catch Ableton::Link)
 endfunction()
