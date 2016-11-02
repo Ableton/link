@@ -93,6 +93,22 @@ struct MockIoContext
     return {};
   }
 
+  template <typename Callback, typename Duration>
+  struct LockFreeCallbackDispatcher
+  {
+    LockFreeCallbackDispatcher(Callback callback, Duration)
+      : mCallback(std::move(callback))
+    {
+    }
+
+    void invoke()
+    {
+      mCallback();
+    }
+
+    Callback mCallback;
+  };
+
   using Log = util::NullLog;
 
   Log log() const

@@ -20,6 +20,7 @@
 #pragma once
 
 #include <ableton/discovery/Service.hpp>
+#include <ableton/link/CircularFifo.hpp>
 #include <ableton/link/ClientSessionTimelines.hpp>
 #include <ableton/link/Gateway.hpp>
 #include <ableton/link/GhostXForm.hpp>
@@ -45,7 +46,8 @@ GhostXForm initXForm(const Clock& clock)
 
 // The timespan in which local modifications to the timeline will be
 // preferred over any modifications coming from the network.
-const auto kLocalModGracePeriod = std::chrono::seconds(1);
+const auto kLocalModGracePeriod = std::chrono::milliseconds(1000);
+const auto kRtHandlerFallbackPeriod = kLocalModGracePeriod / 2;
 
 } // namespace detail
 
@@ -82,6 +84,7 @@ public:
     , mEnabled(false)
     , mIo(std::move(io))
     , mRealtimeIo(util::injectRef(*mIo))
+    , mRtTimelineSetter(*this)
     , mPeers(util::injectRef(*mIo),
         std::ref(mSessionPeerCounter),
         SessionTimelineCallback{*this})
@@ -164,7 +167,7 @@ public:
     // cached version of the timeline.
     const auto now = mClock.micros();
     if (now - mRtClientTimelineTimestamp > detail::kLocalModGracePeriod
-        && mSessionTimingGuard.try_lock())
+        && !mRtTimelineSetter.hasPendingTimelines() && mSessionTimingGuard.try_lock())
     {
       const auto clientTimeline = updateClientTimelineFromSession(
         mRtClientTimeline, mSessionTimeline, now, mGhostXForm);
@@ -184,21 +187,17 @@ public:
   void setTimelineRtSafe(Timeline newTimeline, const std::chrono::microseconds atTime)
   {
     newTimeline = clampTempo(newTimeline);
-    // Cache the new timeline for serving back to the client
-    mRtClientTimeline = newTimeline;
-    mRtClientTimelineTimestamp =
-      isEnabled() ? mClock.micros() : std::chrono::microseconds(0);
 
-    // Update the session timeline from the new client timeline
-    mRealtimeIo.async([this, newTimeline, atTime] {
-      // Synchronize with the non-rt version of the client timeline
-      {
-        std::lock_guard<std::mutex> lock(mClientTimelineGuard);
-        mClientTimeline = newTimeline;
-      }
-      handleTimelineFromClient(updateSessionTimelineFromClient(
-        mSessionTimeline, newTimeline, atTime, mGhostXForm));
-    });
+    // This will fail in case the Fifo in the RtTimelineSetter is full. This indicates a
+    // very high rate of calls to the setter. In this case we ignore one value because we
+    // expect the setter to be called again soon.
+    if (mRtTimelineSetter.tryPush(newTimeline, atTime))
+    {
+      // Cache the new timeline for serving back to the client
+      mRtClientTimeline = newTimeline;
+      mRtClientTimelineTimestamp =
+        isEnabled() ? mClock.micros() : std::chrono::microseconds(0);
+    }
   }
 
 private:
@@ -248,6 +247,16 @@ private:
       mSessions.sawSessionTimeline(std::move(id), std::move(timeline)), mGhostXForm);
   }
 
+  void handleRtTimeline(const Timeline timeline, const std::chrono::microseconds time)
+  {
+    {
+      std::lock_guard<std::mutex> lock(mClientTimelineGuard);
+      mClientTimeline = timeline;
+    }
+    handleTimelineFromClient(
+      updateSessionTimelineFromClient(mSessionTimeline, timeline, time, mGhostXForm));
+  }
+
   void joinSession(const Session& session)
   {
     const bool sessionIdChanged = mSessionId != session.sessionId;
@@ -291,6 +300,60 @@ private:
     }
 
     Controller& mController;
+  };
+
+  struct RtTimelineSetter
+  {
+    using CallbackDispatcher =
+      typename IoContext::template LockFreeCallbackDispatcher<std::function<void()>,
+        std::chrono::milliseconds>;
+    using RtTimeline = std::pair<Timeline, std::chrono::microseconds>;
+
+    RtTimelineSetter(Controller& controller)
+      : mController(controller)
+      , mHasPendingTimelines(false)
+      , mCallbackDispatcher(
+          [this] { processPendingTimelines(); }, detail::kRtHandlerFallbackPeriod)
+    {
+    }
+
+    bool tryPush(const Timeline timeline, const std::chrono::microseconds time)
+    {
+      mHasPendingTimelines = true;
+      const auto success = mFifo.push({timeline, time});
+      if (success)
+      {
+        mCallbackDispatcher.invoke();
+      }
+      return success;
+    }
+
+    bool hasPendingTimelines() const
+    {
+      return mHasPendingTimelines;
+    }
+
+  private:
+    void processPendingTimelines()
+    {
+      auto result = mFifo.clearAndPopLast();
+
+      if (result.valid)
+      {
+        auto timeline = std::move(result.item);
+        mController.mIo->async([this, timeline]() {
+          mController.handleRtTimeline(timeline.first, timeline.second);
+          mHasPendingTimelines = false;
+        });
+      }
+    }
+
+    Controller& mController;
+    // Assuming a wake up time of one ms for the threads owned by the CallbackDispatcher
+    // and the ioService, buffering 16 timelines allows to set eight timelines per ms.
+    CircularFifo<RtTimeline, 16> mFifo;
+    std::atomic<bool> mHasPendingTimelines;
+    CallbackDispatcher mCallbackDispatcher;
   };
 
   struct SessionPeerCounter
@@ -427,6 +490,8 @@ private:
   // A realtime facade over the provided IoContext. This should only
   // be used by realtime code, non-realtime code should use mIo.
   typename IoType::template RealTimeContext<IoType&> mRealtimeIo;
+
+  RtTimelineSetter mRtTimelineSetter;
 
   ControllerPeers mPeers;
 
