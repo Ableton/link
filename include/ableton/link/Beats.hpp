@@ -34,7 +34,7 @@ struct Beats : std::tuple<std::int64_t>
   Beats() = default;
 
   explicit Beats(const double beats)
-    : std::tuple<std::int64_t>(std::llround(beats * 1e6))
+    : std::tuple<std::int64_t>(llround(beats * 1e6))
   {
   }
 

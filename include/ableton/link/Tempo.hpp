@@ -49,7 +49,7 @@ struct Tempo : std::tuple<double>
 
   std::chrono::microseconds microsPerBeat() const
   {
-    return std::chrono::microseconds{std::llround(60. * 1e6 / bpm())};
+    return std::chrono::microseconds{llround(60. * 1e6 / bpm())};
   }
 
   // Given the tempo, convert a time to a beat value
@@ -61,8 +61,7 @@ struct Tempo : std::tuple<double>
   // Given the tempo, convert a beat to a time value
   std::chrono::microseconds beatsToMicros(const Beats beats) const
   {
-    return std::chrono::microseconds{
-      std::llround(beats.floating() * microsPerBeat().count())};
+    return std::chrono::microseconds{llround(beats.floating() * microsPerBeat().count())};
   }
 
   // Model the NetworkByteStreamSerializable concept

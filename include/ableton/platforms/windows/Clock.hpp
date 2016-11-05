@@ -43,7 +43,7 @@ struct Clock
 
   Micros ticksToMicros(const Ticks ticks) const
   {
-    return Micros{std::llround(mTicksToMicros * ticks)};
+    return Micros{llround(mTicksToMicros * ticks)};
   }
 
   Ticks microsToTicks(const Micros micros) const
