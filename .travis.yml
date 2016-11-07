@@ -98,7 +98,7 @@ before_install:
   - CXX=$COMPILER
 
   # Install homebrew packages for Mac OS X
-  - if [ "$TRAVIS_OS_NAME" = "osx" ]; then brew update && brew install cmake ninja qt5; fi
+  - if [ "$TRAVIS_OS_NAME" = "osx" ]; then brew update && brew install ninja qt5; fi
 
   # Install QT for Linux manually, since the QT packages are not whitelisted by Travis
   - if [ "$TRAVIS_OS_NAME" = "linux" ]; then ./ci/install-qt-5.sh $WORDSIZE; fi
