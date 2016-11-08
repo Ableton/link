@@ -116,7 +116,7 @@ void parseByteStream(HandlerMap<It>& map, It bsBegin, const It bsEnd)
     It valueEnd = valueBegin + header.size;
     if (bsEnd < valueEnd)
     {
-      throw range_error("Partial payload entry with key: " + to_string(header.key));
+      throw range_error("Payload with incorrect size.");
     }
 
     // The next entry will start at the end of this one
