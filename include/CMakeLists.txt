@@ -75,7 +75,6 @@ set(link_platform_HEADERS
   ${link_platform_DIR}/asio/AsioWrapper.hpp
   ${link_platform_DIR}/asio/Context.hpp
   ${link_platform_DIR}/asio/LockFreeCallbackDispatcher.hpp
-  ${link_platform_DIR}/asio/PooledHandlerContext.hpp
   ${link_platform_DIR}/asio/Socket.hpp
   ${link_platform_DIR}/asio/Util.hpp
 )

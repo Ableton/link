@@ -83,7 +83,6 @@ public:
     , mSessionPeerCounter(*this, std::move(peerCallback))
     , mEnabled(false)
     , mIo(std::move(io))
-    , mRealtimeIo(util::injectRef(*mIo))
     , mRtTimelineSetter(*this)
     , mPeers(util::injectRef(*mIo),
         std::ref(mSessionPeerCounter),
@@ -112,7 +111,7 @@ public:
     const bool bWasEnabled = mEnabled.exchange(bEnable);
     if (bWasEnabled != bEnable)
     {
-      mRealtimeIo.async([this, bEnable] {
+      mIo->async([this, bEnable] {
         if (bEnable)
         {
           // Always reset when first enabling to avoid hijacking
@@ -487,9 +486,6 @@ private:
   std::atomic<bool> mEnabled;
 
   util::Injected<IoContext> mIo;
-  // A realtime facade over the provided IoContext. This should only
-  // be used by realtime code, non-realtime code should use mIo.
-  typename IoType::template RealTimeContext<IoType&> mRealtimeIo;
 
   RtTimelineSetter mRtTimelineSetter;
 

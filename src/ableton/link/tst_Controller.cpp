@@ -132,23 +132,6 @@ struct MockIoContext
   {
     return {};
   }
-
-  template <typename IoContext>
-  struct RealTimeContext
-  {
-    RealTimeContext(util::Injected<IoContext> io)
-      : mIo(std::move(io))
-    {
-    }
-
-    template <typename Handler>
-    void async(Handler handler) const
-    {
-      mIo->async(std::move(handler));
-    }
-
-    util::Injected<IoContext> mIo;
-  };
 };
 
 using MockController =
