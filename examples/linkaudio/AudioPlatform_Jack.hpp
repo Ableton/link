@@ -40,6 +40,16 @@ private:
   static int audioCallback(jack_nframes_t nframes, void* pvUserData);
   int audioCallback(jack_nframes_t nframes);
 
+  static void timebaseCallback(jack_transport_state_t state,
+    jack_nframes_t nframes,
+    jack_position_t* position,
+    int new_pos,
+    void* pvUserData);
+  void timebaseCallback(jack_transport_state_t state,
+    jack_nframes_t nframes,
+    jack_position_t* position,
+    int new_pos);
+
   void initialize();
   void uninitialize();
   void start();
