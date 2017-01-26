@@ -32,18 +32,12 @@ struct Clock
 {
   using Ticks = std::uint64_t;
 
-  Clock()
-  {
-    mStartTime = std::chrono::high_resolution_clock::now();
-  }
-
   std::chrono::microseconds micros() const
   {
     using namespace std::chrono;
-    return duration_cast<microseconds>(high_resolution_clock::now() - mStartTime);
+    auto nowInMicros = time_point_cast<microseconds>(high_resolution_clock::now());
+    return nowInMicros.time_since_epoch();
   }
-
-  std::chrono::high_resolution_clock::time_point mStartTime;
 };
 
 } // namespace stl
