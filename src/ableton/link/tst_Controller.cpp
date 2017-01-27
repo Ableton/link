@@ -34,13 +34,6 @@ namespace
 
 struct MockClock
 {
-  using Ticks = std::int64_t;
-
-  Ticks ticks() const
-  {
-    return 1;
-  }
-
   microseconds micros() const
   {
     return microseconds{1};

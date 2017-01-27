@@ -30,8 +30,6 @@ namespace stl
 
 struct Clock
 {
-  using Ticks = std::uint64_t;
-
   std::chrono::microseconds micros() const
   {
     using namespace std::chrono;

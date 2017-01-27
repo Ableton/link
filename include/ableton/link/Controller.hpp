@@ -63,8 +63,6 @@ template <typename PeerCountCallback,
 class Controller
 {
 public:
-  using Ticks = typename Clock::Ticks;
-
   Controller(Tempo tempo,
     PeerCountCallback peerCallback,
     TempoCallback tempoCallback,
