@@ -21,6 +21,7 @@
 
 #include "AudioEngine.hpp"
 #include <ableton/link/HostTimeFilter.hpp>
+#include <ableton/platforms/Config.hpp>
 #include <portaudio.h>
 
 namespace ableton
@@ -49,7 +50,7 @@ private:
   void start();
   void stop();
 
-  link::HostTimeFilter<platforms::stl::Clock> mHostTimeFilter;
+  link::HostTimeFilter<link::platform::Clock> mHostTimeFilter;
   double mSampleTime;
   PaStream* pStream;
 };
