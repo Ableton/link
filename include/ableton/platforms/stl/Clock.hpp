@@ -33,7 +33,7 @@ struct Clock
   std::chrono::microseconds micros() const
   {
     using namespace std::chrono;
-    auto nowInMicros = time_point_cast<microseconds>(high_resolution_clock::now());
+    auto nowInMicros = time_point_cast<microseconds>(steady_clock::now());
     return nowInMicros.time_since_epoch();
   }
 };
