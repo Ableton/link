@@ -42,7 +42,7 @@ environment:
 
 install:
   - git submodule update --init --recursive
-  - set PATH=%PATH%;C:\Qt\5.5\%QT%\bin
+  - set PATH=%PATH%;C:\Qt\5.8\%QT%\bin
 
 build_script:
   - python ci/configure.py -q -a %AUDIO_DRIVER% -g "%GENERATOR%"
