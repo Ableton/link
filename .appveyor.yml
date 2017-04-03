@@ -23,22 +23,22 @@ environment:
     - AUDIO_DRIVER: Asio
       CONFIGURATION: Release
       GENERATOR: Visual Studio 14 2015
-      QT: msvc2013
+      QT: msvc2015
     # Visual Studio 2015, 64-bit Debug, Asio driver
     - AUDIO_DRIVER: Asio
       CONFIGURATION: Debug
       GENERATOR: Visual Studio 14 2015 Win64
-      QT: msvc2013_64
+      QT: msvc2015_64
     # Visual Studio 2015, 64-bit Release, Asio driver
     - AUDIO_DRIVER: Asio
       CONFIGURATION: Release
       GENERATOR: Visual Studio 14 2015 Win64
-      QT: msvc2013_64
+      QT: msvc2015_64
     # Visual Studio 2015, 64-bit Release, Wasapi driver
     - AUDIO_DRIVER: Wasapi
       CONFIGURATION: Release
       GENERATOR: Visual Studio 14 2015 Win64
-      QT: msvc2013_64
+      QT: msvc2015_64
 
 install:
   - git submodule update --init --recursive
