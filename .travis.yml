@@ -65,7 +65,7 @@ matrix:
       compiler: gcc
       addons:
         apt:
-          sources: ['ubuntu-toolchain-r-test', 'george-edison55-precise-backports']
+          sources: ['ubuntu-toolchain-r-test']
           packages: ['g++-5', 'valgrind', 'p7zip-full', 'portaudio19-dev', 'cmake', 'cmake-data']
       env: COMPILER=g++-5 WORDSIZE=64 CONFIGURATION=Release AUDIO=Alsa
 
@@ -74,7 +74,7 @@ matrix:
       compiler: gcc
       addons:
         apt:
-          sources: ['ubuntu-toolchain-r-test', 'george-edison55-precise-backports']
+          sources: ['ubuntu-toolchain-r-test']
           packages: ['g++-6', 'valgrind', 'p7zip-full', 'portaudio19-dev', 'cmake', 'cmake-data']
       env: COMPILER=g++-6 WORDSIZE=64 CONFIGURATION=Release AUDIO=Alsa
 
@@ -100,8 +100,13 @@ before_install:
   # Install homebrew packages for Mac OS X
   - if [ "$TRAVIS_OS_NAME" = "osx" ]; then brew update && brew install ninja qt5; fi
 
-  # Install QT for Linux manually, since the QT packages are not whitelisted by Travis
-  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then ./ci/install-qt-5.sh $WORDSIZE; fi
+  # Install QT for Linux
+  - |
+    if [ "$TRAVIS_OS_NAME" = "linux" ]; then
+      sudo apt-add-repository -y ppa:beineri/opt-qt58-trusty
+      sudo apt-get -qy update
+      sudo apt-get -qy install qtdeclarative5-dev
+    fi
 
 install:
   - git submodule update --init --recursive
