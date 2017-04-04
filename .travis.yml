@@ -81,15 +81,16 @@ matrix:
     # Code formatting verification
     - os: linux
       compiler: clang
+      addons:
+        apt:
+          sources: ['llvm-toolchain-precise-3.9', 'ubuntu-toolchain-r-test']
+          packages: ['clang-format-3.9']
       env: CONFIGURATION=Formatting LLVM_VERSION=3.9.0
 
 before_install:
   # Do indentation check
   - |
     if [ "$CONFIGURATION" = "Formatting" ]; then
-      wget -O - http://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
-      echo deb http://apt.llvm.org/trusty/ llvm-toolchain-trusty-3.9 main | sudo tee --append /etc/apt/sources.list
-      sudo apt-get update && sudo apt-get -y install clang-format-3.9
       python ci/check-formatting.py -c $(which clang-format-3.9)
       exit $?
     fi
