@@ -116,6 +116,14 @@ elseif(${CMAKE_CXX_COMPILER_ID} STREQUAL MSVC)
     )
   endif()
 
+  if(MSVC_VERSION VERSION_GREATER 1900)
+    set(build_flags_COMMON_LIST
+      ${build_flags_COMMON_LIST}
+      "/wd4987" # nonstandard extension used: 'throw (...)'
+      "/wd4774" # 'printf_s' : format string expected in argument 1 is not a string literal
+    )
+  endif()
+
   if(NOT LINK_BUILD_ASIO)
     set(build_flags_COMMON_LIST
       ${build_flags_COMMON_LIST}
