@@ -94,7 +94,6 @@ elseif(${CMAKE_CXX_COMPILER_ID} STREQUAL MSVC)
     "/wd4514" # 'Function' : unreferenced inline function has been removed
     "/wd4571" # Informational: catch(...) semantics changed since Visual C++ 7.1; structured exceptions (SEH) are no longer caught
     "/wd4610" # 'Class': can never be instantiated - user defined constructor required
-    "/wd4619" # #pragma warning: there is no warning number 'number'
     "/wd4625" # 'Derived class' : copy constructor was implicitly defined as deleted because a base class copy constructor is inaccessible or deleted
     "/wd4626" # 'Derived class' : assignment operator was implicitly defined as deleted because a base class assignment operator is inaccessible or deleted
     "/wd4628" # digraphs not supported with -Ze. Character sequence 'digraph' not interpreted as alternate token for 'char'

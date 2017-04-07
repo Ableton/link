@@ -144,6 +144,7 @@ if(WIN32)
   set(extra_ignored_warnings_LIST
     "/wd4127" # conditional expression is constant
     "/wd4242" # 'identifier' : conversion from 'type1' to 'type2', possible loss of data
+    "/wd4619" # #pragma warning : there is no warning number 'number'
     "/wd4668" # 'symbol' is not defined as a preprocessor macro, replacing with '0' for 'directives'
     "/wd4702" # unreachable code
   )
