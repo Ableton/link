@@ -60,6 +60,11 @@
 #pragma warning(disable : 4668)
 // C4675: 'function' : resolved overload was found by argument-dependent lookup
 #pragma warning(disable : 4675)
+#if _MSC_VER >= 1900
+// C5031: #pragma warning(pop): likely mismatch, popping warning state pushed in different
+// file
+#pragma warning(disable : 5031)
+#endif
 #endif
 
 #include <asio.hpp>

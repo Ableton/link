@@ -113,7 +113,6 @@ elseif(${CMAKE_CXX_COMPILER_ID} STREQUAL MSVC)
       "/wd4868" # Compiler may not enforce left-to-right evaluation order in braced initializer list
       "/wd5026" # Move constructor was implicitly defined as deleted
       "/wd5027" # Move assignment operator was implicitly defined as deleted
-      "/wd5031" # #pragma warning(pop): likely mismatch, popping warning state pushed in different file
     )
   endif()
 
