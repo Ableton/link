@@ -20,9 +20,9 @@
 #pragma once
 
 #include <ableton/platforms/asio/AsioWrapper.hpp>
-#if LINK_PLATFORM_MACOSX
+#if defined(LINK_PLATFORM_MACOSX)
 #include <ableton/platforms/darwin/Darwin.hpp>
-#elif LINK_PLATFORM_LINUX
+#elif defined(LINK_PLATFORM_LINUX)
 #include <ableton/platforms/linux/Linux.hpp>
 #endif
 
@@ -32,7 +32,7 @@
 #include <utility>
 #include <vector>
 
-#if LINK_PLATFORM_WINDOWS
+#if defined(LINK_PLATFORM_WINDOWS)
 #include <WS2tcpip.h>
 #include <WinSock2.h>
 #include <Windows.h>

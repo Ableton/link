@@ -143,6 +143,7 @@ if(WIN32)
   # When building LinkHut, additional warnings are generated from third-party frameworks
   set(extra_ignored_warnings_LIST
     "/wd4127" # conditional expression is constant
+    "/wd4668" # 'symbol' is not defined as a preprocessor macro, replacing with '0' for 'directives'
     "/wd4702" # unreachable code
   )
   if(LINK_BUILD_ASIO)

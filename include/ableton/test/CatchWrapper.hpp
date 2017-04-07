@@ -31,6 +31,9 @@
 #pragma warning(push)
 // C4388: signed/unsigned mismatch
 #pragma warning(disable : 4388)
+// C4668: 'symbol' is not defined as a preprocessor macro, replacing with '0' for
+// 'directives'
+#pragma warning(disable : 4668)
 // C4702: unreachable code
 #pragma warning(disable : 4702)
 #endif

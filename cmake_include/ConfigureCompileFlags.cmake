@@ -100,7 +100,6 @@ elseif(${CMAKE_CXX_COMPILER_ID} STREQUAL MSVC)
     "/wd4626" # 'Derived class' : assignment operator was implicitly defined as deleted because a base class assignment operator is inaccessible or deleted
     "/wd4628" # digraphs not supported with -Ze. Character sequence 'digraph' not interpreted as alternate token for 'char'
     "/wd4640" # 'Instance': construction of local static object is not thread-safe
-    "/wd4668" # 'Symbol' is not defined as a preprocessor macro, replacing with '0' for 'directives'
     "/wd4710" # 'Function': function not inlined
     "/wd4711" # Function 'function' selected for inline expansion
     "/wd4738" # Storing 32-bit float result in memory, possible loss of performance

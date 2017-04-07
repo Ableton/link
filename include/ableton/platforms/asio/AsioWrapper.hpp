@@ -32,7 +32,7 @@
 #pragma push_macro("ASIO_NO_TYPEID")
 #define ASIO_NO_TYPEID 1
 
-#if LINK_PLATFORM_WINDOWS
+#if defined(LINK_PLATFORM_WINDOWS)
 #pragma push_macro("INCL_EXTRA_HTON_FUNCTIONS")
 #define INCL_EXTRA_HTON_FUNCTIONS 1
 #endif
@@ -53,6 +53,9 @@
 #pragma warning(disable : 4548)
 // C4619: #pragma warning : there is no warning number 'number'
 #pragma warning(disable : 4619)
+// C4668: 'symbol' is not defined as a preprocessor macro, replacing with '0' for
+// 'directives'
+#pragma warning(disable : 4668)
 // C4675: 'function' : resolved overload was found by argument-dependent lookup
 #pragma warning(disable : 4675)
 #endif
@@ -60,7 +63,7 @@
 #include <asio.hpp>
 #include <asio/system_timer.hpp>
 
-#if LINK_PLATFORM_WINDOWS
+#if defined(LINK_PLATFORM_WINDOWS)
 #pragma pop_macro("INCL_EXTRA_HTON_FUNCTIONS")
 #endif
 

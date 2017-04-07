@@ -22,7 +22,7 @@
 #include <ableton/test/CatchWrapper.hpp>
 #include <string>
 
-#if LINK_PLATFORM_WINDOWS && LINK_BUILD_VLD
+#if defined(LINK_PLATFORM_WINDOWS) && LINK_BUILD_VLD
 #include <vld.h>
 #endif
 
