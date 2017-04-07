@@ -151,6 +151,11 @@ if(WIN32)
       "/wd4267" # 'argument': conversion from '?' to '?', possible loss of data
       "/wd4477" # 'printf': format string '%?' requires an argument of type '?'
     )
+  else()
+    set(extra_ignored_warnings_LIST
+      ${extra_ignored_warnings_LIST}
+      "/wd4191" # 'operator/operation' : unsafe conversion from 'type of expression' to 'type required'
+    )
   endif()
   string(REPLACE ";" " " extra_ignored_warnings "${extra_ignored_warnings_LIST}")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${extra_ignored_warnings}")
