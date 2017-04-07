@@ -47,10 +47,6 @@ namespace linkaudio
 #ifndef LINK_ASIO_OUTPUT_CHANNELS
 #define LINK_ASIO_OUTPUT_CHANNELS 2
 #endif
-#ifndef LINKHUT_VERBOSE_LOGGING
-// Show information about buffer sizes and offsets in each render callback
-#define LINKHUT_VERBOSE_LOGGING 1
-#endif
 
 struct DriverInfo
 {

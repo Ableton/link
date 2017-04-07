@@ -34,11 +34,6 @@ namespace ableton
 namespace linkaudio
 {
 
-#ifndef LINKHUT_VERBOSE_LOGGING
-// Show information about buffer sizes and offsets in each render callback
-#define LINKHUT_VERBOSE_LOGGING 0
-#endif
-
 // Convenience function to look up the human-readable WinAPI error code, print it out,
 // and then terminate the application.
 void fatalError(HRESULT result, LPCTSTR context);
@@ -71,9 +66,6 @@ private:
   HANDLE mEventHandle;
   HANDLE mAudioThreadHandle;
   std::atomic<bool> mIsRunning;
-#if LINKHUT_VERBOSE_LOGGING
-  Log log;
-#endif
 };
 
 } // namespace linkaudio

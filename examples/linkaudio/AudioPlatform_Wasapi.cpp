@@ -30,11 +30,6 @@ namespace ableton
 namespace linkaudio
 {
 
-#ifndef LINKHUT_VERBOSE_LOGGING
-// Show information about buffer sizes and offsets in each render callback
-#define LINKHUT_VERBOSE_LOGGING 0
-#endif
-
 // GUID identifiers used to when looking up COM enumerators and devices
 static const IID kMMDeviceEnumeratorId = __uuidof(MMDeviceEnumerator);
 static const IID kIMMDeviceEnumeratorId = __uuidof(IMMDeviceEnumerator);
