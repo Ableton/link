@@ -83,7 +83,6 @@ elseif(${CMAKE_CXX_COMPILER_ID} STREQUAL MSVC)
     # Ignored compiler warnings #
     #############################
     "/wd4061" # Enumerator 'identifier' in switch of enum 'enumeration' is not explicitly handled by a case label
-    "/wd4242" # 'Identifier': conversion from 'type1' to 'type2', possible loss of data
     "/wd4265" # 'Class' : class has virtual functions, but destructor is not virtual
     "/wd4350" # Behavior change: 'member1' called instead of 'member2'
     "/wd4355" # 'This' : used in base member initializer list
