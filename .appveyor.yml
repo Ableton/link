@@ -19,6 +19,11 @@ environment:
       CONFIGURATION: Release
       GENERATOR: Visual Studio 12 2013 Win64
       QT: msvc2013_64
+    # Visual Studio 2013, 64-bit Debug, Wasapi driver
+    - AUDIO_DRIVER: Wasapi
+      CONFIGURATION: Debug
+      GENERATOR: Visual Studio 12 2013 Win64
+      QT: msvc2013_64
     # Visual Studio 2015, 32-bit Release, Asio driver
     - AUDIO_DRIVER: Asio
       CONFIGURATION: Release
