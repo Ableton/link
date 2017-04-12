@@ -72,8 +72,6 @@ def build_cmake_args(args):
        if args.audio_driver == 'Jack':
            cmake_args.append('-DLINK_BUILD_JACK=ON')
 
-    print sys.platform
-
     # This must always be last
     cmake_args.append('..')
     return cmake_args
