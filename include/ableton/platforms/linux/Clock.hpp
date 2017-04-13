@@ -19,41 +19,38 @@
 
 #pragma once
 
-#include "AudioEngine.hpp"
-#include <ableton/link/HostTimeFilter.hpp>
-#include <ableton/platforms/Config.hpp>
-#include <portaudio.h>
+#include <chrono>
+#include <cmath>
+#include <ctime>
 
 namespace ableton
 {
-namespace linkaudio
+namespace platforms
 {
 
-class AudioPlatform
+#ifdef linux
+#undef linux
+#endif
+
+namespace linux
+{
+
+template <clockid_t CLOCK>
+class Clock
 {
 public:
-  AudioPlatform(Link& link);
-  ~AudioPlatform();
-
-  AudioEngine mEngine;
-
-private:
-  static int audioCallback(const void* inputBuffer,
-    void* outputBuffer,
-    unsigned long inNumFrames,
-    const PaStreamCallbackTimeInfo* timeInfo,
-    PaStreamCallbackFlags statusFlags,
-    void* userData);
-
-  void initialize();
-  void uninitialize();
-  void start();
-  void stop();
-
-  link::HostTimeFilter<link::platform::Clock> mHostTimeFilter;
-  double mSampleTime;
-  PaStream* pStream;
+  std::chrono::microseconds micros() const
+  {
+    ::timespec ts;
+    ::clock_gettime(CLOCK, &ts);
+    std::uint64_t ns = ts.tv_sec * 1000000000ULL + ts.tv_nsec;
+    return std::chrono::microseconds(ns / 1000ULL);
+  }
 };
 
-} // namespace linkaudio
+using ClockMonotonic = Clock<CLOCK_MONOTONIC>;
+using ClockMonotonicRaw = Clock<CLOCK_MONOTONIC_RAW>;
+
+} // namespace linux
+} // namespace platforms
 } // namespace ableton

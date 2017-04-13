@@ -21,6 +21,7 @@
 
 #include "AudioEngine.hpp"
 #include <ableton/link/HostTimeFilter.hpp>
+#include <ableton/platforms/Config.hpp>
 #include <jack/jack.h>
 
 namespace ableton
@@ -45,7 +46,7 @@ private:
   void start();
   void stop();
 
-  link::HostTimeFilter<platforms::stl::Clock> mHostTimeFilter;
+  link::HostTimeFilter<link::platform::Clock> mHostTimeFilter;
   double mSampleTime;
   jack_client_t* mpJackClient;
   jack_port_t** mpJackPorts;
