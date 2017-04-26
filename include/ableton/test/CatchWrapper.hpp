@@ -26,7 +26,6 @@
  * which are specific to that library.
  */
 
-// Visual Studio
 #if defined(_MSC_VER)
 #pragma warning(push)
 // C4242: 'identifier' : conversion from 'type1' to 'type2', possible loss of data
@@ -46,7 +45,6 @@
 
 #include <catch.hpp>
 
-// Visual Studio
 #if defined(_MSC_VER)
 #pragma warning(pop)
 #endif
