@@ -27,19 +27,8 @@
  */
 
 #if defined(_MSC_VER)
-#pragma warning(push)
-// C4242: 'identifier' : conversion from 'type1' to 'type2', possible loss of data
+#pragma warning(push, 0)
 #pragma warning(disable : 4242)
-#if _MSC_VER >= 1910
-// C4244: 'conversion' conversion from 'type1' to 'type2', possible loss of data
-#pragma warning(disable : 4244)
-#endif
-// C4388: signed/unsigned mismatch
-#pragma warning(disable : 4388)
-// C4668: 'symbol' is not defined as a preprocessor macro, replacing with '0' for
-// 'directives'
-#pragma warning(disable : 4668)
-// C4702: unreachable code
 #pragma warning(disable : 4702)
 #endif
 

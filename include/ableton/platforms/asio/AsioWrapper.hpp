@@ -45,26 +45,9 @@
 #endif
 
 #if defined(_MSC_VER)
-#pragma warning(push)
-// C4191: 'operator/operation': unsafe conversion from 'type of expression' to
-// 'type required'
-#pragma warning(disable : 4191)
-// C4242: 'identifier' : conversion from 'type1' to 'type2', possible loss of data
+#pragma warning(push, 0)
 #pragma warning(disable : 4242)
-// C4548: expression before comma has no effect; expected expression with side-effect
-#pragma warning(disable : 4548)
-// C4619: #pragma warning : there is no warning number 'number'
-#pragma warning(disable : 4619)
-// C4668: 'symbol' is not defined as a preprocessor macro, replacing with '0' for
-// 'directives'
-#pragma warning(disable : 4668)
-// C4675: 'function' : resolved overload was found by argument-dependent lookup
-#pragma warning(disable : 4675)
-#if _MSC_VER >= 1900
-// C5031: #pragma warning(pop): likely mismatch, popping warning state pushed in different
-// file
-#pragma warning(disable : 5031)
-#endif
+#pragma warning(disable : 4702)
 #endif
 
 #include <asio.hpp>
