@@ -28,7 +28,7 @@ namespace ableton
 namespace link
 {
 
-template <class T>
+template <class Clock>
 class HostTimeFilter
 {
   static const std::size_t kNumPoints = 512;
@@ -75,7 +75,7 @@ public:
 private:
   std::size_t mIndex;
   Points mPoints;
-  T mHostTimeSampler;
+  Clock mHostTimeSampler;
 };
 
 } // namespace link
