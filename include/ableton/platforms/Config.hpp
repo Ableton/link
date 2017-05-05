@@ -54,7 +54,7 @@ using IoContext =
   platforms::asio::Context<platforms::posix::ScanIpIfAddrs, util::NullLog>;
 
 #elif defined(LINK_PLATFORM_LINUX)
-using Clock = platforms::linux::ClockMonotonic;
+using Clock = platforms::linux::ClockMonotonicRaw;
 using IoContext =
   platforms::asio::Context<platforms::posix::ScanIpIfAddrs, util::NullLog>;
 #endif
