@@ -31,6 +31,7 @@ namespace link
 struct HostTime
 {
   static const std::int32_t key = '__ht';
+  static_assert(key == 0x5f5f6874, "Unexpected byte order");
 
   HostTime() = default;
 
@@ -66,6 +67,7 @@ struct HostTime
 struct GHostTime : HostTime
 {
   static const std::int32_t key = '__gt';
+  static_assert(key == 0x5f5f6774, "Unexpected byte order");
 
   GHostTime() = default;
 
@@ -101,6 +103,7 @@ struct GHostTime : HostTime
 struct PrevGHostTime
 {
   static const std::int32_t key = '_pgt';
+  static_assert(key == 0x5f706774, "Unexpected byte order");
 
   PrevGHostTime() = default;
 

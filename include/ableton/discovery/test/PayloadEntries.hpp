@@ -36,6 +36,7 @@ namespace test
 struct Foo
 {
   static const std::int32_t key = '_foo';
+  static_assert(key == 0x5f666f6f, "Unexpected byte order");
 
   std::int32_t fooVal;
 
@@ -64,6 +65,7 @@ struct Foo
 struct Bar
 {
   static const std::int32_t key = '_bar';
+  static_assert(key == 0x5f626172, "Unexpected byte order");
 
   std::vector<std::uint64_t> barVals;
 
