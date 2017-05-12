@@ -35,10 +35,7 @@ namespace test
 // A fixed-size entry type
 struct Foo
 {
-  enum
-  {
-    key = '_foo'
-  };
+  static const std::int32_t key = '_foo';
 
   std::int32_t fooVal;
 
@@ -66,10 +63,7 @@ struct Foo
 // A variable-size entry type
 struct Bar
 {
-  enum
-  {
-    key = '_bar'
-  };
+  static const std::int32_t key = '_bar';
 
   std::vector<std::uint64_t> barVals;
 

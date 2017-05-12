@@ -30,10 +30,7 @@ namespace link
 
 struct HostTime
 {
-  enum
-  {
-    key = '__ht'
-  };
+  static const std::int32_t key = '__ht';
 
   HostTime() = default;
 
@@ -68,10 +65,7 @@ struct HostTime
 
 struct GHostTime : HostTime
 {
-  enum
-  {
-    key = '__gt'
-  };
+  static const std::int32_t key = '__gt';
 
   GHostTime() = default;
 
@@ -106,10 +100,7 @@ struct GHostTime : HostTime
 
 struct PrevGHostTime
 {
-  enum
-  {
-    key = '_pgt'
-  };
+  static const std::int32_t key = '_pgt';
 
   PrevGHostTime() = default;
 

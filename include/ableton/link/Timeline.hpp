@@ -38,10 +38,7 @@ namespace link
 
 struct Timeline
 {
-  enum
-  {
-    key = 'tmln'
-  };
+  static const std::int32_t key = 'tmln';
 
   Beats toBeats(const std::chrono::microseconds time) const
   {

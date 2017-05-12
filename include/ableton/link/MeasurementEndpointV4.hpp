@@ -29,10 +29,7 @@ namespace link
 
 struct MeasurementEndpointV4
 {
-  enum
-  {
-    key = 'mep4'
-  };
+  static const std::int32_t key = 'mep4';
 
   // Model the NetworkByteStreamSerializable concept
   friend std::uint32_t sizeInByteStream(const MeasurementEndpointV4 mep)
