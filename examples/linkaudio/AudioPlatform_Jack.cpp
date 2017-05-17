@@ -72,6 +72,49 @@ int AudioPlatform::audioCallback(jack_nframes_t nframes)
   return 0;
 }
 
+void AudioPlatform::timebaseCallback(jack_transport_state_t state,
+  jack_nframes_t nframes,
+  jack_position_t* position,
+  int new_pos,
+  void* pvUserData)
+{
+  AudioPlatform* pAudioPlatform = static_cast<AudioPlatform*>(pvUserData);
+  pAudioPlatform->timebaseCallback(state, nframes, position, new_pos);
+}
+
+void AudioPlatform::timebaseCallback(jack_transport_state_t /*state*/,
+  jack_nframes_t /*nframes*/,
+  jack_position_t* position,
+  int /*new_pos*/)
+{
+  const AudioEngine& engine = mEngine;
+
+  const auto time =
+    std::chrono::microseconds(llround(1.0e6 * position->frame / position->frame_rate));
+
+  const auto timeline = engine.mLink.captureAppTimeline();
+  const auto quantum = engine.quantum();
+
+  const double beats_per_minute = timeline.tempo();
+  const double beats_per_bar = std::max(quantum, 1.);
+
+  const double beats = beats_per_minute * time.count() / 60.e6;
+  const double bar = std::floor(beats / beats_per_bar);
+  const double beat = beats - bar * beats_per_bar;
+
+  static const double ticks_per_beat = 960.0;
+  static const float beat_type = 4.0f;
+
+  position->valid = JackPositionBBT;
+  position->bar = int32_t(bar) + 1;
+  position->beat = int32_t(beat) + 1;
+  position->tick = int32_t(ticks_per_beat * beat / beats_per_bar);
+  position->beats_per_bar = float(beats_per_bar);
+  position->ticks_per_beat = ticks_per_beat;
+  position->beats_per_minute = beats_per_minute;
+  position->beat_type = beat_type;
+}
+
 void AudioPlatform::initialize()
 {
   jack_status_t status = JackFailure;
@@ -121,6 +164,7 @@ void AudioPlatform::initialize()
   }
 
   jack_set_process_callback(mpJackClient, AudioPlatform::audioCallback, this);
+  jack_set_timebase_callback(mpJackClient, 0, AudioPlatform::timebaseCallback, this);
 
   const double bufferSize = jack_get_buffer_size(mpJackClient);
   const double sampleRate = jack_get_sample_rate(mpJackClient);
