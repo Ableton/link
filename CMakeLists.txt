@@ -12,9 +12,6 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 # Note: Please use the LINK_* prefix for all project-specific options
 option(LINK_BUILD_QT_EXAMPLES "Build examples (Requires Qt)" OFF)
-if(MSVC_VERSION VERSION_GREATER 1900 AND LINK_BUILD_QT_EXAMPLES)
-  message(FATAL_ERROR "Qt is not yet supported with VS2017. Qt examples must be disabled.")
-endif()
 
 if(UNIX)
   option(LINK_ENABLE_ASAN "Build with Address Sanitizier (ASan)" OFF)

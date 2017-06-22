@@ -227,6 +227,11 @@ if(LINK_BUILD_QT_EXAMPLES)
     ${linkhut_audio_SOURCES}
     ${UI_RESOURCES}
   )
+
+  if(MSVC_VERSION VERSION_GREATER 1900)
+    target_compile_options(QLinkHut PRIVATE "/wd4946")
+  endif()
+
   target_link_libraries(QLinkHut Qt5::Quick)
   configure_linkhut_audio_sources(QLinkHut)
   configure_linkhut_executable(QLinkHut)
@@ -241,6 +246,11 @@ if(LINK_BUILD_QT_EXAMPLES)
     linkaudio/AudioPlatform_Dummy.hpp
     ${UI_RESOURCES}
   )
+
+  if(MSVC_VERSION VERSION_GREATER 1900)
+    target_compile_options(QLinkHutSilent PRIVATE "/wd4946")
+  endif()
+
   target_link_libraries(QLinkHutSilent Qt5::Quick)
 
   target_compile_definitions(QLinkHutSilent PRIVATE

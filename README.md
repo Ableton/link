@@ -38,7 +38,7 @@ path must be set in the system PATH and `LINK_BUILD_QT_EXAMPLES` must be set:
 ```
 $ mkdir build
 $ cd build
-$ cmake -DLINK_BUILD_QT_EXAMPLES=ON .. # Qt examples are not supported by MSVC 2017
+$ cmake -DLINK_BUILD_QT_EXAMPLES=ON ..
 $ cmake --build .
 ```
 
