@@ -5,7 +5,9 @@ branches:
     - master
 
 # Also includes VS2013 pre-installed
-image: Visual Studio 2015
+image:
+  - Visual Studio 2015
+  - Visual Studio 2017
 
 environment:
   matrix:
@@ -44,10 +46,28 @@ environment:
       CONFIGURATION: Release
       GENERATOR: Visual Studio 14 2015 Win64
       QT: msvc2015_64
+    # Visual Studio 2017, 64-bit Release, Asio driver
+    - AUDIO_DRIVER: Asio
+      CONFIGURATION: Release
+      GENERATOR: Visual Studio 15 2017 Win64
+      QT: msvc2017_64
+  
+matrix:
+  exclude:
+    - image: Visual Studio 2015
+      GENERATOR: Visual Studio 15 2017 Win64
+    - image: Visual Studio 2017
+      GENERATOR: Visual Studio 12 2013
+    - image: Visual Studio 2017
+      GENERATOR: Visual Studio 12 2013 Win64
+    - image: Visual Studio 2017
+      GENERATOR: Visual Studio 14 2015
+    - image: Visual Studio 2017
+      GENERATOR: Visual Studio 14 2015 Win64
 
 install:
   - git submodule update --init --recursive
-  - set PATH=%PATH%;C:\Qt\5.8\%QT%\bin
+  - set PATH=%PATH%;C:\Qt\5.8\%QT%\bin;C:\Qt\5.9\%QT%\bin
 
 build_script:
   - python ci/configure.py -q -a %AUDIO_DRIVER% -g "%GENERATOR%"
