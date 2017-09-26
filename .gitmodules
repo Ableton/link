@@ -1,6 +1,3 @@
 [submodule "modules/asio-standalone"]
 	path = modules/asio-standalone
 	url = https://github.com/chriskohlhoff/asio.git
-[submodule "modules/catch"]
-	path = modules/catch
-	url = https://github.com/philsquared/Catch.git
