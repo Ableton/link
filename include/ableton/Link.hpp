@@ -128,6 +128,19 @@ public:
   template <typename Callback>
   void setTempoCallback(Callback callback);
 
+  /*! brief: Register a callback to be notified when the state of
+   *  start/stop isPlaying changes.
+   *  Thread-safe: yes
+   *  Realtime-safe: no
+   *
+   *  @discussion The callback is invoked on a Link-managed thread.
+   *
+   *  @param callback The callback signature is:
+   *  void (bool isPlaying)
+   */
+  template <typename Callback>
+  void setStartStopCallback(Callback callback);
+
   /*! @brief The clock used by Link.
    *  Thread-safe: yes
    *  Realtime-safe: yes
@@ -309,6 +322,7 @@ private:
   std::mutex mCallbackMutex;
   link::PeerCountCallback mPeerCountCallback;
   link::TempoCallback mTempoCallback;
+  link::StartStopStateCallback mStartStopCallback;
   Clock mClock;
   link::platform::Controller mController;
 };
