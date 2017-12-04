@@ -429,7 +429,7 @@ private:
     if (clientState.timeline)
     {
       auto sessionTimeline = updateSessionTimelineFromClient(mSessionState.timeline,
-        *clientState.timeline, clientState.timestamp, mSessionState.ghostXForm);
+        *clientState.timeline, clientState.timelineTimestamp, mSessionState.ghostXForm);
 
       mSessions.resetTimeline(sessionTimeline);
       mPeers.setSessionTimeline(mSessionId, sessionTimeline);

@@ -67,7 +67,7 @@ struct IncomingClientState
 {
   OptionalTimeline timeline;
   OptionalStartStopState startStopState;
-  std::chrono::microseconds timestamp;
+  std::chrono::microseconds timelineTimestamp;
 };
 
 struct ApiState
