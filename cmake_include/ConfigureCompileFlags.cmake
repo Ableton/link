@@ -38,7 +38,6 @@ if(UNIX)
       "-Wno-unknown-warning-option"
       "-Wno-unused-macros"
       "-Wno-unused-member-function"
-      "-Wno-unused-template"
       "-Wno-zero-as-null-pointer-constant"
     )
 

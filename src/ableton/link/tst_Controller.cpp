@@ -62,18 +62,6 @@ struct MockIoContext
     }
   };
 
-  template <std::size_t BufferSize>
-  Socket<BufferSize> openUnicastSocket(const asio::ip::address_v4&)
-  {
-    return {};
-  }
-
-  template <std::size_t BufferSize>
-  Socket<BufferSize> openMulticastSocket(const asio::ip::address_v4&)
-  {
-    return {};
-  }
-
   std::vector<asio::ip::address> scanNetworkInterfaces()
   {
     return {};
