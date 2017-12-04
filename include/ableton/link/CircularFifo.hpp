@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include <ableton/link/Optional.hpp>
 #include <array>
 #include <atomic>
 #include <cassert>
@@ -34,12 +35,6 @@ template <typename Type, std::size_t size>
 class CircularFifo
 {
 public:
-  struct PoppedItem
-  {
-    Type item;
-    bool valid;
-  };
-
   CircularFifo()
     : tail(0)
     , head(0)
@@ -60,20 +55,20 @@ public:
     return false;
   }
 
-  PoppedItem pop()
+  Optional<Type> pop()
   {
     const auto currentHead = head.load();
     if (currentHead == tail.load())
     {
-      return {Type{}, false};
+      return {};
     }
 
     auto item = data[currentHead];
     head.store(nextIndex(currentHead));
-    return {std::move(item), true};
+    return Optional<Type>{std::move(item)};
   }
 
-  PoppedItem clearAndPopLast()
+  Optional<Type> clearAndPopLast()
   {
     auto hasData = false;
     auto currentHead = head.load();
@@ -85,7 +80,8 @@ public:
 
     auto item = data[previousIndex(currentHead)];
     head.store(currentHead);
-    return {std::move(item), hasData};
+
+    return hasData ? Optional<Type>{std::move(item)} : Optional<Type>{};
   }
 
   bool isEmpty() const
