@@ -24,10 +24,24 @@ if(UNIX)
   if(${CMAKE_CXX_COMPILER_ID} MATCHES Clang)
     set(build_flags_COMMON_LIST
       ${build_flags_COMMON_LIST}
+      "-Weverything"
       "-Werror"
+      "-Wno-c++98-compat"
+      "-Wno-c++98-compat-pedantic"
+      "-Wno-conversion"
       "-Wno-deprecated"
+      "-Wno-disabled-macro-expansion"
+      "-Wno-exit-time-destructors"
       "-Wno-global-constructors"
-      "-Wno-over-aligned"
+      "-Wno-missing-prototypes"
+      "-Wno-padded"
+      "-Wno-reserved-id-macro"
+      "-Wno-undefined-reinterpret-cast"
+      "-Wno-unknown-warning-option"
+      "-Wno-unused-macros"
+      "-Wno-unused-member-function"
+      "-Wno-unused-template"
+      "-Wno-zero-as-null-pointer-constant"
     )
 
   # GCC-specific flags
