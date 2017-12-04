@@ -109,7 +109,7 @@ public:
     , mEnabled(false)
     , mStartStopSyncEnabled(false)
     , mIo(std::move(io))
-    , mRtTimelineSetter(*this)
+    , mRtSessionStateSetter(*this)
     , mPeers(util::injectRef(*mIo),
         std::ref(mSessionPeerCounter),
         SessionTimelineCallback{*this},
@@ -212,7 +212,7 @@ public:
     // cached version of the timeline.
     const auto now = mClock.micros();
     if (now - mRtClientTimelineTimestamp > detail::kLocalModGracePeriod
-        && !mRtTimelineSetter.hasPendingTimelines() && mSessionTimingGuard.try_lock())
+        && !mRtSessionStateSetter.hasPendingTimelines() && mSessionTimingGuard.try_lock())
     {
       const auto clientTimeline = updateClientTimelineFromSession(
         mRtClientTimeline, mSessionTimeline, now, mGhostXForm);
@@ -233,10 +233,10 @@ public:
   {
     newTimeline = clampTempo(newTimeline);
 
-    // This will fail in case the Fifo in the RtTimelineSetter is full. This indicates a
-    // very high rate of calls to the setter. In this case we ignore one value because we
-    // expect the setter to be called again soon.
-    if (mRtTimelineSetter.tryPush(newTimeline, atTime))
+    // This will fail in case the Fifo in the RtSessionStateSetter is full. This indicates
+    // a very high rate of calls to the setter. In this case we ignore one value because
+    // we expect the setter to be called again soon.
+    if (mRtSessionStateSetter.tryPush(newTimeline, atTime))
     {
       // Cache the new timeline for serving back to the client
       mRtClientTimeline = newTimeline;
@@ -412,14 +412,14 @@ private:
     Controller& mController;
   };
 
-  struct RtTimelineSetter
+  struct RtSessionStateSetter
   {
     using CallbackDispatcher =
       typename IoContext::template LockFreeCallbackDispatcher<std::function<void()>,
         std::chrono::milliseconds>;
     using RtTimeline = std::pair<Timeline, std::chrono::microseconds>;
 
-    RtTimelineSetter(Controller& controller)
+    RtSessionStateSetter(Controller& controller)
       : mController(controller)
       , mHasPendingTimelines(false)
       , mCallbackDispatcher(
@@ -617,7 +617,7 @@ private:
 
   util::Injected<IoContext> mIo;
 
-  RtTimelineSetter mRtTimelineSetter;
+  RtSessionStateSetter mRtSessionStateSetter;
 
   ControllerPeers mPeers;
 
