@@ -31,15 +31,15 @@ namespace link
 using OptionalTimeline = Optional<Timeline>;
 using OptionalStartStopState = Optional<StartStopState>;
 
-struct SessionState
+struct ClientState
 {
-  friend bool operator==(const SessionState& lhs, const SessionState& rhs)
+  friend bool operator==(const ClientState& lhs, const ClientState& rhs)
   {
     return std::tie(lhs.timeline, lhs.startStopState)
            == std::tie(rhs.timeline, rhs.startStopState);
   }
 
-  friend bool operator!=(const SessionState& lhs, const SessionState& rhs)
+  friend bool operator!=(const ClientState& lhs, const ClientState& rhs)
   {
     return !(lhs == rhs);
   }
@@ -48,7 +48,7 @@ struct SessionState
   StartStopState startStopState;
 };
 
-struct IncomingSessionState
+struct IncomingClientState
 {
   OptionalTimeline timeline;
   OptionalStartStopState startStopState;

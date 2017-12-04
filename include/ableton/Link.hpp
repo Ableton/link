@@ -236,7 +236,7 @@ public:
   class SessionState
   {
   public:
-    SessionState(const link::SessionState sessionState, const bool bRespectQuantum);
+    SessionState(const link::ClientState state, const bool bRespectQuantum);
 
     /*! @brief: The tempo of the timeline, in bpm */
     double tempo() const;
@@ -355,8 +355,8 @@ public:
 
   private:
     friend Link;
-    link::SessionState mOriginalState;
-    link::SessionState mState;
+    link::ClientState mOriginalState;
+    link::ClientState mState;
     bool mbRespectQuantum;
   };
 
