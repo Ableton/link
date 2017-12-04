@@ -40,9 +40,9 @@ struct SessionMembershipCallback
 
 struct SessionTimelineCallback
 {
-  void operator()(const SessionId& session, const Timeline& tl)
+  void operator()(const SessionId& sessionId, const Timeline& timeline)
   {
-    sessionTimelines.push_back(std::make_pair(session, tl));
+    sessionTimelines.push_back(std::make_pair(sessionId, timeline));
   }
 
   std::vector<std::pair<SessionId, Timeline>> sessionTimelines;
@@ -70,13 +70,13 @@ using PeerVector = std::vector<typename Peers<test::serial_io::Context,
   SessionMembershipCallback,
   SessionTimelineCallback>::Peer>;
 
-void expectPeers(PeerVector expected, PeerVector actual)
+void expectPeers(const PeerVector& expected, const PeerVector& actual)
 {
   CHECK(expected == actual);
 }
 
-void expectSessionTimelines(
-  std::vector<std::pair<SessionId, Timeline>> expected, SessionTimelineCallback callback)
+void expectSessionTimelines(const std::vector<std::pair<SessionId, Timeline>>& expected,
+  const SessionTimelineCallback& callback)
 {
   CHECK(expected == callback.sessionTimelines);
 }
