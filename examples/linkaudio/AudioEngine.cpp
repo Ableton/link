@@ -60,8 +60,8 @@ bool AudioEngine::isPlaying() const
 
 double AudioEngine::beatTime() const
 {
-  const auto timeline = mLink.captureAppTimeline();
-  return timeline.beatAtTime(mLink.clock().micros(), mSharedEngineData.quantum);
+  const auto sessionState = mLink.captureAppSessionState();
+  return sessionState.beatAtTime(mLink.clock().micros(), mSharedEngineData.quantum);
 }
 
 void AudioEngine::setTempo(double tempo)
@@ -112,7 +112,7 @@ AudioEngine::EngineData AudioEngine::pullEngineData()
   return engineData;
 }
 
-void AudioEngine::renderMetronomeIntoBuffer(const Link::Timeline timeline,
+void AudioEngine::renderMetronomeIntoBuffer(const Link::SessionState sessionState,
   const double quantum,
   const std::chrono::microseconds beginHostTime,
   const std::size_t numSamples)
@@ -137,12 +137,13 @@ void AudioEngine::renderMetronomeIntoBuffer(const Link::Timeline timeline,
 
     // Only make sound for positive beat magnitudes. Negative beat
     // magnitudes are count-in beats.
-    if (timeline.beatAtTime(hostTime, quantum) >= 0.)
+    if (sessionState.beatAtTime(hostTime, quantum) >= 0.)
     {
       // If the phase wraps around between the last sample and the
       // current one with respect to a 1 beat quantum, then a click
       // should occur.
-      if (timeline.phaseAtTime(hostTime, 1) < timeline.phaseAtTime(lastSampleHostTime, 1))
+      if (sessionState.phaseAtTime(hostTime, 1)
+          < sessionState.phaseAtTime(lastSampleHostTime, 1))
       {
         mTimeAtLastClick = hostTime;
       }
@@ -159,7 +160,7 @@ void AudioEngine::renderMetronomeIntoBuffer(const Link::Timeline timeline,
         // want to use the high tone. For other beats within the
         // quantum, use the low tone.
         const auto freq =
-          floor(timeline.phaseAtTime(hostTime, quantum)) == 0 ? highTone : lowTone;
+          floor(sessionState.phaseAtTime(hostTime, quantum)) == 0 ? highTone : lowTone;
 
         // Simple cosine synth
         amplitude = cos(2 * M_PI * secondsAfterClick.count() * freq)
@@ -175,7 +176,7 @@ void AudioEngine::audioCallback(
 {
   const auto engineData = pullEngineData();
 
-  auto timeline = mLink.captureAudioTimeline();
+  auto sessionState = mLink.captureAudioSessionState();
 
   // Clear the buffer
   std::fill(mBuffer.begin(), mBuffer.end(), 0);
@@ -184,23 +185,23 @@ void AudioEngine::audioCallback(
   {
     // Reset the timeline so that beat 0 lands at the beginning of
     // this buffer and clear the flag.
-    timeline.requestBeatAtTime(0, hostTime, engineData.quantum);
+    sessionState.requestBeatAtTime(0, hostTime, engineData.quantum);
   }
 
   if (engineData.requestedTempo > 0)
   {
     // Set the newly requested tempo from the beginning of this buffer
-    timeline.setTempo(engineData.requestedTempo, hostTime);
+    sessionState.setTempo(engineData.requestedTempo, hostTime);
   }
 
   // Timeline modifications are complete, commit the results
-  mLink.commitAudioTimeline(timeline);
+  mLink.commitAudioSessionState(sessionState);
 
   if (engineData.isPlaying)
   {
     // As long as the engine is playing, generate metronome clicks in
     // the buffer at the appropriate beats.
-    renderMetronomeIntoBuffer(timeline, engineData.quantum, hostTime, numSamples);
+    renderMetronomeIntoBuffer(sessionState, engineData.quantum, hostTime, numSamples);
   }
 }
 

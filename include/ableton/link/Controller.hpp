@@ -56,6 +56,23 @@ const auto kRtHandlerFallbackPeriod = kLocalModGracePeriod / 2;
 using PeerCountCallback = std::function<void(std::size_t)>;
 using TempoCallback = std::function<void(ableton::link::Tempo)>;
 
+struct SessionState
+{
+  friend bool operator==(const SessionState& lhs, const SessionState& rhs)
+  {
+    return std::tie(lhs.timeline, lhs.startStopState)
+           == std::tie(rhs.timeline, rhs.startStopState);
+  }
+
+  friend bool operator!=(const SessionState& lhs, const SessionState& rhs)
+  {
+    return !(lhs == rhs);
+  }
+
+  Timeline timeline;
+  StartStopState startStopState;
+};
+
 // The main Link controller
 template <typename PeerCountCallback,
   typename TempoCallback,

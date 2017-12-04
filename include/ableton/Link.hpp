@@ -47,22 +47,22 @@ namespace ableton
  *  it does not block and is appropriate for use in the thread that
  *  performs audio IO.
  *
- *  Link provides one Timeline capture/commit method pair for use in the
- *  audio thread and one for all other application contexts. In
- *  general, modifying the Link timeline should be done in the audio
+ *  Link provides one session state capture/commit method pair for use
+ *  in the audio thread and one for all other application contexts. In
+ *  general, modifying the session state should be done in the audio
  *  thread for the most accurate timing results. The ability to modify
- *  the Link timeline from application threads should only be used in
+ *  the session state from application threads should only be used in
  *  cases where an application's audio thread is not actively running
- *  or if it doesn't generate audio at all. Modifying the Link
- *  timeline from both the audio thread and an application thread
- *  concurrently is not advised and will potentially lead to
- *  unexpected behavior.
+ *  or if it doesn't generate audio at all. Modifying the Link session
+ *  state from both the audio thread and an application thread
+ *  concurrently is not advised and will potentially lead to unexpected
+ *  behavior.
  */
 class Link
 {
 public:
   using Clock = link::platform::Clock;
-  class Timeline;
+  class SessionState;
 
   /*! @brief Construct with an initial tempo. */
   Link(double bpm);
@@ -130,69 +130,69 @@ public:
    */
   Clock clock() const;
 
-  /*! @brief Capture the current Link timeline from the audio thread.
+  /*! @brief Capture the current Link Session State from the audio thread.
    *  Thread-safe: no
    *  Realtime-safe: yes
    *
    *  @discussion This method should ONLY be called in the audio thread
    *  and must not be accessed from any other threads. The returned
-   *  Timeline stores a snapshot of the current Link state, so it
+   *  object stores a snapshot of the current Link Session State, so it
    *  should be captured and used in a local scope. Storing the
-   *  Timeline for later use in a different context is not advised
-   *  because it will provide an outdated view on the Link state.
+   *  Session State for later use in a different context is not advised
+   *  because it will provide an outdated view.
    */
-  Timeline captureAudioTimeline() const;
+  SessionState captureAudioSessionState() const;
 
-  /*! @brief Commit the given timeline to the Link session from the
+  /*! @brief Commit the given Session State to the Link session from the
    *  audio thread.
    *  Thread-safe: no
    *  Realtime-safe: yes
    *
    *  @discussion This method should ONLY be called in the audio
-   *  thread. The given timeline will replace the current Link
-   *  timeline. Modifications to the session based on the new timeline
-   *  will be communicated to other peers in the session.
+   *  thread. The given Session State will replace the current Link
+   *  state. Modifications will be communicated to other peers in the
+   *  session.
    */
-  void commitAudioTimeline(Timeline timeline);
+  void commitAudioSessionState(SessionState state);
 
-  /*! @brief Capture the current Link timeline from an application
+  /*! @brief Capture the current Link Session State from an application
    *  thread.
    *  Thread-safe: yes
    *  Realtime-safe: no
    *
-   *  @discussion Provides a mechanism for capturing the Link timeline
-   *  from an application thread (other than the audio thread). The
-   *  returned Timeline stores a snapshot of the current Link state,
-   *  so it should be captured and used in a local scope. Storing the
-   *  Timeline for later use in a different context is not advised
-   *  because it will provide an outdated view on the Link state.
+   *  @discussion Provides a mechanism for capturing the Link Session
+   *  State from an application thread (other than the audio thread).
+   *  The returned Session State stores a snapshot of the current Link
+   *  state, so it should be captured and used in a local scope.
+   *  Storing the it for later use in a different context is not
+   *  advised because it will provide an outdated view.
    */
-  Timeline captureAppTimeline() const;
+  SessionState captureAppSessionState() const;
 
-  /*! @brief Commit the given timeline to the Link session from an
+  /*! @brief Commit the given Session State to the Link session from an
    *  application thread.
    *  Thread-safe: yes
    *  Realtime-safe: no
    *
-   *  @discussion The given timeline will replace the current Link
-   *  timeline. Modifications to the session based on the new timeline
-   *  will be communicated to other peers in the session.
+   *  @discussion The given Session State will replace the current Link
+   *  Session State. Modifications of the Session State will be
+   *  communicated to other peers in the session.
    */
-  void commitAppTimeline(Timeline timeline);
+  void commitAppSessionState(SessionState state);
 
-  /*! @class Timeline
+  /*! @class SessionState
    *  @brief Representation of a mapping between time and beats for
    *  varying quanta.
    *
-   *  @discussion A Timeline object is intended for use in a local
+   *  @discussion A SessionState object is intended for use in a local
    *  scope within a single thread - none of its methods are
    *  thread-safe. All of its methods are non-blocking, so it is safe
    *  to use from a realtime thread.
    */
-  class Timeline
+  class SessionState
   {
   public:
-    Timeline(const link::Timeline timeline, const bool bRespectQuantum);
+    SessionState(const link::SessionState sessionState, const bool bRespectQuantum);
 
     /*! @brief: The tempo of the timeline, in bpm */
     double tempo() const;
@@ -288,9 +288,9 @@ public:
 
   private:
     friend Link;
-    link::Timeline mOriginalTimeline;
+    link::SessionState mOriginalSessionState;
+    link::SessionState mSessionState;
     bool mbRespectQuantum;
-    link::Timeline mTimeline;
   };
 
 private:

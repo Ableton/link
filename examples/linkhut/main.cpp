@@ -83,16 +83,16 @@ void printHelp()
 }
 
 void printState(const std::chrono::microseconds time,
-  const ableton::Link::Timeline timeline,
+  const ableton::Link::SessionState sessionState,
   const std::size_t numPeers,
   const double quantum)
 {
-  const auto beats = timeline.beatAtTime(time, quantum);
-  const auto phase = timeline.phaseAtTime(time, quantum);
+  const auto beats = sessionState.beatAtTime(time, quantum);
+  const auto phase = sessionState.phaseAtTime(time, quantum);
   std::cout << std::defaultfloat << "peers: " << numPeers << " | "
             << "quantum: " << quantum << " | "
-            << "tempo: " << timeline.tempo() << " | " << std::fixed << "beats: " << beats
-            << " | ";
+            << "tempo: " << sessionState.tempo() << " | " << std::fixed
+            << "beats: " << beats << " | ";
   for (int i = 0; i < ceil(quantum); ++i)
   {
     if (i < phase)
@@ -124,7 +124,7 @@ void input(State& state)
   in = static_cast<char>(std::cin.get());
 #endif
 
-  const auto tempo = state.link.captureAppTimeline().tempo();
+  const auto tempo = state.link.captureAppSessionState().tempo();
   auto& engine = state.audioPlatform.mEngine;
 
   switch (in)
@@ -172,9 +172,9 @@ int main(int, char**)
   while (state.running)
   {
     const auto time = state.link.clock().micros();
-    auto timeline = state.link.captureAppTimeline();
+    auto sessionState = state.link.captureAppSessionState();
     printState(
-      time, timeline, state.link.numPeers(), state.audioPlatform.mEngine.quantum());
+      time, sessionState, state.link.numPeers(), state.audioPlatform.mEngine.quantum());
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
   }
 
