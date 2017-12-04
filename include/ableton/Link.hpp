@@ -355,8 +355,8 @@ public:
 
   private:
     friend Link;
-    link::SessionState mOriginalSessionState;
-    link::SessionState mSessionState;
+    link::SessionState mOriginalState;
+    link::SessionState mState;
     bool mbRespectQuantum;
   };
 
