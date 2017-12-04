@@ -216,11 +216,10 @@ PeerGateway<Messenger, PeerObserver, IoContext> makePeerGateway(
 
 // IpV4 gateway types
 template <typename StateQuery, typename IoContext>
-using IpV4Messenger =
-  UdpMessenger<IpV4Interface<typename util::Injected<IoContext>::type&,
-                 v1::kMaxMessageSize>,
-    StateQuery,
-    IoContext>;
+using IpV4Messenger = UdpMessenger<
+  IpV4Interface<typename util::Injected<IoContext>::type&, v1::kMaxMessageSize>,
+  StateQuery,
+  IoContext>;
 
 template <typename PeerObserver, typename StateQuery, typename IoContext>
 using IpV4Gateway =

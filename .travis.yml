@@ -83,15 +83,15 @@ matrix:
       compiler: clang
       addons:
         apt:
-          sources: ['llvm-toolchain-precise-3.9', 'ubuntu-toolchain-r-test']
-          packages: ['clang-format-3.9']
-      env: CONFIGURATION=Formatting LLVM_VERSION=3.9.0
+          sources: ['llvm-toolchain-trusty-5.0']
+          packages: ['clang-format-5.0']
+      env: CONFIGURATION=Formatting LLVM_VERSION=5.0
 
 before_install:
   # Do indentation check
   - |
     if [ "$CONFIGURATION" = "Formatting" ]; then
-      python ci/check-formatting.py -c $(which clang-format-3.9)
+      python ci/check-formatting.py -c $(which clang-format-5.0)
       exit $?
     fi
 
