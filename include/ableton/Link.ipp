@@ -76,75 +76,82 @@ inline Link::Clock Link::clock() const
   return mClock;
 }
 
-inline Link::Timeline Link::captureAudioTimeline() const
+inline Link::SessionState Link::captureAudioSessionState() const
 {
-  return Link::Timeline{mController.timelineRtSafe(), numPeers() > 0};
+  return Link::SessionState{
+    link::SessionState{mController.timelineRtSafe(), link::StartStopState{}},
+    numPeers() > 0};
 }
 
-inline void Link::commitAudioTimeline(const Link::Timeline timeline)
+inline void Link::commitAudioSessionState(const Link::SessionState state)
 {
-  if (timeline.mOriginalTimeline != timeline.mTimeline)
+  if (state.mOriginalSessionState != state.mSessionState)
   {
-    mController.setTimelineRtSafe(timeline.mTimeline, mClock.micros());
+    mController.setTimelineRtSafe(state.mSessionState.timeline, mClock.micros());
   }
 }
 
-inline Link::Timeline Link::captureAppTimeline() const
+inline Link::SessionState Link::captureAppSessionState() const
 {
-  return Link::Timeline{mController.timeline(), numPeers() > 0};
+  return Link::SessionState{
+    link::SessionState{mController.timeline(), link::StartStopState{}}, numPeers() > 0};
 }
 
-inline void Link::commitAppTimeline(const Link::Timeline timeline)
+inline void Link::commitAppSessionState(const Link::SessionState state)
 {
-  if (timeline.mOriginalTimeline != timeline.mTimeline)
+  if (state.mOriginalSessionState != state.mSessionState)
   {
-    mController.setTimeline(timeline.mTimeline, mClock.micros());
+    mController.setTimeline(state.mSessionState.timeline, mClock.micros());
   }
 }
 
-// Link::Timeline
+// Link::SessionState
 
-inline Link::Timeline::Timeline(const link::Timeline timeline, const bool bRespectQuantum)
-  : mOriginalTimeline(timeline)
+inline Link::SessionState::SessionState(
+  const link::SessionState sessionState, const bool bRespectQuantum)
+  : mOriginalSessionState(sessionState)
+  , mSessionState(sessionState)
   , mbRespectQuantum(bRespectQuantum)
-  , mTimeline(timeline)
 {
 }
 
-inline double Link::Timeline::tempo() const
+inline double Link::SessionState::tempo() const
 {
-  return mTimeline.tempo.bpm();
+  return mSessionState.timeline.tempo.bpm();
 }
 
-inline void Link::Timeline::setTempo(
+inline void Link::SessionState::setTempo(
   const double bpm, const std::chrono::microseconds atTime)
 {
-  const auto desiredTl =
-    link::clampTempo(link::Timeline{link::Tempo(bpm), mTimeline.toBeats(atTime), atTime});
-  mTimeline.tempo = desiredTl.tempo;
-  mTimeline.timeOrigin = desiredTl.fromBeats(mTimeline.beatOrigin);
+  const auto desiredTl = link::clampTempo(
+    link::Timeline{link::Tempo(bpm), mSessionState.timeline.toBeats(atTime), atTime});
+  mSessionState.timeline.tempo = desiredTl.tempo;
+  mSessionState.timeline.timeOrigin =
+    desiredTl.fromBeats(mSessionState.timeline.beatOrigin);
 }
 
-inline double Link::Timeline::beatAtTime(
+inline double Link::SessionState::beatAtTime(
   const std::chrono::microseconds time, const double quantum) const
 {
-  return link::toPhaseEncodedBeats(mTimeline, time, link::Beats{quantum}).floating();
+  return link::toPhaseEncodedBeats(mSessionState.timeline, time, link::Beats{quantum})
+    .floating();
 }
 
-inline double Link::Timeline::phaseAtTime(
+inline double Link::SessionState::phaseAtTime(
   const std::chrono::microseconds time, const double quantum) const
 {
   return link::phase(link::Beats{beatAtTime(time, quantum)}, link::Beats{quantum})
     .floating();
 }
 
-inline std::chrono::microseconds Link::Timeline::timeAtBeat(
+inline std::chrono::microseconds Link::SessionState::timeAtBeat(
   const double beat, const double quantum) const
 {
-  return link::fromPhaseEncodedBeats(mTimeline, link::Beats{beat}, link::Beats{quantum});
+  return link::fromPhaseEncodedBeats(
+    mSessionState.timeline, link::Beats{beat}, link::Beats{quantum});
 }
 
-inline void Link::Timeline::requestBeatAtTime(
+inline void Link::SessionState::requestBeatAtTime(
   const double beat, std::chrono::microseconds time, const double quantum)
 {
   if (mbRespectQuantum)
@@ -157,7 +164,7 @@ inline void Link::Timeline::requestBeatAtTime(
   forceBeatAtTime(beat, time, quantum);
 }
 
-inline void Link::Timeline::forceBeatAtTime(
+inline void Link::SessionState::forceBeatAtTime(
   const double beat, const std::chrono::microseconds time, const double quantum)
 {
   // There are two components to the beat adjustment: a phase shift
@@ -165,9 +172,11 @@ inline void Link::Timeline::forceBeatAtTime(
   const auto curBeatAtTime = link::Beats{beatAtTime(time, quantum)};
   const auto closestInPhase =
     link::closestPhaseMatch(curBeatAtTime, link::Beats{beat}, link::Beats{quantum});
-  mTimeline = shiftClientTimeline(mTimeline, closestInPhase - curBeatAtTime);
+  mSessionState.timeline =
+    shiftClientTimeline(mSessionState.timeline, closestInPhase - curBeatAtTime);
   // Now adjust the magnitude
-  mTimeline.beatOrigin = mTimeline.beatOrigin + (link::Beats{beat} - closestInPhase);
+  mSessionState.timeline.beatOrigin =
+    mSessionState.timeline.beatOrigin + (link::Beats{beat} - closestInPhase);
 }
 
 } // ableton

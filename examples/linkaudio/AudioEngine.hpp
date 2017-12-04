@@ -53,7 +53,7 @@ private:
   void setBufferSize(std::size_t size);
   void setSampleRate(double sampleRate);
   EngineData pullEngineData();
-  void renderMetronomeIntoBuffer(Link::Timeline timeline,
+  void renderMetronomeIntoBuffer(Link::SessionState sessionState,
     double quantum,
     std::chrono::microseconds beginHostTime,
     std::size_t numSamples);
