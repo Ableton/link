@@ -101,7 +101,7 @@ public:
     , mEnabled(false)
     , mStartStopSyncEnabled(false)
     , mIo(std::move(io))
-    , mRtSessionStateSetter(*this)
+    , mRtClientStateSetter(*this)
     , mPeers(util::injectRef(*mIo),
         std::ref(mSessionPeerCounter),
         SessionTimelineCallback{*this},
@@ -163,48 +163,47 @@ public:
     return mSessionPeerCounter.mSessionPeerCount;
   }
 
-  // Get the current Link session state. Thread-safe but may block, so
+  // Get the current Link client state. Thread-safe but may block, so
   // it cannot be used from audio thread.
-  SessionState sessionState() const
+  ClientState clientState() const
   {
     std::lock_guard<std::mutex> lock(mClientSessionStateGuard);
-    return SessionState{mClientTimeline, mClientStartStopState};
+    return ClientState{mClientTimeline, mClientStartStopState};
   }
 
-  // Set the session state to be used, starting at the given
-  // time. Thread-safe but may block, so it cannot be used from audio thread.
-  void setSessionState(IncomingSessionState newSessionState)
+  // Set the client state to be used, starting at the given time.
+  // Thread-safe but may block, so it cannot be used from audio thread.
+  void setClientState(IncomingClientState newClientState)
   {
     {
       std::lock_guard<std::mutex> lock(mClientSessionStateGuard);
-      if (newSessionState.timeline)
+      if (newClientState.timeline)
       {
-        *newSessionState.timeline = clampTempo(*newSessionState.timeline);
-        mClientTimeline = *newSessionState.timeline;
+        *newClientState.timeline = clampTempo(*newClientState.timeline);
+        mClientTimeline = *newClientState.timeline;
       }
-      if (newSessionState.startStopState)
+      if (newClientState.startStopState)
       {
         // Prevent updating client start stop state with an outdated start stop state
-        *newSessionState.startStopState = detail::selectPreferredStartStopState(
-          mClientStartStopState, *newSessionState.startStopState);
-        mClientStartStopState = *newSessionState.startStopState;
+        *newClientState.startStopState = detail::selectPreferredStartStopState(
+          mClientStartStopState, *newClientState.startStopState);
+        mClientStartStopState = *newClientState.startStopState;
       }
     }
 
-    mIo->async(
-      [this, newSessionState] { handleSessionStateFromClient(newSessionState); });
+    mIo->async([this, newClientState] { handleClientState(newClientState); });
   }
 
-  // Non-blocking session state access for a realtime context. NOT
+  // Non-blocking client state access for a realtime context. NOT
   // thread-safe. Must not be called from multiple threads
-  // concurrently and must not be called concurrently with setSessionStateRtSafe.
-  SessionState sessionStateRtSafe() const
+  // concurrently and must not be called concurrently with setClientStateRtSafe.
+  ClientState clientStateRtSafe() const
   {
     // Respect the session timing guard and the client session state guard but don't
     // block on them. If we can't access one or both because of concurrent modification
     // we fall back to our cached version of the timeline and/or start stop state.
 
-    if (!mRtSessionStateSetter.hasPendingSessionStates())
+    if (!mRtClientStateSetter.hasPendingClientStates())
     {
       const auto now = mClock.micros();
       if (now - mRtClientTimelineTimestamp > detail::kLocalModGracePeriod)
@@ -243,36 +242,36 @@ public:
   }
 
   // should only be called from the audio thread
-  void setSessionStateRtSafe(IncomingSessionState newSessionState)
+  void setClientStateRtSafe(IncomingClientState newClientState)
   {
-    if (newSessionState.timeline)
+    if (newClientState.timeline)
     {
-      *newSessionState.timeline = clampTempo(*newSessionState.timeline);
+      *newClientState.timeline = clampTempo(*newClientState.timeline);
     }
 
-    if (newSessionState.startStopState)
+    if (newClientState.startStopState)
     {
       // Prevent updating client start stop state with an outdated start stop state
-      *newSessionState.startStopState = detail::selectPreferredStartStopState(
-        mRtClientStartStopState, *newSessionState.startStopState);
+      *newClientState.startStopState = detail::selectPreferredStartStopState(
+        mRtClientStartStopState, *newClientState.startStopState);
     }
 
-    // This will fail in case the Fifo in the RtSessionStateSetter is full. This indicates
+    // This will fail in case the Fifo in the RtClientStateSetter is full. This indicates
     // a very high rate of calls to the setter. In this case we ignore one value because
     // we expect the setter to be called again soon.
-    if (mRtSessionStateSetter.tryPush(newSessionState))
+    if (mRtClientStateSetter.tryPush(newClientState))
     {
       const auto now = mClock.micros();
       // Cache the new timeline and StartStopState for serving back to the client
-      if (newSessionState.timeline)
+      if (newClientState.timeline)
       {
         // Cache the new timeline and StartStopState for serving back to the client
-        mRtClientTimeline = *newSessionState.timeline;
+        mRtClientTimeline = *newClientState.timeline;
         mRtClientTimelineTimestamp = makeRtTimestamp(now);
       }
-      if (newSessionState.startStopState)
+      if (newClientState.startStopState)
       {
-        mRtClientStartStopState = *newSessionState.startStopState;
+        mRtClientStartStopState = *newClientState.startStopState;
         mRtClientStartStopStateTimestamp = makeRtTimestamp(now);
       }
     }
@@ -375,14 +374,14 @@ private:
     }
   }
 
-  void handleSessionStateFromClient(const IncomingSessionState sessionState)
+  void handleClientState(const IncomingClientState clientState)
   {
     auto mustUpdateDiscovery = false;
 
-    if (sessionState.timeline)
+    if (clientState.timeline)
     {
       auto sessionTimeline = updateSessionTimelineFromClient(
-        mSessionTimeline, *sessionState.timeline, sessionState.timestamp, mGhostXForm);
+        mSessionTimeline, *clientState.timeline, clientState.timestamp, mGhostXForm);
 
       mSessions.resetTimeline(sessionTimeline);
       mPeers.setSessionTimeline(mSessionId, sessionTimeline);
@@ -391,18 +390,17 @@ private:
       mustUpdateDiscovery = true;
     }
 
-    if (mStartStopSyncEnabled && sessionState.startStopState)
+    if (mStartStopSyncEnabled && clientState.startStopState)
     {
       // Prevent updating with an outdated start stop state
-      const auto newGhostTime =
-        mGhostXForm.hostToGhost(sessionState.startStopState->time);
+      const auto newGhostTime = mGhostXForm.hostToGhost(clientState.startStopState->time);
       if (newGhostTime > mSessionStartStopState.time)
       {
         mSessionStartStopState =
-          StartStopState{sessionState.startStopState->isPlaying, newGhostTime};
+          StartStopState{clientState.startStopState->isPlaying, newGhostTime};
         {
           std::lock_guard<std::mutex> lock(mClientSessionStateGuard);
-          mClientStartStopState = *sessionState.startStopState;
+          mClientStartStopState = *clientState.startStopState;
         }
 
         mustUpdateDiscovery = true;
@@ -417,24 +415,24 @@ private:
     invokeStartStopStateCallbackIfChanged();
   }
 
-  void handleRtSessionState(IncomingSessionState sessionState)
+  void handleRtClientState(IncomingClientState clientState)
   {
     {
       std::lock_guard<std::mutex> lock(mClientSessionStateGuard);
-      if (sessionState.timeline)
+      if (clientState.timeline)
       {
-        mClientTimeline = *sessionState.timeline;
+        mClientTimeline = *clientState.timeline;
       }
-      if (sessionState.startStopState)
+      if (clientState.startStopState)
       {
         // Prevent updating client start stop state with an outdated start stop state
-        *sessionState.startStopState = detail::selectPreferredStartStopState(
-          mClientStartStopState, *sessionState.startStopState);
-        mClientStartStopState = *sessionState.startStopState;
+        *clientState.startStopState = detail::selectPreferredStartStopState(
+          mClientStartStopState, *clientState.startStopState);
+        mClientStartStopState = *clientState.startStopState;
       }
     }
 
-    handleSessionStateFromClient(sessionState);
+    handleClientState(clientState);
   }
 
   void joinSession(const Session& session)
@@ -493,24 +491,24 @@ private:
     Controller& mController;
   };
 
-  struct RtSessionStateSetter
+  struct RtClientStateSetter
   {
     using CallbackDispatcher =
       typename IoContext::template LockFreeCallbackDispatcher<std::function<void()>,
         std::chrono::milliseconds>;
 
-    RtSessionStateSetter(Controller& controller)
+    RtClientStateSetter(Controller& controller)
       : mController(controller)
-      , mHasPendingSessionStates(false)
+      , mHasPendingClientStates(false)
       , mCallbackDispatcher(
-          [this] { processPendingSessionStates(); }, detail::kRtHandlerFallbackPeriod)
+          [this] { processPendingClientStates(); }, detail::kRtHandlerFallbackPeriod)
     {
     }
 
-    bool tryPush(const IncomingSessionState sessionState)
+    bool tryPush(const IncomingClientState clientState)
     {
-      mHasPendingSessionStates = true;
-      const auto success = mSessionStateFifo.push(sessionState);
+      mHasPendingClientStates = true;
+      const auto success = mClientStateFifo.push(clientState);
       if (success)
       {
         mCallbackDispatcher.invoke();
@@ -518,33 +516,33 @@ private:
       return success;
     }
 
-    bool hasPendingSessionStates() const
+    bool hasPendingClientStates() const
     {
-      return mHasPendingSessionStates;
+      return mHasPendingClientStates;
     }
 
   private:
-    void processPendingSessionStates()
+    void processPendingClientStates()
     {
-      auto result = mSessionStateFifo.clearAndPopLast();
+      auto result = mClientStateFifo.clearAndPopLast();
 
       if (result)
       {
-        const auto sessionState = std::move(*result);
-        mController.mIo->async([this, sessionState]() {
-          mController.handleRtSessionState(sessionState);
-          mHasPendingSessionStates = false;
+        const auto clientState = std::move(*result);
+        mController.mIo->async([this, clientState]() {
+          mController.handleRtClientState(clientState);
+          mHasPendingClientStates = false;
         });
       }
     }
 
     Controller& mController;
     // Assuming a wake up time of one ms for the threads owned by the CallbackDispatcher
-    // and the ioService, buffering 16 session states allows to set eight session states
+    // and the ioService, buffering 16 client states allows to set eight client states
     // per ms.
     static const std::size_t kBufferSize = 16;
-    CircularFifo<IncomingSessionState, kBufferSize> mSessionStateFifo;
-    std::atomic<bool> mHasPendingSessionStates;
+    CircularFifo<IncomingClientState, kBufferSize> mClientStateFifo;
+    std::atomic<bool> mHasPendingClientStates;
     CallbackDispatcher mCallbackDispatcher;
   };
 
@@ -702,7 +700,7 @@ private:
 
   util::Injected<IoContext> mIo;
 
-  RtSessionStateSetter mRtSessionStateSetter;
+  RtClientStateSetter mRtClientStateSetter;
 
   ControllerPeers mPeers;
 

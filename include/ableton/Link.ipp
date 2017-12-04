@@ -100,7 +100,7 @@ inline Link::Clock Link::clock() const
 
 inline Link::SessionState Link::captureAudioSessionState() const
 {
-  return Link::SessionState{mController.sessionStateRtSafe(), numPeers() > 0};
+  return Link::SessionState{mController.clientStateRtSafe(), numPeers() > 0};
 }
 
 inline void Link::commitAudioSessionState(const Link::SessionState state)
@@ -114,13 +114,13 @@ inline void Link::commitAudioSessionState(const Link::SessionState state)
       state.mOriginalState.startStopState != state.mState.startStopState
         ? link::OptionalStartStopState{state.mState.startStopState}
         : link::OptionalStartStopState{};
-    mController.setSessionStateRtSafe({timeline, startStopState, mClock.micros()});
+    mController.setClientStateRtSafe({timeline, startStopState, mClock.micros()});
   }
 }
 
 inline Link::SessionState Link::captureAppSessionState() const
 {
-  return Link::SessionState{mController.sessionState(), numPeers() > 0};
+  return Link::SessionState{mController.clientState(), numPeers() > 0};
 }
 
 inline void Link::commitAppSessionState(const Link::SessionState state)
@@ -134,14 +134,14 @@ inline void Link::commitAppSessionState(const Link::SessionState state)
       state.mOriginalState.startStopState != state.mState.startStopState
         ? link::OptionalStartStopState{state.mState.startStopState}
         : link::OptionalStartStopState{};
-    mController.setSessionState({timeline, startStopState, mClock.micros()});
+    mController.setClientState({timeline, startStopState, mClock.micros()});
   }
 }
 
 // Link::SessionState
 
 inline Link::SessionState::SessionState(
-  const link::SessionState state, const bool bRespectQuantum)
+  const link::ClientState state, const bool bRespectQuantum)
   : mOriginalState(state)
   , mState(state)
   , mbRespectQuantum(bRespectQuantum)
