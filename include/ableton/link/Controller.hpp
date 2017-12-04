@@ -26,6 +26,7 @@
 #include <ableton/link/GhostXForm.hpp>
 #include <ableton/link/NodeState.hpp>
 #include <ableton/link/Peers.hpp>
+#include <ableton/link/SessionState.hpp>
 #include <ableton/link/Sessions.hpp>
 #include <ableton/link/StartStopState.hpp>
 #include <mutex>
@@ -64,22 +65,6 @@ using PeerCountCallback = std::function<void(std::size_t)>;
 using TempoCallback = std::function<void(ableton::link::Tempo)>;
 using StartStopStateCallback = std::function<void(bool)>;
 
-struct SessionState
-{
-  friend bool operator==(const SessionState& lhs, const SessionState& rhs)
-  {
-    return std::tie(lhs.timeline, lhs.startStopState)
-           == std::tie(rhs.timeline, rhs.startStopState);
-  }
-
-  friend bool operator!=(const SessionState& lhs, const SessionState& rhs)
-  {
-    return !(lhs == rhs);
-  }
-
-  Timeline timeline;
-  StartStopState startStopState;
-};
 
 // The main Link controller
 template <typename PeerCountCallback,
