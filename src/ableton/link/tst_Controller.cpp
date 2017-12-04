@@ -235,11 +235,28 @@ TEST_CASE("Controller | SetAndGetSessionStateThreadSafe", "[Controller]")
   auto sessionState = controller.sessionState();
   expectSessionStateEquals(expectedSessionState, sessionState);
 
+  // Set session state with a StartStopState having the same timestamp as the current
+  // StartStopState - don't advance clock
+  auto outdatedStartStopState =
+    Optional<StartStopState>{StartStopState{false, clock.micros()}};
+  controller.setSessionState(
+    IncomingSessionState{Optional<Timeline>{}, outdatedStartStopState, clock.micros()});
+  sessionState = controller.sessionState();
+  expectSessionStateEquals(expectedSessionState, sessionState);
+
   // Set session state with an outdated StartStopState
-  const auto outdatedStartStopState =
+  clock.advance();
+  outdatedStartStopState =
     Optional<StartStopState>{StartStopState{false, microseconds{0}}};
   controller.setSessionState(
-    IncomingSessionState{expectedTimeline, outdatedStartStopState, clock.micros()});
+    IncomingSessionState{Optional<Timeline>{}, outdatedStartStopState, clock.micros()});
+  sessionState = controller.sessionState();
+  expectSessionStateEquals(expectedSessionState, sessionState);
+
+  // Set session state without Timeline and StartStopState
+  clock.advance();
+  controller.setSessionState(IncomingSessionState{
+    Optional<Timeline>{}, Optional<StartStopState>{}, clock.micros()});
   sessionState = controller.sessionState();
   expectSessionStateEquals(expectedSessionState, sessionState);
 
@@ -274,11 +291,28 @@ TEST_CASE("Controller | SetAndGetSessionStateRealtimeSafe", "[Controller]")
   auto sessionState = controller.sessionState();
   expectSessionStateEquals(expectedSessionState, sessionState);
 
+  // Set session state with a StartStopState having the same timestamp as the current
+  // StartStopState - don't advance clock
+  auto outdatedStartStopState =
+    Optional<StartStopState>{StartStopState{false, clock.micros()}};
+  controller.setSessionStateRtSafe(
+    IncomingSessionState{Optional<Timeline>{}, outdatedStartStopState, clock.micros()});
+  sessionState = controller.sessionStateRtSafe();
+  expectSessionStateEquals(expectedSessionState, sessionState);
+
   // Set session state with an outdated StartStopState
-  const auto outdatedStartStopState =
+  clock.advance();
+  outdatedStartStopState =
     Optional<StartStopState>{StartStopState{false, microseconds{0}}};
   controller.setSessionStateRtSafe(
-    IncomingSessionState{expectedTimeline, outdatedStartStopState, clock.micros()});
+    IncomingSessionState{Optional<Timeline>{}, outdatedStartStopState, clock.micros()});
+  sessionState = controller.sessionStateRtSafe();
+  expectSessionStateEquals(expectedSessionState, sessionState);
+
+  // Set session state without Timeline and StartStopState
+  clock.advance();
+  controller.setSessionStateRtSafe(IncomingSessionState{
+    Optional<Timeline>{}, Optional<StartStopState>{}, clock.micros()});
   sessionState = controller.sessionStateRtSafe();
   expectSessionStateEquals(expectedSessionState, sessionState);
 
