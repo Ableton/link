@@ -153,6 +153,12 @@ struct StartStopStateClientCallback
   std::vector<bool> startStopStates;
 };
 
+void expectSessionState(IncomingSessionState expectedState, SessionState state)
+{
+  CHECK(std::tie(expectedState.timeline, expectedState.startStopState)
+        == std::tie(state.timeline, state.startStopState));
+}
+
 } // anon namespace
 
 TEST_CASE("Controller | ConstructOptimistically", "[Controller]")
@@ -211,25 +217,27 @@ TEST_CASE("Controller | SetAndGetSessionStateThreadSafe", "[Controller]")
 
   auto expectedTimeline = Timeline{Tempo{60.}, Beats{0.}, microseconds{0}};
   auto expectedStartStopState = StartStopState{true, microseconds{1}};
-  auto expectedSessionState = SessionState{expectedTimeline, expectedStartStopState};
-  controller.setSessionState(expectedSessionState, microseconds{0});
+  auto expectedSessionState =
+    IncomingSessionState{expectedTimeline, expectedStartStopState, microseconds{0}};
+  controller.setSessionState(expectedSessionState);
   auto sessionState = controller.sessionState();
-  CHECK(expectedSessionState == sessionState);
+  expectSessionState(expectedSessionState, sessionState);
 
   // Set session state with an outdated StartStopState
   const auto outdatedStartStopState = StartStopState{false, microseconds{1}};
   controller.setSessionState(
-    SessionState{expectedTimeline, outdatedStartStopState}, microseconds{0});
+    IncomingSessionState{expectedTimeline, outdatedStartStopState, microseconds{0}});
   sessionState = controller.sessionState();
-  CHECK(expectedSessionState == sessionState);
+  expectSessionState(expectedSessionState, sessionState);
 
   // Set session state with a new StartStopState
   expectedTimeline = Timeline{Tempo{80.}, Beats{1.}, microseconds{6}};
   expectedStartStopState = StartStopState{false, microseconds{7}};
-  expectedSessionState = SessionState{expectedTimeline, expectedStartStopState};
-  controller.setSessionState(expectedSessionState, microseconds{0});
+  expectedSessionState =
+    IncomingSessionState{expectedTimeline, expectedStartStopState, microseconds{0}};
+  controller.setSessionState(expectedSessionState);
   sessionState = controller.sessionState();
-  CHECK(expectedSessionState == sessionState);
+  expectSessionState(expectedSessionState, sessionState);
 }
 
 TEST_CASE("Controller | SetAndGetSessionStateRealtimeSafe", "[Controller]")
@@ -241,25 +249,27 @@ TEST_CASE("Controller | SetAndGetSessionStateRealtimeSafe", "[Controller]")
 
   auto expectedTimeline = Timeline{Tempo{110.}, Beats{0.}, microseconds{0}};
   auto expectedStartStopState = StartStopState{true, microseconds{1}};
-  auto expectedSessionState = SessionState{expectedTimeline, expectedStartStopState};
-  controller.setSessionStateRtSafe(expectedSessionState, microseconds{0});
+  auto expectedSessionState =
+    IncomingSessionState{expectedTimeline, expectedStartStopState, microseconds{0}};
+  controller.setSessionStateRtSafe(expectedSessionState);
   auto sessionState = controller.sessionState();
-  CHECK(expectedSessionState == sessionState);
+  expectSessionState(expectedSessionState, sessionState);
 
   // Set session state with an outdated StartStopState
   const auto outdatedStartStopState = StartStopState{false, microseconds{0}};
   controller.setSessionStateRtSafe(
-    SessionState{expectedTimeline, outdatedStartStopState}, microseconds{0});
+    IncomingSessionState{expectedTimeline, outdatedStartStopState, microseconds{0}});
   sessionState = controller.sessionStateRtSafe();
-  CHECK(expectedSessionState == sessionState);
+  expectSessionState(expectedSessionState, sessionState);
 
   // Set session state with a new StartStopState
   expectedTimeline = Timeline{Tempo{90.}, Beats{1.4}, microseconds{5}};
   expectedStartStopState = StartStopState{false, microseconds{6}};
-  expectedSessionState = SessionState{expectedTimeline, expectedStartStopState};
-  controller.setSessionStateRtSafe(expectedSessionState, microseconds{0});
+  expectedSessionState =
+    IncomingSessionState{expectedTimeline, expectedStartStopState, microseconds{0}};
+  controller.setSessionStateRtSafe(expectedSessionState);
   sessionState = controller.sessionStateRtSafe();
-  CHECK(expectedSessionState == sessionState);
+  expectSessionState(expectedSessionState, sessionState);
 }
 
 TEST_CASE("Controller | CallbacksCalledBySettingSessionStateThreadSafe", "[Controller]")
@@ -275,7 +285,7 @@ TEST_CASE("Controller | CallbacksCalledBySettingSessionStateThreadSafe", "[Contr
   const auto timeline = Timeline{expectedTempo, Beats{0.}, microseconds{0}};
   const auto expectedIsPlaying = true;
   const auto startStopState = StartStopState{expectedIsPlaying, microseconds{1}};
-  controller.setSessionState({timeline, startStopState}, microseconds{0});
+  controller.setSessionState({timeline, startStopState, microseconds{0}});
   CHECK(std::vector<Tempo>{expectedTempo} == tempoCallback.tempos);
   CHECK(std::vector<bool>{expectedIsPlaying} == startStopStateCallback.startStopStates);
 }
@@ -293,7 +303,7 @@ TEST_CASE("Controller | CallbacksCalledBySettingSessionStateRealtimeSafe", "[Con
   const auto timeline = Timeline{expectedTempo, Beats{0.}, microseconds{0}};
   const auto expectedIsPlaying = true;
   const auto startStopState = StartStopState{expectedIsPlaying, microseconds{1}};
-  controller.setSessionStateRtSafe({timeline, startStopState}, microseconds{0});
+  controller.setSessionStateRtSafe({timeline, startStopState, microseconds{0}});
   CHECK(std::vector<Tempo>{expectedTempo} == tempoCallback.tempos);
   CHECK(std::vector<bool>{expectedIsPlaying} == startStopStateCallback.startStopStates);
 }
