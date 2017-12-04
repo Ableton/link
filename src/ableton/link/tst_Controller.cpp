@@ -127,15 +127,38 @@ struct MockIoContext
   }
 };
 
-using MockController =
-  Controller<PeerCountCallback, TempoCallback, MockClock, MockIoContext>;
+using MockController = Controller<PeerCountCallback,
+  TempoCallback,
+  StartStopStateCallback,
+  MockClock,
+  MockIoContext>;
+
+struct TempoClientCallback
+{
+  void operator()(const Tempo bpm)
+  {
+    tempos.push_back(bpm);
+  }
+
+  std::vector<Tempo> tempos;
+};
+
+struct StartStopStateClientCallback
+{
+  void operator()(const bool isPlaying)
+  {
+    startStopStates.push_back(isPlaying);
+  }
+
+  std::vector<bool> startStopStates;
+};
 
 } // anon namespace
 
 TEST_CASE("Controller | ConstructOptimistically", "[Controller]")
 {
-  MockController controller(Tempo{100.0}, [](std::size_t) {}, [](Tempo) {}, MockClock{},
-    util::injectVal(MockIoContext{}));
+  MockController controller(Tempo{100.0}, [](std::size_t) {}, [](Tempo) {}, [](bool) {},
+    MockClock{}, util::injectVal(MockIoContext{}));
 
   CHECK(!controller.isEnabled());
   CHECK(!controller.isStartStopSyncEnabled());
@@ -147,20 +170,20 @@ TEST_CASE("Controller | ConstructOptimistically", "[Controller]")
 TEST_CASE("Controller | ConstructWithInvalidTempo", "[Controller]")
 {
   MockController controllerLowTempo(Tempo{1.0}, [](std::size_t) {}, [](Tempo) {},
-    MockClock{}, util::injectVal(MockIoContext{}));
+    [](bool) {}, MockClock{}, util::injectVal(MockIoContext{}));
   const auto tlLow = controllerLowTempo.sessionState().timeline;
   CHECK(Tempo{20.0} == tlLow.tempo);
 
   MockController controllerHighTempo(Tempo{100000.0}, [](std::size_t) {}, [](Tempo) {},
-    MockClock{}, util::injectVal(MockIoContext{}));
+    [](bool) {}, MockClock{}, util::injectVal(MockIoContext{}));
   const auto tlHigh = controllerHighTempo.sessionState().timeline;
   CHECK(Tempo{999.0} == tlHigh.tempo);
 }
 
 TEST_CASE("Controller | EnableDisable", "[Controller]")
 {
-  MockController controller(Tempo{100.0}, [](std::size_t) {}, [](Tempo) {}, MockClock{},
-    util::injectVal(MockIoContext{}));
+  MockController controller(Tempo{100.0}, [](std::size_t) {}, [](Tempo) {}, [](bool) {},
+    MockClock{}, util::injectVal(MockIoContext{}));
 
   controller.enable(true);
   CHECK(controller.isEnabled());
@@ -170,8 +193,8 @@ TEST_CASE("Controller | EnableDisable", "[Controller]")
 
 TEST_CASE("Controller | EnableDisableStartStopSync", "[Controller]")
 {
-  MockController controller(Tempo{100.0}, [](std::size_t) {}, [](Tempo) {}, MockClock{},
-    util::injectVal(MockIoContext{}));
+  MockController controller(Tempo{100.0}, [](std::size_t) {}, [](Tempo) {}, [](bool) {},
+    MockClock{}, util::injectVal(MockIoContext{}));
 
   controller.enableStartStopSync(true);
   CHECK(controller.isStartStopSyncEnabled());
@@ -183,8 +206,8 @@ TEST_CASE("Controller | SetAndGetSessionStateThreadSafe", "[Controller]")
 {
   using namespace std::chrono;
 
-  MockController controller(Tempo{100.0}, [](std::size_t) {}, [](Tempo) {}, MockClock{},
-    util::injectVal(MockIoContext{}));
+  MockController controller(Tempo{100.0}, [](std::size_t) {}, [](Tempo) {}, [](bool) {},
+    MockClock{}, util::injectVal(MockIoContext{}));
 
   auto expectedTimeline = Timeline{Tempo{60.}, Beats{0.}, microseconds{0}};
   auto expectedStartStopState = StartStopState{true, microseconds{1}};
@@ -213,8 +236,8 @@ TEST_CASE("Controller | SetAndGetSessionStateRealtimeSafe", "[Controller]")
 {
   using namespace std::chrono;
 
-  MockController controller(Tempo{100.0}, [](std::size_t) {}, [](Tempo) {}, MockClock{},
-    util::injectVal(MockIoContext{}));
+  MockController controller(Tempo{100.0}, [](std::size_t) {}, [](Tempo) {}, [](bool) {},
+    MockClock{}, util::injectVal(MockIoContext{}));
 
   auto expectedTimeline = Timeline{Tempo{110.}, Beats{0.}, microseconds{0}};
   auto expectedStartStopState = StartStopState{true, microseconds{1}};
@@ -237,6 +260,42 @@ TEST_CASE("Controller | SetAndGetSessionStateRealtimeSafe", "[Controller]")
   controller.setSessionStateRtSafe(expectedSessionState, microseconds{0});
   sessionState = controller.sessionStateRtSafe();
   CHECK(expectedSessionState == sessionState);
+}
+
+TEST_CASE("Controller | CallbacksCalledBySettingSessionStateThreadSafe", "[Controller]")
+{
+  using namespace std::chrono;
+
+  auto tempoCallback = TempoClientCallback{};
+  auto startStopStateCallback = StartStopStateClientCallback{};
+  MockController controller(Tempo{100.0}, [](std::size_t) {}, std::ref(tempoCallback),
+    std::ref(startStopStateCallback), MockClock{}, util::injectVal(MockIoContext{}));
+
+  const auto expectedTempo = Tempo{50.};
+  const auto timeline = Timeline{expectedTempo, Beats{0.}, microseconds{0}};
+  const auto expectedIsPlaying = true;
+  const auto startStopState = StartStopState{expectedIsPlaying, microseconds{1}};
+  controller.setSessionState({timeline, startStopState}, microseconds{0});
+  CHECK(std::vector<Tempo>{expectedTempo} == tempoCallback.tempos);
+  CHECK(std::vector<bool>{expectedIsPlaying} == startStopStateCallback.startStopStates);
+}
+
+TEST_CASE("Controller | CallbacksCalledBySettingSessionStateRealtimeSafe", "[Controller]")
+{
+  using namespace std::chrono;
+
+  auto tempoCallback = TempoClientCallback{};
+  auto startStopStateCallback = StartStopStateClientCallback{};
+  MockController controller(Tempo{100.0}, [](std::size_t) {}, std::ref(tempoCallback),
+    std::ref(startStopStateCallback), MockClock{}, util::injectVal(MockIoContext{}));
+
+  const auto expectedTempo = Tempo{130.};
+  const auto timeline = Timeline{expectedTempo, Beats{0.}, microseconds{0}};
+  const auto expectedIsPlaying = true;
+  const auto startStopState = StartStopState{expectedIsPlaying, microseconds{1}};
+  controller.setSessionStateRtSafe({timeline, startStopState}, microseconds{0});
+  CHECK(std::vector<Tempo>{expectedTempo} == tempoCallback.tempos);
+  CHECK(std::vector<bool>{expectedIsPlaying} == startStopStateCallback.startStopStates);
 }
 
 } // namespace link

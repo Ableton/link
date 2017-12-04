@@ -27,6 +27,7 @@ namespace ableton
 inline Link::Link(const double bpm)
   : mPeerCountCallback([](std::size_t) {})
   , mTempoCallback([](link::Tempo) {})
+  , mStartStopCallback([](bool) {})
   , mClock{}
   , mController(link::Tempo(bpm),
       [this](const std::size_t peers) {
@@ -36,6 +37,10 @@ inline Link::Link(const double bpm)
       [this](const link::Tempo tempo) {
         std::lock_guard<std::mutex> lock(mCallbackMutex);
         mTempoCallback(tempo);
+      },
+      [this](const bool isPlaying) {
+        std::lock_guard<std::mutex> lock(mCallbackMutex);
+        mStartStopCallback(isPlaying);
       },
       mClock,
       util::injectVal(link::platform::IoContext{}))
@@ -79,6 +84,13 @@ void Link::setTempoCallback(Callback callback)
 {
   std::lock_guard<std::mutex> lock(mCallbackMutex);
   mTempoCallback = [callback](const link::Tempo tempo) { callback(tempo.bpm()); };
+}
+
+template <typename Callback>
+void Link::setStartStopCallback(Callback callback)
+{
+  std::lock_guard<std::mutex> lock(mCallbackMutex);
+  mStartStopCallback = callback;
 }
 
 inline Link::Clock Link::clock() const

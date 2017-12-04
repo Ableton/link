@@ -62,6 +62,7 @@ inline StartStopState selectPreferredStartStopState(
 // function types corresponding to the Controller callback type params
 using PeerCountCallback = std::function<void(std::size_t)>;
 using TempoCallback = std::function<void(ableton::link::Tempo)>;
+using StartStopStateCallback = std::function<void(bool)>;
 
 struct SessionState
 {
@@ -83,6 +84,7 @@ struct SessionState
 // The main Link controller
 template <typename PeerCountCallback,
   typename TempoCallback,
+  typename StartStopStateCallback,
   typename Clock,
   typename IoContext>
 class Controller
@@ -91,9 +93,11 @@ public:
   Controller(Tempo tempo,
     PeerCountCallback peerCallback,
     TempoCallback tempoCallback,
+    StartStopStateCallback startStopStateCallback,
     Clock clock,
     util::Injected<IoContext> io)
     : mTempoCallback(std::move(tempoCallback))
+    , mStartStopStateCallback(std::move(startStopStateCallback))
     , mClock(std::move(clock))
     , mNodeId(NodeId::random())
     , mSessionId(mNodeId)
@@ -330,9 +334,12 @@ private:
 
       if (mStartStopSyncEnabled)
       {
-        std::lock_guard<std::mutex> lock(mClientSessionStateGuard);
-        mClientStartStopState = StartStopState{
-          startStopState.isPlaying, mGhostXForm.ghostToHost(startStopState.time)};
+        {
+          std::lock_guard<std::mutex> lock(mClientSessionStateGuard);
+          mClientStartStopState = StartStopState{
+            startStopState.isPlaying, mGhostXForm.ghostToHost(startStopState.time)};
+        }
+        mStartStopStateCallback(startStopState.isPlaying);
       }
     }
   }
@@ -359,6 +366,8 @@ private:
     }
 
     updateDiscovery();
+
+    mStartStopStateCallback(startStopState.isPlaying);
   }
 
   void handleRtTimelineAndStartStopState(const Timeline timeline,
@@ -614,6 +623,7 @@ private:
   };
 
   TempoCallback mTempoCallback;
+  StartStopStateCallback mStartStopStateCallback;
   Clock mClock;
   NodeId mNodeId;
   SessionId mSessionId;
