@@ -107,7 +107,8 @@ inline void Link::commitAudioSessionState(const Link::SessionState state)
 {
   if (state.mOriginalSessionState != state.mSessionState)
   {
-    mController.setSessionStateRtSafe(state.mSessionState, mClock.micros());
+    mController.setSessionStateRtSafe({state.mSessionState.timeline,
+      state.mSessionState.startStopState, mClock.micros()});
   }
 }
 
@@ -120,7 +121,8 @@ inline void Link::commitAppSessionState(const Link::SessionState state)
 {
   if (state.mOriginalSessionState != state.mSessionState)
   {
-    mController.setSessionState(state.mSessionState, mClock.micros());
+    mController.setSessionState({state.mSessionState.timeline,
+      state.mSessionState.startStopState, mClock.micros()});
   }
 }
 

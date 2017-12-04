@@ -44,5 +44,12 @@ struct SessionState
   StartStopState startStopState;
 };
 
+struct IncomingSessionState
+{
+  Timeline timeline;
+  StartStopState startStopState;
+  std::chrono::microseconds timestamp;
+};
+
 } // namespace link
 } // namespace ableton
