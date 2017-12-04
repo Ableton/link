@@ -166,7 +166,7 @@ public:
   // it cannot be used from audio thread.
   Timeline timeline() const
   {
-    std::lock_guard<std::mutex> lock(mClientTimelineGuard);
+    std::lock_guard<std::mutex> lock(mClientSessionStateGuard);
     return mClientTimeline;
   }
 
@@ -176,7 +176,7 @@ public:
   {
     newTimeline = clampTempo(newTimeline);
     {
-      std::lock_guard<std::mutex> lock(mClientTimelineGuard);
+      std::lock_guard<std::mutex> lock(mClientSessionStateGuard);
       mClientTimeline = newTimeline;
     }
     mIo->async([this, newTimeline, atTime] {
@@ -251,7 +251,7 @@ private:
 
       // Update the client timeline based on the new session timing data
       {
-        std::lock_guard<std::mutex> lock(mClientTimelineGuard);
+        std::lock_guard<std::mutex> lock(mClientSessionStateGuard);
         mClientTimeline = updateClientTimelineFromSession(
           mClientTimeline, mSessionTimeline, mClock.micros(), mGhostXForm);
       }
@@ -283,7 +283,7 @@ private:
   void handleRtTimeline(const Timeline timeline, const std::chrono::microseconds time)
   {
     {
-      std::lock_guard<std::mutex> lock(mClientTimelineGuard);
+      std::lock_guard<std::mutex> lock(mClientSessionStateGuard);
       mClientTimeline = timeline;
     }
     handleTimelineFromClient(
@@ -515,7 +515,7 @@ private:
   GhostXForm mGhostXForm;
   Timeline mSessionTimeline;
 
-  mutable std::mutex mClientTimelineGuard;
+  mutable std::mutex mClientSessionStateGuard;
   Timeline mClientTimeline;
 
   mutable Timeline mRtClientTimeline;
