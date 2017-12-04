@@ -88,16 +88,14 @@ inline Link::Clock Link::clock() const
 
 inline Link::SessionState Link::captureAudioSessionState() const
 {
-  return Link::SessionState{
-    link::SessionState{mController.timelineRtSafe(), link::StartStopState{}},
-    numPeers() > 0};
+  return Link::SessionState{mController.sessionStateRtSafe(), numPeers() > 0};
 }
 
 inline void Link::commitAudioSessionState(const Link::SessionState state)
 {
   if (state.mOriginalSessionState != state.mSessionState)
   {
-    mController.setTimelineRtSafe(state.mSessionState.timeline, mClock.micros());
+    mController.setSessionStateRtSafe(state.mSessionState, mClock.micros());
   }
 }
 
