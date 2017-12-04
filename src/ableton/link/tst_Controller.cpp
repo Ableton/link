@@ -160,7 +160,8 @@ struct StartStopStateClientCallback
   std::vector<bool> startStopStates;
 };
 
-void expectSessionStateEquals(IncomingSessionState expectedState, SessionState state)
+void expectSessionStateEquals(
+  const IncomingSessionState& expectedState, const SessionState& state)
 {
   CHECK(std::tie(*expectedState.timeline, *expectedState.startStopState)
         == std::tie(state.timeline, state.startStopState));
@@ -235,7 +236,8 @@ TEST_CASE("Controller | SetAndGetSessionStateThreadSafe", "[Controller]")
   expectSessionStateEquals(expectedSessionState, sessionState);
 
   // Set session state with an outdated StartStopState
-  const auto outdatedStartStopState = Optional<StartStopState>{};
+  const auto outdatedStartStopState =
+    Optional<StartStopState>{StartStopState{false, microseconds{0}}};
   controller.setSessionState(
     IncomingSessionState{expectedTimeline, outdatedStartStopState, clock.micros()});
   sessionState = controller.sessionState();
@@ -273,7 +275,8 @@ TEST_CASE("Controller | SetAndGetSessionStateRealtimeSafe", "[Controller]")
   expectSessionStateEquals(expectedSessionState, sessionState);
 
   // Set session state with an outdated StartStopState
-  const auto outdatedStartStopState = Optional<StartStopState>{};
+  const auto outdatedStartStopState =
+    Optional<StartStopState>{StartStopState{false, microseconds{0}}};
   controller.setSessionStateRtSafe(
     IncomingSessionState{expectedTimeline, outdatedStartStopState, clock.micros()});
   sessionState = controller.sessionStateRtSafe();
