@@ -229,11 +229,11 @@ private:
     }
   }
 
-  void handleTimelineFromClient(Timeline tl)
+  void handleTimelineFromClient(Timeline timeline)
   {
-    mSessions.resetTimeline(tl);
-    mPeers.setSessionTimeline(mSessionId, tl);
-    updateSessionTiming(std::move(tl), mGhostXForm);
+    mSessions.resetTimeline(timeline);
+    mPeers.setSessionTimeline(mSessionId, timeline);
+    updateSessionTiming(std::move(timeline), mGhostXForm);
   }
 
   void handleTimelineFromSession(SessionId id, Timeline timeline)
