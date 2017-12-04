@@ -50,17 +50,17 @@ struct SessionTimelineCallback
 
 const auto fooPeer =
   PeerState{{NodeId::random(), NodeId::random(),
-              Timeline{Tempo{60.}, Beats{1.}, std::chrono::microseconds{1234}}},
+              Timeline{Tempo{60.}, Beats{1.}, std::chrono::microseconds{1234}}, {}},
     {}};
 
 const auto barPeer =
   PeerState{{NodeId::random(), NodeId::random(),
-              Timeline{Tempo{120.}, Beats{10.}, std::chrono::microseconds{500}}},
+              Timeline{Tempo{120.}, Beats{10.}, std::chrono::microseconds{500}}, {}},
     {}};
 
 const auto bazPeer =
   PeerState{{NodeId::random(), NodeId::random(),
-              Timeline{Tempo{100.}, Beats{4.}, std::chrono::microseconds{100}}},
+              Timeline{Tempo{100.}, Beats{4.}, std::chrono::microseconds{100}}, {}},
     {}};
 
 const auto gateway1 = asio::ip::address::from_string("123.123.123.123");
