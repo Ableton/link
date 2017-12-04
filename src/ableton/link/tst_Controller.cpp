@@ -140,7 +140,7 @@ TEST_CASE("Controller | ConstructOptimistically", "[Controller]")
   CHECK(!controller.isEnabled());
   CHECK(!controller.isStartStopSyncEnabled());
   CHECK(0 == controller.numPeers());
-  const auto tl = controller.timeline();
+  const auto tl = controller.sessionState().timeline;
   CHECK(Tempo{100.0} == tl.tempo);
 }
 
@@ -148,12 +148,12 @@ TEST_CASE("Controller | ConstructWithInvalidTempo", "[Controller]")
 {
   MockController controllerLowTempo(Tempo{1.0}, [](std::size_t) {}, [](Tempo) {},
     MockClock{}, util::injectVal(MockIoContext{}));
-  const auto tlLow = controllerLowTempo.timeline();
+  const auto tlLow = controllerLowTempo.sessionState().timeline;
   CHECK(Tempo{20.0} == tlLow.tempo);
 
   MockController controllerHighTempo(Tempo{100000.0}, [](std::size_t) {}, [](Tempo) {},
     MockClock{}, util::injectVal(MockIoContext{}));
-  const auto tlHigh = controllerHighTempo.timeline();
+  const auto tlHigh = controllerHighTempo.sessionState().timeline;
   CHECK(Tempo{999.0} == tlHigh.tempo);
 }
 
@@ -177,6 +177,36 @@ TEST_CASE("Controller | EnableDisableStartStopSync", "[Controller]")
   CHECK(controller.isStartStopSyncEnabled());
   controller.enableStartStopSync(false);
   CHECK(!controller.isStartStopSyncEnabled());
+}
+
+TEST_CASE("Controller | SetAndGetSessionStateThreadSafe", "[Controller]")
+{
+  using namespace std::chrono;
+
+  MockController controller(Tempo{100.0}, [](std::size_t) {}, [](Tempo) {}, MockClock{},
+    util::injectVal(MockIoContext{}));
+
+  auto expectedTimeline = Timeline{Tempo{60.}, Beats{0.}, microseconds{0}};
+  auto expectedStartStopState = StartStopState{true, microseconds{1}};
+  auto expectedSessionState = SessionState{expectedTimeline, expectedStartStopState};
+  controller.setSessionState(expectedSessionState, microseconds{0});
+  auto sessionState = controller.sessionState();
+  CHECK(expectedSessionState == sessionState);
+
+  // Set session state with an outdated StartStopState
+  const auto outdatedStartStopState = StartStopState{false, microseconds{1}};
+  controller.setSessionState(
+    SessionState{expectedTimeline, outdatedStartStopState}, microseconds{0});
+  sessionState = controller.sessionState();
+  CHECK(expectedSessionState == sessionState);
+
+  // Set session state with a new StartStopState
+  expectedTimeline = Timeline{Tempo{80.}, Beats{1.}, microseconds{6}};
+  expectedStartStopState = StartStopState{false, microseconds{7}};
+  expectedSessionState = SessionState{expectedTimeline, expectedStartStopState};
+  controller.setSessionState(expectedSessionState, microseconds{0});
+  sessionState = controller.sessionState();
+  CHECK(expectedSessionState == sessionState);
 }
 
 } // namespace link

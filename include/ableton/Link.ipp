@@ -103,15 +103,14 @@ inline void Link::commitAudioSessionState(const Link::SessionState state)
 
 inline Link::SessionState Link::captureAppSessionState() const
 {
-  return Link::SessionState{
-    link::SessionState{mController.timeline(), link::StartStopState{}}, numPeers() > 0};
+  return Link::SessionState{mController.sessionState(), numPeers() > 0};
 }
 
 inline void Link::commitAppSessionState(const Link::SessionState state)
 {
   if (state.mOriginalSessionState != state.mSessionState)
   {
-    mController.setTimeline(state.mSessionState.timeline, mClock.micros());
+    mController.setSessionState(state.mSessionState, mClock.micros());
   }
 }
 
