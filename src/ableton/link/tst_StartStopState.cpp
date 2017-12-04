@@ -27,7 +27,8 @@ namespace link
 
 TEST_CASE("StartStopState | RoundtripByteStreamEncoding", "[StartStopState]")
 {
-  const auto originalState = StartStopState{true, std::chrono::microseconds{12345}};
+  const auto originalState =
+    StartStopState{true, Beats{1234.}, std::chrono::microseconds{5678}};
   std::vector<std::uint8_t> bytes(sizeInByteStream(originalState));
   const auto serializedEndIter = toNetworkByteStream(originalState, begin(bytes));
   const auto deserialized =

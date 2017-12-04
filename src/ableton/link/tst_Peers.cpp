@@ -61,7 +61,7 @@ struct SessionStartStopStateCallback
 const auto fooPeer =
   PeerState{{NodeId::random(), NodeId::random(),
               Timeline{Tempo{60.}, Beats{1.}, std::chrono::microseconds{1234}},
-              StartStopState{false, std::chrono::microseconds{2345}}},
+              StartStopState{false, Beats{0.}, std::chrono::microseconds{2345}}},
     {}};
 
 const auto barPeer =

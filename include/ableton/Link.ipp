@@ -29,8 +29,9 @@ namespace detail
 inline Link::SessionState toSessionState(
   const link::ClientState& state, const bool isConnected)
 {
+  const auto time = state.timeline.fromBeats(state.startStopState.beats);
   const auto startStopState =
-    link::ApiStartStopState{state.startStopState.isPlaying, state.startStopState.time};
+    link::ApiStartStopState{state.startStopState.isPlaying, time};
   return {{state.timeline, startStopState}, isConnected};
 }
 
@@ -43,8 +44,8 @@ inline link::IncomingClientState toIncomingClientState(const link::ApiState& sta
                           : link::OptionalTimeline{};
   const auto startStopState =
     originalState.startStopState != state.startStopState
-      ? link::OptionalStartStopState(
-          {state.startStopState.isPlaying, state.startStopState.time})
+      ? link::OptionalStartStopState{{state.startStopState.isPlaying,
+          state.timeline.toBeats(state.startStopState.time), timestamp}}
       : link::OptionalStartStopState{};
   return {timeline, startStopState, timestamp};
 }

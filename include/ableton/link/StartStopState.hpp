@@ -20,6 +20,7 @@
 #pragma once
 
 #include <ableton/discovery/NetworkByteStreamSerializable.hpp>
+#include <ableton/link/Beats.hpp>
 #include <chrono>
 #include <tuple>
 
@@ -37,19 +38,22 @@ struct StartStopState
   static const std::int32_t key = 'stst';
   static_assert(key == 0x73747374, "Unexpected byte order");
 
-  using StartStopStateTuple = std::tuple<bool, std::chrono::microseconds>;
+  using StartStopStateTuple = std::tuple<bool, Beats, std::chrono::microseconds>;
 
   StartStopState() = default;
 
-  StartStopState(const bool aIsPlaying, const std::chrono::microseconds aTime)
+  StartStopState(
+    const bool aIsPlaying, const Beats aBeats, const std::chrono::microseconds aTimestamp)
     : isPlaying(aIsPlaying)
-    , time(aTime)
+    , beats(aBeats)
+    , timestamp(aTimestamp)
   {
   }
 
   friend bool operator==(const StartStopState& lhs, const StartStopState& rhs)
   {
-    return std::tie(lhs.isPlaying, lhs.time) == std::tie(rhs.isPlaying, rhs.time);
+    return std::tie(lhs.isPlaying, lhs.beats, lhs.timestamp)
+           == std::tie(rhs.isPlaying, rhs.beats, rhs.timestamp);
   }
 
   friend bool operator!=(const StartStopState& lhs, const StartStopState& rhs)
@@ -76,17 +80,19 @@ struct StartStopState
     using namespace discovery;
     auto result =
       Deserialize<StartStopStateTuple>::fromNetworkByteStream(move(begin), move(end));
-    const auto state = StartStopState{get<0>(result.first), get<1>(result.first)};
+    auto state =
+      StartStopState{get<0>(result.first), get<1>(result.first), get<2>(result.first)};
     return make_pair(move(state), move(result.second));
   }
 
   bool isPlaying{false};
-  std::chrono::microseconds time{0};
+  Beats beats{0.};
+  std::chrono::microseconds timestamp{0};
 
 private:
   StartStopStateTuple asTuple() const
   {
-    return std::make_tuple(isPlaying, time);
+    return std::make_tuple(isPlaying, beats, timestamp);
   }
 };
 
