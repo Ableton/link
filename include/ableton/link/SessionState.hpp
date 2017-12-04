@@ -70,5 +70,11 @@ struct IncomingClientState
   std::chrono::microseconds timestamp;
 };
 
+struct ApiState
+{
+  Timeline timeline;
+  ApiStartStopState startStopState;
+};
+
 } // namespace link
 } // namespace ableton

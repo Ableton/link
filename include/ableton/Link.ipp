@@ -23,6 +23,33 @@
 
 namespace ableton
 {
+namespace detail
+{
+
+inline Link::SessionState toSessionState(
+  const link::ClientState& state, const bool isConnected)
+{
+  const auto startStopState =
+    link::ApiStartStopState{state.startStopState.isPlaying, state.startStopState.time};
+  return {{state.timeline, startStopState}, isConnected};
+}
+
+inline link::IncomingClientState toIncomingClientState(const link::ApiState& state,
+  const link::ApiState& originalState,
+  const std::chrono::microseconds timestamp)
+{
+  const auto timeline = originalState.timeline != state.timeline
+                          ? link::OptionalTimeline{state.timeline}
+                          : link::OptionalTimeline{};
+  const auto startStopState =
+    originalState.startStopState != state.startStopState
+      ? link::OptionalStartStopState(
+          {state.startStopState.isPlaying, state.startStopState.time})
+      : link::OptionalStartStopState{};
+  return {timeline, startStopState, timestamp};
+}
+
+} // namespace detail
 
 inline Link::Link(const double bpm)
   : mPeerCountCallback([](std::size_t) {})
@@ -100,48 +127,30 @@ inline Link::Clock Link::clock() const
 
 inline Link::SessionState Link::captureAudioSessionState() const
 {
-  return Link::SessionState{mController.clientStateRtSafe(), numPeers() > 0};
+  return detail::toSessionState(mController.clientStateRtSafe(), numPeers() > 0);
 }
 
 inline void Link::commitAudioSessionState(const Link::SessionState state)
 {
-  if (state.mOriginalState != state.mState)
-  {
-    const auto timeline = state.mOriginalState.timeline != state.mState.timeline
-                            ? link::OptionalTimeline{state.mState.timeline}
-                            : link::OptionalTimeline{};
-    const auto startStopState =
-      state.mOriginalState.startStopState != state.mState.startStopState
-        ? link::OptionalStartStopState{state.mState.startStopState}
-        : link::OptionalStartStopState{};
-    mController.setClientStateRtSafe({timeline, startStopState, mClock.micros()});
-  }
+  mController.setClientStateRtSafe(
+    detail::toIncomingClientState(state.mState, state.mOriginalState, mClock.micros()));
 }
 
 inline Link::SessionState Link::captureAppSessionState() const
 {
-  return Link::SessionState{mController.clientState(), numPeers() > 0};
+  return detail::toSessionState(mController.clientState(), numPeers() > 0);
 }
 
 inline void Link::commitAppSessionState(const Link::SessionState state)
 {
-  if (state.mOriginalState != state.mState)
-  {
-    const auto timeline = state.mOriginalState.timeline != state.mState.timeline
-                            ? link::OptionalTimeline{state.mState.timeline}
-                            : link::OptionalTimeline{};
-    const auto startStopState =
-      state.mOriginalState.startStopState != state.mState.startStopState
-        ? link::OptionalStartStopState{state.mState.startStopState}
-        : link::OptionalStartStopState{};
-    mController.setClientState({timeline, startStopState, mClock.micros()});
-  }
+  mController.setClientState(
+    detail::toIncomingClientState(state.mState, state.mOriginalState, mClock.micros()));
 }
 
 // Link::SessionState
 
 inline Link::SessionState::SessionState(
-  const link::ClientState state, const bool bRespectQuantum)
+  const link::ApiState state, const bool bRespectQuantum)
   : mOriginalState(state)
   , mState(state)
   , mbRespectQuantum(bRespectQuantum)
