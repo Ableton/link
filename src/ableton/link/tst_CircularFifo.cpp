@@ -79,38 +79,5 @@ TEST_CASE("CircularFifo | IsEmpty", "[CircularFifo]")
   CHECK(cf.isEmpty());
 }
 
-TEST_CASE("CircularFifo | PopLast", "[CircularFifo]")
-{
-  CircularFifo<int, 5> cf;
-
-  auto result = cf.clearAndPopLast();
-  CHECK(!result);
-
-  for (int i = 0; i < 4; ++i)
-  {
-    CHECK(cf.push(i));
-  }
-
-  result = cf.clearAndPopLast();
-  CHECK(result);
-  CHECK(*result == 3);
-
-  result = cf.clearAndPopLast();
-  CHECK(!result);
-
-  // once more with wrap
-  for (int i = 0; i < 5; ++i)
-  {
-    CHECK(cf.push(i));
-  }
-
-  result = cf.clearAndPopLast();
-  CHECK(result);
-  CHECK(*result == 4);
-
-  result = cf.clearAndPopLast();
-  CHECK(!result);
-}
-
 } // namespace link
 } // namespace ableton
