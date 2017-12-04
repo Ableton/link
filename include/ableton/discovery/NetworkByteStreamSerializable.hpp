@@ -395,8 +395,7 @@ struct Deserialize<std::tuple<X, Y, Z>>
     auto xres = Deserialize<X>::fromNetworkByteStream(begin, end);
     auto yres = Deserialize<Y>::fromNetworkByteStream(xres.second, end);
     auto zres = Deserialize<Z>::fromNetworkByteStream(yres.second, end);
-    return make_pair(
-      std::tuple<X, Y, Z>{move(xres.first), move(yres.first), move(zres.first)},
+    return make_pair(make_tuple(move(xres.first), move(yres.first), move(zres.first)),
       move(zres.second));
   }
 };
