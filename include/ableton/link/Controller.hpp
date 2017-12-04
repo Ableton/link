@@ -50,20 +50,23 @@ template <typename Clock>
 inline SessionState initSessionState(const Tempo tempo, const Clock& clock)
 {
   using namespace std::chrono;
-  return {clampTempo(Timeline{tempo, Beats{0.}, microseconds{0}}), StartStopState{},
-    initXForm(clock)};
+  return {clampTempo(Timeline{tempo, Beats{0.}, microseconds{0}}),
+    StartStopState{false, microseconds{0}}, initXForm(clock)};
 }
 
 inline ClientState initClientState(const SessionState& sessionState)
 {
   const auto hostTime = sessionState.ghostXForm.ghostToHost(std::chrono::microseconds{0});
-  return {Timeline{sessionState.timeline.tempo, Beats{0.}, hostTime}, StartStopState{}};
+  return {
+    Timeline{sessionState.timeline.tempo, sessionState.timeline.beatOrigin, hostTime},
+    StartStopState{sessionState.startStopState.isPlaying, hostTime}};
 }
 
 inline RtClientState initRtClientState(const ClientState& clientState)
 {
   using namespace std::chrono;
-  return {clientState.timeline, StartStopState{}, microseconds{0}, microseconds{0}};
+  return {
+    clientState.timeline, clientState.startStopState, microseconds{0}, microseconds{0}};
 }
 
 // The timespan in which local modifications to the timeline will be
