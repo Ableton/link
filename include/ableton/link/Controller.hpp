@@ -46,6 +46,14 @@ GhostXForm initXForm(const Clock& clock)
   return {1.0, -clock.micros()};
 }
 
+template <typename Clock>
+inline SessionState initSessionState(const Tempo tempo, const Clock& clock)
+{
+  using namespace std::chrono;
+  return {clampTempo(Timeline{tempo, Beats{0.}, microseconds{0}}), StartStopState{},
+    initXForm(clock)};
+}
+
 // The timespan in which local modifications to the timeline will be
 // preferred over any modifications coming from the network.
 const auto kLocalModGracePeriod = std::chrono::milliseconds(1000);
@@ -86,15 +94,13 @@ public:
     , mClock(std::move(clock))
     , mNodeId(NodeId::random())
     , mSessionId(mNodeId)
-    , mGhostXForm(detail::initXForm(mClock))
-    , mSessionTimeline(clampTempo({tempo, Beats{0.}, std::chrono::microseconds{0}}))
-    , mClientTimeline({mSessionTimeline.tempo, Beats{0.},
-        mGhostXForm.ghostToHost(std::chrono::microseconds{0})})
+    , mSessionState(detail::initSessionState(tempo, mClock))
+    , mClientTimeline({mSessionState.timeline.tempo, Beats{0.},
+        mSessionState.ghostXForm.ghostToHost(std::chrono::microseconds{0})})
     , mClientStartStopState()
     , mLastIsPlayingForStartStopStateCallback(false)
     , mRtClientTimeline(mClientTimeline)
     , mRtClientTimelineTimestamp(0)
-    , mSessionStartStopState()
     , mRtClientStartStopState()
     , mRtClientStartStopStateTimestamp(0)
     , mSessionPeerCounter(*this, std::move(peerCallback))
@@ -106,15 +112,16 @@ public:
         std::ref(mSessionPeerCounter),
         SessionTimelineCallback{*this},
         SessionStartStopStateCallback{*this})
-    , mSessions({mSessionId, mSessionTimeline, {mGhostXForm, mClock.micros()}},
+    , mSessions(
+        {mSessionId, mSessionState.timeline, {mSessionState.ghostXForm, mClock.micros()}},
         util::injectRef(mPeers),
         MeasurePeer{*this},
         JoinSessionCallback{*this},
         util::injectRef(*mIo),
         mClock)
-    , mDiscovery(
-        std::make_pair(NodeState{mNodeId, mSessionId, mSessionTimeline, StartStopState{}},
-          mGhostXForm),
+    , mDiscovery(std::make_pair(NodeState{mNodeId, mSessionId, mSessionState.timeline,
+                                  mSessionState.startStopState},
+                   mSessionState.ghostXForm),
         GatewayFactory{*this},
         util::injectVal(mIo->clone(UdpSendExceptionHandler{*this})))
   {
@@ -199,7 +206,7 @@ public:
   // concurrently and must not be called concurrently with setClientStateRtSafe.
   ClientState clientStateRtSafe() const
   {
-    // Respect the session timing guard and the client session state guard but don't
+    // Respect the session state guard and the client session state guard but don't
     // block on them. If we can't access one or both because of concurrent modification
     // we fall back to our cached version of the timeline and/or start stop state.
 
@@ -208,12 +215,12 @@ public:
       const auto now = mClock.micros();
       if (now - mRtClientTimelineTimestamp > detail::kLocalModGracePeriod)
       {
-        if (mSessionTimingGuard.try_lock())
+        if (mSessionStateGuard.try_lock())
         {
           const auto clientTimeline = updateClientTimelineFromSession(
-            mRtClientTimeline, mSessionTimeline, now, mGhostXForm);
+            mRtClientTimeline, mSessionState.timeline, now, mSessionState.ghostXForm);
 
-          mSessionTimingGuard.unlock();
+          mSessionStateGuard.unlock();
 
           if (clientTimeline != mRtClientTimeline)
           {
@@ -302,29 +309,30 @@ private:
   void updateDiscovery()
   {
     // Push the change to the discovery service
-    mDiscovery.updateNodeState(std::make_pair(
-      NodeState{mNodeId, mSessionId, mSessionTimeline, mSessionStartStopState},
-      mGhostXForm));
+    mDiscovery.updateNodeState(
+      std::make_pair(NodeState{mNodeId, mSessionId, mSessionState.timeline,
+                       mSessionState.startStopState},
+        mSessionState.ghostXForm));
   }
 
   void updateSessionTiming(const Timeline newTimeline, const GhostXForm newXForm)
   {
-    const auto oldTimeline = mSessionTimeline;
-    const auto oldXForm = mGhostXForm;
+    const auto oldTimeline = mSessionState.timeline;
+    const auto oldXForm = mSessionState.ghostXForm;
 
     if (oldTimeline != newTimeline || oldXForm != newXForm)
     {
       {
-        std::lock_guard<std::mutex> lock(mSessionTimingGuard);
-        mSessionTimeline = newTimeline;
-        mGhostXForm = newXForm;
+        std::lock_guard<std::mutex> lock(mSessionStateGuard);
+        mSessionState.timeline = newTimeline;
+        mSessionState.ghostXForm = newXForm;
       }
 
       // Update the client timeline based on the new session timing data
       {
         std::lock_guard<std::mutex> lock(mClientSessionStateGuard);
-        mClientTimeline = updateClientTimelineFromSession(
-          mClientTimeline, mSessionTimeline, mClock.micros(), mGhostXForm);
+        mClientTimeline = updateClientTimelineFromSession(mClientTimeline,
+          mSessionState.timeline, mClock.micros(), mSessionState.ghostXForm);
       }
 
       if (oldTimeline.tempo != newTimeline.tempo)
@@ -338,14 +346,14 @@ private:
   {
     debug(mIo->log()) << "Received timeline with tempo: " << timeline.tempo.bpm()
                       << " for session: " << id;
-    updateSessionTiming(
-      mSessions.sawSessionTimeline(std::move(id), std::move(timeline)), mGhostXForm);
+    updateSessionTiming(mSessions.sawSessionTimeline(std::move(id), std::move(timeline)),
+      mSessionState.ghostXForm);
     updateDiscovery();
   }
 
   void resetSessionStartStopState()
   {
-    mSessionStartStopState = StartStopState{};
+    mSessionState.startStopState = StartStopState{};
   }
 
   void handleStartStopStateFromSession(SessionId sessionId, StartStopState startStopState)
@@ -354,9 +362,10 @@ private:
                       << startStopState.isPlaying
                       << ", time: " << startStopState.time.count()
                       << " for session: " << sessionId;
-    if (sessionId == mSessionId && startStopState.time > mSessionStartStopState.time)
+    if (sessionId == mSessionId
+        && startStopState.time > mSessionState.startStopState.time)
     {
-      mSessionStartStopState = startStopState;
+      mSessionState.startStopState = startStopState;
 
       // Always propagate the session start stop state so even a client that doesn't have
       // the feature enabled can function as a relay.
@@ -366,8 +375,8 @@ private:
       {
         {
           std::lock_guard<std::mutex> lock(mClientSessionStateGuard);
-          mClientStartStopState = StartStopState{
-            startStopState.isPlaying, mGhostXForm.ghostToHost(startStopState.time)};
+          mClientStartStopState = StartStopState{startStopState.isPlaying,
+            mSessionState.ghostXForm.ghostToHost(startStopState.time)};
         }
         invokeStartStopStateCallbackIfChanged();
       }
@@ -380,12 +389,12 @@ private:
 
     if (clientState.timeline)
     {
-      auto sessionTimeline = updateSessionTimelineFromClient(
-        mSessionTimeline, *clientState.timeline, clientState.timestamp, mGhostXForm);
+      auto sessionTimeline = updateSessionTimelineFromClient(mSessionState.timeline,
+        *clientState.timeline, clientState.timestamp, mSessionState.ghostXForm);
 
       mSessions.resetTimeline(sessionTimeline);
       mPeers.setSessionTimeline(mSessionId, sessionTimeline);
-      updateSessionTiming(std::move(sessionTimeline), mGhostXForm);
+      updateSessionTiming(std::move(sessionTimeline), mSessionState.ghostXForm);
 
       mustUpdateDiscovery = true;
     }
@@ -393,10 +402,11 @@ private:
     if (mStartStopSyncEnabled && clientState.startStopState)
     {
       // Prevent updating with an outdated start stop state
-      const auto newGhostTime = mGhostXForm.hostToGhost(clientState.startStopState->time);
-      if (newGhostTime > mSessionStartStopState.time)
+      const auto newGhostTime =
+        mSessionState.ghostXForm.hostToGhost(clientState.startStopState->time);
+      if (newGhostTime > mSessionState.startStopState.time)
       {
-        mSessionStartStopState =
+        mSessionState.startStopState =
           StartStopState{clientState.startStopState->isPlaying, newGhostTime};
         {
           std::lock_guard<std::mutex> lock(mClientSessionStateGuard);
@@ -468,8 +478,8 @@ private:
     // the beat on the old session timeline corresponding to the
     // current host time and mapping it to the new ghost time
     // representation of the current host time.
-    const auto newTl = Timeline{mSessionTimeline.tempo,
-      mSessionTimeline.toBeats(mGhostXForm.hostToGhost(hostTime)),
+    const auto newTl = Timeline{mSessionState.timeline.tempo,
+      mSessionState.timeline.toBeats(mSessionState.ghostXForm.hostToGhost(hostTime)),
       xform.hostToGhost(hostTime)};
 
     resetSessionStartStopState();
@@ -674,10 +684,8 @@ private:
   NodeId mNodeId;
   SessionId mSessionId;
 
-  // Mutex that controls access to mGhostXForm and mSessionTimeline
-  mutable std::mutex mSessionTimingGuard;
-  GhostXForm mGhostXForm;
-  Timeline mSessionTimeline;
+  mutable std::mutex mSessionStateGuard;
+  SessionState mSessionState;
 
   mutable std::mutex mClientSessionStateGuard;
   Timeline mClientTimeline;
@@ -686,8 +694,6 @@ private:
 
   mutable Timeline mRtClientTimeline;
   std::chrono::microseconds mRtClientTimelineTimestamp;
-
-  StartStopState mSessionStartStopState;
 
   mutable StartStopState mRtClientStartStopState;
   std::chrono::microseconds mRtClientStartStopStateTimestamp;
