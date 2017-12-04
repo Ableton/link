@@ -34,10 +34,17 @@ namespace
 
 struct MockClock
 {
+  void advance()
+  {
+    time += microseconds{1};
+  }
+
   microseconds micros() const
   {
-    return microseconds{1};
+    return time;
   }
+
+  microseconds time{1};
 };
 
 struct MockIoContext
@@ -212,15 +219,17 @@ TEST_CASE("Controller | SetAndGetSessionStateThreadSafe", "[Controller]")
 {
   using namespace std::chrono;
 
+  auto clock = MockClock{};
   MockController controller(Tempo{100.0}, [](std::size_t) {}, [](Tempo) {}, [](bool) {},
-    MockClock{}, util::injectVal(MockIoContext{}));
+    clock, util::injectVal(MockIoContext{}));
 
+  clock.advance();
   auto expectedTimeline =
     Optional<Timeline>{Timeline{Tempo{60.}, Beats{0.}, microseconds{0}}};
   auto expectedStartStopState =
-    Optional<StartStopState>{StartStopState{true, microseconds{1}}};
+    Optional<StartStopState>{StartStopState{true, clock.micros()}};
   auto expectedSessionState =
-    IncomingSessionState{expectedTimeline, expectedStartStopState, microseconds{0}};
+    IncomingSessionState{expectedTimeline, expectedStartStopState, clock.micros()};
   controller.setSessionState(expectedSessionState);
   auto sessionState = controller.sessionState();
   expectSessionStateEquals(expectedSessionState, sessionState);
@@ -228,16 +237,17 @@ TEST_CASE("Controller | SetAndGetSessionStateThreadSafe", "[Controller]")
   // Set session state with an outdated StartStopState
   const auto outdatedStartStopState = Optional<StartStopState>{};
   controller.setSessionState(
-    IncomingSessionState{expectedTimeline, outdatedStartStopState, microseconds{0}});
+    IncomingSessionState{expectedTimeline, outdatedStartStopState, clock.micros()});
   sessionState = controller.sessionState();
   expectSessionStateEquals(expectedSessionState, sessionState);
 
   // Set session state with a new StartStopState
+  clock.advance();
   expectedTimeline = Optional<Timeline>{Timeline{Tempo{80.}, Beats{1.}, microseconds{6}}};
   expectedStartStopState =
-    Optional<StartStopState>{StartStopState{false, microseconds{7}}};
+    Optional<StartStopState>{StartStopState{false, clock.micros()}};
   expectedSessionState =
-    IncomingSessionState{expectedTimeline, expectedStartStopState, microseconds{0}};
+    IncomingSessionState{expectedTimeline, expectedStartStopState, clock.micros()};
   controller.setSessionState(expectedSessionState);
   sessionState = controller.sessionState();
   expectSessionStateEquals(expectedSessionState, sessionState);
@@ -247,15 +257,17 @@ TEST_CASE("Controller | SetAndGetSessionStateRealtimeSafe", "[Controller]")
 {
   using namespace std::chrono;
 
+  auto clock = MockClock{};
   MockController controller(Tempo{100.0}, [](std::size_t) {}, [](Tempo) {}, [](bool) {},
-    MockClock{}, util::injectVal(MockIoContext{}));
+    clock, util::injectVal(MockIoContext{}));
 
+  clock.advance();
   auto expectedTimeline =
     Optional<Timeline>{Timeline{Tempo{110.}, Beats{0.}, microseconds{0}}};
   auto expectedStartStopState =
-    Optional<StartStopState>{StartStopState{true, microseconds{1}}};
+    Optional<StartStopState>{StartStopState{true, clock.micros()}};
   auto expectedSessionState =
-    IncomingSessionState{expectedTimeline, expectedStartStopState, microseconds{0}};
+    IncomingSessionState{expectedTimeline, expectedStartStopState, clock.micros()};
   controller.setSessionStateRtSafe(expectedSessionState);
   auto sessionState = controller.sessionState();
   expectSessionStateEquals(expectedSessionState, sessionState);
@@ -263,17 +275,18 @@ TEST_CASE("Controller | SetAndGetSessionStateRealtimeSafe", "[Controller]")
   // Set session state with an outdated StartStopState
   const auto outdatedStartStopState = Optional<StartStopState>{};
   controller.setSessionStateRtSafe(
-    IncomingSessionState{expectedTimeline, outdatedStartStopState, microseconds{0}});
+    IncomingSessionState{expectedTimeline, outdatedStartStopState, clock.micros()});
   sessionState = controller.sessionStateRtSafe();
   expectSessionStateEquals(expectedSessionState, sessionState);
 
   // Set session state with a new StartStopState
+  clock.advance();
   expectedTimeline =
     Optional<Timeline>{Timeline{Tempo{90.}, Beats{1.4}, microseconds{5}}};
   expectedStartStopState =
-    Optional<StartStopState>{StartStopState{false, microseconds{6}}};
+    Optional<StartStopState>{StartStopState{false, clock.micros()}};
   expectedSessionState =
-    IncomingSessionState{expectedTimeline, expectedStartStopState, microseconds{0}};
+    IncomingSessionState{expectedTimeline, expectedStartStopState, clock.micros()};
   controller.setSessionStateRtSafe(expectedSessionState);
   sessionState = controller.sessionStateRtSafe();
   expectSessionStateEquals(expectedSessionState, sessionState);
@@ -283,27 +296,30 @@ TEST_CASE("Controller | CallbacksCalledBySettingSessionStateThreadSafe", "[Contr
 {
   using namespace std::chrono;
 
+  auto clock = MockClock{};
   auto tempoCallback = TempoClientCallback{};
   auto startStopStateCallback = StartStopStateClientCallback{};
   MockController controller(Tempo{100.0}, [](std::size_t) {}, std::ref(tempoCallback),
-    std::ref(startStopStateCallback), MockClock{}, util::injectVal(MockIoContext{}));
+    std::ref(startStopStateCallback), clock, util::injectVal(MockIoContext{}));
 
+  clock.advance();
   const auto expectedTempo = Tempo{50.};
   auto timeline = Optional<Timeline>{Timeline{expectedTempo, Beats{0.}, microseconds{0}}};
   const auto expectedIsPlaying = true;
   auto startStopState =
-    Optional<StartStopState>{StartStopState{expectedIsPlaying, microseconds{1}}};
-  controller.setSessionState({timeline, startStopState, microseconds{0}});
+    Optional<StartStopState>{StartStopState{expectedIsPlaying, clock.micros()}};
+  controller.setSessionState({timeline, startStopState, clock.micros()});
   CHECK(std::vector<Tempo>{expectedTempo} == tempoCallback.tempos);
   CHECK(std::vector<bool>{expectedIsPlaying} == startStopStateCallback.startStopStates);
 
   // Callbacks mustn't be called if Tempo and isPlaying don't change
+  clock.advance();
   tempoCallback.tempos = {};
   startStopStateCallback.startStopStates = {};
   timeline = Optional<Timeline>{Timeline{expectedTempo, Beats{1.}, microseconds{2}}};
   startStopState =
-    Optional<StartStopState>{StartStopState{expectedIsPlaying, microseconds{2}}};
-  controller.setSessionState({timeline, startStopState, microseconds{3}});
+    Optional<StartStopState>{StartStopState{expectedIsPlaying, clock.micros()}};
+  controller.setSessionState({timeline, startStopState, clock.micros()});
   CHECK(tempoCallback.tempos.empty());
   CHECK(startStopStateCallback.startStopStates.empty());
 }
@@ -312,27 +328,30 @@ TEST_CASE("Controller | CallbacksCalledBySettingSessionStateRealtimeSafe", "[Con
 {
   using namespace std::chrono;
 
+  auto clock = MockClock{};
   auto tempoCallback = TempoClientCallback{};
   auto startStopStateCallback = StartStopStateClientCallback{};
   MockController controller(Tempo{100.0}, [](std::size_t) {}, std::ref(tempoCallback),
-    std::ref(startStopStateCallback), MockClock{}, util::injectVal(MockIoContext{}));
+    std::ref(startStopStateCallback), clock, util::injectVal(MockIoContext{}));
 
+  clock.advance();
   const auto expectedTempo = Tempo{130.};
   auto timeline = Optional<Timeline>{Timeline{expectedTempo, Beats{0.}, microseconds{0}}};
   const auto expectedIsPlaying = true;
   auto startStopState =
-    Optional<StartStopState>{StartStopState{expectedIsPlaying, microseconds{1}}};
-  controller.setSessionStateRtSafe({timeline, startStopState, microseconds{0}});
+    Optional<StartStopState>{StartStopState{expectedIsPlaying, clock.micros()}};
+  controller.setSessionStateRtSafe({timeline, startStopState, clock.micros()});
   CHECK(std::vector<Tempo>{expectedTempo} == tempoCallback.tempos);
   CHECK(std::vector<bool>{expectedIsPlaying} == startStopStateCallback.startStopStates);
 
   // Callbacks mustn't be called if Tempo and isPlaying don't change
+  clock.advance();
   tempoCallback.tempos = {};
   startStopStateCallback.startStopStates = {};
   timeline = Optional<Timeline>{Timeline{expectedTempo, Beats{1.}, microseconds{2}}};
   startStopState =
-    Optional<StartStopState>{StartStopState{expectedIsPlaying, microseconds{2}}};
-  controller.setSessionStateRtSafe({timeline, startStopState, microseconds{3}});
+    Optional<StartStopState>{StartStopState{expectedIsPlaying, clock.micros()}};
+  controller.setSessionStateRtSafe({timeline, startStopState, clock.micros()});
   CHECK(tempoCallback.tempos.empty());
   CHECK(startStopStateCallback.startStopStates.empty());
 }
