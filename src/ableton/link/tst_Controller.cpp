@@ -254,11 +254,13 @@ TEST_CASE("Controller | SetAndGetClientStateThreadSafe", "[Controller]")
     expectClientStateEquals(initialClientState, controller.clientState());
   }
 
+  clock.advance();
+
   SECTION("Set outdated start stop state (timestamp in past)")
   {
-    clock.advance();
     const auto outdatedStartStopState =
       Optional<StartStopState>{StartStopState{false, kAnyBeatTime, microseconds{0}}};
+
     controller.setClientState(
       IncomingClientState{Optional<Timeline>{}, outdatedStartStopState, clock.micros()});
     expectClientStateEquals(initialClientState, controller.clientState());
@@ -266,7 +268,6 @@ TEST_CASE("Controller | SetAndGetClientStateThreadSafe", "[Controller]")
 
   SECTION("Set empty client state")
   {
-    clock.advance();
     controller.setClientState(IncomingClientState{
       Optional<Timeline>{}, Optional<StartStopState>{}, clock.micros()});
     expectClientStateEquals(initialClientState, controller.clientState());
@@ -274,8 +275,6 @@ TEST_CASE("Controller | SetAndGetClientStateThreadSafe", "[Controller]")
 
   SECTION("Set client state with new Timeline and StartStopState")
   {
-    clock.advance();
-
     const auto expectedTimeline =
       Optional<Timeline>{Timeline{Tempo{80.}, Beats{1.}, kAnyTime}};
     const auto expectedStartStopState =
