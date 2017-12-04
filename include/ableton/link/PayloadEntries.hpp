@@ -64,7 +64,7 @@ struct HostTime
   std::chrono::microseconds time;
 };
 
-struct GHostTime : HostTime
+struct GHostTime
 {
   static const std::int32_t key = '__gt';
   static_assert(key == 0x5f5f6774, "Unexpected byte order");
