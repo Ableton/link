@@ -52,6 +52,16 @@ inline void Link::enable(const bool bEnable)
   mController.enable(bEnable);
 }
 
+inline bool Link::isStartStopSyncEnabled() const
+{
+  return mController.isStartStopSyncEnabled();
+}
+
+inline void Link::enableStartStopSync(bool bEnable)
+{
+  mController.enableStartStopSync(bEnable);
+}
+
 inline std::size_t Link::numPeers() const
 {
   return mController.numPeers();

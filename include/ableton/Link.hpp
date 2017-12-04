@@ -85,6 +85,18 @@ public:
    */
   void enable(bool bEnable);
 
+  /*! @brief: Is start/stop synchronization enabled?
+   *  Thread-safe: yes
+   *  Realtime-safe: no
+   */
+  bool isStartStopSyncEnabled() const;
+
+  /*! @brief: Enable start/stop synchronization.
+   *  Thread-safe: yes
+   *  Realtime-safe: no
+   */
+  void enableStartStopSync(bool bEnable);
+
   /*! @brief How many peers are currently connected in a Link session?
    *  Thread-safe: yes
    *  Realtime-safe: yes

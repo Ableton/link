@@ -98,6 +98,7 @@ public:
     , mRtClientTimelineTimestamp(0)
     , mSessionPeerCounter(*this, std::move(peerCallback))
     , mEnabled(false)
+    , mStartStopSyncEnabled(false)
     , mIo(std::move(io))
     , mRtTimelineSetter(*this)
     , mPeers(util::injectRef(*mIo),
@@ -144,6 +145,16 @@ public:
   bool isEnabled() const
   {
     return mEnabled;
+  }
+
+  void enableStartStopSync(const bool bEnable)
+  {
+    mStartStopSyncEnabled = bEnable;
+  }
+
+  bool isStartStopSyncEnabled() const
+  {
+    return mStartStopSyncEnabled;
   }
 
   std::size_t numPeers() const
@@ -506,6 +517,8 @@ private:
   SessionPeerCounter mSessionPeerCounter;
 
   std::atomic<bool> mEnabled;
+
+  std::atomic<bool> mStartStopSyncEnabled;
 
   util::Injected<IoContext> mIo;
 
