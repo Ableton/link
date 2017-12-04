@@ -337,7 +337,7 @@ private:
 
       if (result.valid)
       {
-        auto timeline = std::move(result.item);
+        const auto timeline = std::move(result.item);
         mController.mIo->async([this, timeline]() {
           mController.handleRtTimeline(timeline.first, timeline.second);
           mHasPendingTimelines = false;
