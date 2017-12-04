@@ -235,29 +235,29 @@ struct Deserialize<int64_t>
   }
 };
 
-// overloads for std::chrono durations
-template <typename Rep, typename Ratio>
-std::uint32_t sizeInByteStream(const std::chrono::duration<Rep, Ratio> dur)
+// std::chrono::microseconds
+inline std::uint32_t sizeInByteStream(const std::chrono::microseconds micros)
 {
-  return sizeInByteStream(dur.count());
+  return sizeInByteStream(micros.count());
 }
 
-template <typename Rep, typename Ratio, typename It>
-It toNetworkByteStream(const std::chrono::duration<Rep, Ratio> dur, It out)
+template <typename It>
+It toNetworkByteStream(const std::chrono::microseconds micros, It out)
 {
-  return toNetworkByteStream(dur.count(), std::move(out));
+  static_assert(sizeof(int64_t) == sizeof(std::chrono::microseconds::rep),
+    "The size of microseconds::rep must matche the size of int64_t.");
+  return toNetworkByteStream(static_cast<int64_t>(micros.count()), std::move(out));
 }
 
-template <typename Rep, typename Ratio>
-struct Deserialize<std::chrono::duration<Rep, Ratio>>
+template <>
+struct Deserialize<std::chrono::microseconds>
 {
   template <typename It>
-  static std::pair<std::chrono::duration<Rep, Ratio>, It> fromNetworkByteStream(
-    It begin, It end)
+  static std::pair<std::chrono::microseconds, It> fromNetworkByteStream(It begin, It end)
   {
     using namespace std;
-    auto result = Deserialize<Rep>::fromNetworkByteStream(move(begin), move(end));
-    return make_pair(std::chrono::duration<Rep, Ratio>{result.first}, result.second);
+    auto result = Deserialize<int64_t>::fromNetworkByteStream(move(begin), move(end));
+    return make_pair(chrono::microseconds{result.first}, result.second);
   }
 };
 
