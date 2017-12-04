@@ -642,8 +642,6 @@ private:
 
   StartStopState mSessionStartStopState;
 
-  mutable std::mutex mClientStartStopStateGuard;
-
   mutable StartStopState mRtClientStartStopState;
 
   SessionPeerCounter mSessionPeerCounter;
