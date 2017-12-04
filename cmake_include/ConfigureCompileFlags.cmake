@@ -36,7 +36,6 @@ if(UNIX)
       "-Wno-missing-prototypes"
       "-Wno-padded"
       "-Wno-reserved-id-macro"
-      "-Wno-undefined-reinterpret-cast"
       "-Wno-unknown-warning-option"
       "-Wno-unused-macros"
       "-Wno-unused-member-function"

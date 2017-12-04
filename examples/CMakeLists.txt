@@ -103,6 +103,19 @@ function(configure_linkhut_executable target)
   target_link_libraries(${target} Ableton::Link)
 endfunction()
 
+function(configure_qlinkhut_executable target)
+  configure_linkhut_executable(${target})
+  target_link_libraries(${target} Qt5::Quick)
+
+  if(${CMAKE_CXX_COMPILER_ID} MATCHES Clang)
+    target_compile_options(${target} PRIVATE "-Wno-undefined-reinterpret-cast")
+  endif()
+
+  if(MSVC_VERSION VERSION_GREATER 1900)
+    target_compile_options(${target} PRIVATE "/wd4946")
+  endif()
+endfunction()
+
 function(configure_linkhut_audio_sources target)
   if(APPLE)
     target_link_libraries(${target} "-framework AudioUnit")
@@ -228,13 +241,8 @@ if(LINK_BUILD_QT_EXAMPLES)
     ${UI_RESOURCES}
   )
 
-  if(MSVC_VERSION VERSION_GREATER 1900)
-    target_compile_options(QLinkHut PRIVATE "/wd4946")
-  endif()
-
-  target_link_libraries(QLinkHut Qt5::Quick)
   configure_linkhut_audio_sources(QLinkHut)
-  configure_linkhut_executable(QLinkHut)
+  configure_qlinkhut_executable(QLinkHut)
 
   # A silent version of QLinkHut that uses the Link application context instead of
   # the audio buffer context. It is the same as QLinkHut except that it doesn't
@@ -247,12 +255,6 @@ if(LINK_BUILD_QT_EXAMPLES)
     ${UI_RESOURCES}
   )
 
-  if(MSVC_VERSION VERSION_GREATER 1900)
-    target_compile_options(QLinkHutSilent PRIVATE "/wd4946")
-  endif()
-
-  target_link_libraries(QLinkHutSilent Qt5::Quick)
-
   target_compile_definitions(QLinkHutSilent PRIVATE
     -DLINKHUT_AUDIO_PLATFORM_DUMMY=1
   )
@@ -263,5 +265,5 @@ if(LINK_BUILD_QT_EXAMPLES)
     )
   endif()
 
-  configure_linkhut_executable(QLinkHutSilent)
+  configure_qlinkhut_executable(QLinkHutSilent)
 endif()
