@@ -85,7 +85,8 @@ public:
     , mRtTimelineSetter(*this)
     , mPeers(util::injectRef(*mIo),
         std::ref(mSessionPeerCounter),
-        SessionTimelineCallback{*this})
+        SessionTimelineCallback{*this},
+        [](SessionId, StartStopState) {})
     , mSessions({mSessionId, mSessionTimeline, {mGhostXForm, mClock.micros()}},
         util::injectRef(mPeers),
         MeasurePeer{*this},
@@ -425,8 +426,12 @@ private:
 
   using IoType = typename util::Injected<IoContext>::type;
 
-  using ControllerPeers =
-    Peers<IoType&, std::reference_wrapper<SessionPeerCounter>, SessionTimelineCallback>;
+  using SessionStartStopStateCallback = std::function<void(SessionId, StartStopState)>;
+
+  using ControllerPeers = Peers<IoType&,
+    std::reference_wrapper<SessionPeerCounter>,
+    SessionTimelineCallback,
+    SessionStartStopStateCallback>;
 
   using ControllerGateway =
     Gateway<typename ControllerPeers::GatewayObserver, Clock, IoType&>;
