@@ -51,7 +51,7 @@ inline SessionState initSessionState(const Tempo tempo, const Clock& clock)
 {
   using namespace std::chrono;
   return {clampTempo(Timeline{tempo, Beats{0.}, microseconds{0}}),
-    StartStopState{false, microseconds{0}}, initXForm(clock)};
+    StartStopState{false, Beats{0.}, microseconds{0}}, initXForm(clock)};
 }
 
 inline ClientState initClientState(const SessionState& sessionState)
@@ -59,7 +59,8 @@ inline ClientState initClientState(const SessionState& sessionState)
   const auto hostTime = sessionState.ghostXForm.ghostToHost(std::chrono::microseconds{0});
   return {
     Timeline{sessionState.timeline.tempo, sessionState.timeline.beatOrigin, hostTime},
-    StartStopState{sessionState.startStopState.isPlaying, hostTime}};
+    StartStopState{sessionState.startStopState.isPlaying,
+      sessionState.startStopState.beats, hostTime}};
 }
 
 inline RtClientState initRtClientState(const ClientState& clientState)
@@ -77,8 +78,33 @@ const auto kRtHandlerFallbackPeriod = kLocalModGracePeriod / 2;
 inline StartStopState selectPreferredStartStopState(
   const StartStopState currentStartStopState, const StartStopState startStopState)
 {
-  return startStopState.time > currentStartStopState.time ? startStopState
-                                                          : currentStartStopState;
+  return startStopState.timestamp > currentStartStopState.timestamp
+           ? startStopState
+           : currentStartStopState;
+}
+
+inline StartStopState mapStartStopStateFromSessionToClient(
+  const StartStopState& sessionStartStopState,
+  const Timeline& clientTimeline,
+  const Timeline& sessionTimeline,
+  const GhostXForm& xForm)
+{
+  const auto clientBeats = clientTimeline.toBeats(
+    xForm.ghostToHost(sessionTimeline.fromBeats(sessionStartStopState.beats)));
+  const auto clientTime = xForm.ghostToHost(sessionStartStopState.timestamp);
+  return StartStopState{sessionStartStopState.isPlaying, clientBeats, clientTime};
+}
+
+inline StartStopState mapStartStopStateFromClientToSession(
+  const StartStopState& clientStartStopState,
+  const Timeline& clientTimeline,
+  const Timeline& sessionTimeline,
+  const GhostXForm& xForm)
+{
+  const auto sessionBeats = sessionTimeline.toBeats(
+    xForm.hostToGhost(clientTimeline.fromBeats(clientStartStopState.beats)));
+  const auto sessionTime = xForm.hostToGhost(clientStartStopState.timestamp);
+  return StartStopState{clientStartStopState.isPlaying, sessionBeats, sessionTime};
 }
 
 } // namespace detail
@@ -371,10 +397,11 @@ private:
   {
     debug(mIo->log()) << "Received start stop state. isPlaying: "
                       << startStopState.isPlaying
-                      << ", time: " << startStopState.time.count()
+                      << ", beats: " << startStopState.beats.floating()
+                      << ", time: " << startStopState.timestamp.count()
                       << " for session: " << sessionId;
     if (sessionId == mSessionId
-        && startStopState.time > mSessionState.startStopState.time)
+        && startStopState.timestamp > mSessionState.startStopState.timestamp)
     {
       mSessionState.startStopState = startStopState;
 
@@ -386,8 +413,9 @@ private:
       {
         {
           std::lock_guard<std::mutex> lock(mClientStateGuard);
-          mClientState.startStopState = StartStopState{startStopState.isPlaying,
-            mSessionState.ghostXForm.ghostToHost(startStopState.time)};
+          mClientState.startStopState =
+            detail::mapStartStopStateFromSessionToClient(startStopState,
+              mClientState.timeline, mSessionState.timeline, mSessionState.ghostXForm);
         }
         invokeStartStopStateCallbackIfChanged();
       }
@@ -414,13 +442,14 @@ private:
     {
       // Prevent updating with an outdated start stop state
       const auto newGhostTime =
-        mSessionState.ghostXForm.hostToGhost(clientState.startStopState->time);
-      if (newGhostTime > mSessionState.startStopState.time)
+        mSessionState.ghostXForm.hostToGhost(clientState.startStopState->timestamp);
+      if (newGhostTime > mSessionState.startStopState.timestamp)
       {
-        mSessionState.startStopState =
-          StartStopState{clientState.startStopState->isPlaying, newGhostTime};
         {
           std::lock_guard<std::mutex> lock(mClientStateGuard);
+          mSessionState.startStopState =
+            detail::mapStartStopStateFromClientToSession(*clientState.startStopState,
+              mClientState.timeline, mSessionState.timeline, mSessionState.ghostXForm);
           mClientState.startStopState = *clientState.startStopState;
         }
 
