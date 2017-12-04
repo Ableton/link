@@ -110,6 +110,7 @@ function(configure_qlinkhut_executable target)
   if(${CMAKE_CXX_COMPILER_ID} MATCHES Clang)
     target_compile_options(${target} PRIVATE
       "-Wno-global-constructors"
+      "-Wno-missing-prototypes"
       "-Wno-undefined-reinterpret-cast"
       )
   endif()

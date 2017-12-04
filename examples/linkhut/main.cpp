@@ -28,6 +28,9 @@
 #include <termios.h>
 #endif
 
+namespace
+{
+
 struct State
 {
   std::atomic<bool> running;
@@ -156,6 +159,8 @@ void input(State& state)
 
   input(state);
 }
+
+} // anon namespace
 
 int main(int, char**)
 {

@@ -31,7 +31,6 @@ if(UNIX)
       "-Wno-deprecated"
       "-Wno-disabled-macro-expansion"
       "-Wno-exit-time-destructors"
-      "-Wno-missing-prototypes"
       "-Wno-padded"
       "-Wno-reserved-id-macro"
       "-Wno-unknown-warning-option"
