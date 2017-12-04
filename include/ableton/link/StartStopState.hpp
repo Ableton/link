@@ -90,5 +90,28 @@ private:
   }
 };
 
+struct ApiStartStopState
+{
+  ApiStartStopState() = default;
+
+  ApiStartStopState(const bool aIsPlaying, const std::chrono::microseconds aTime)
+    : isPlaying(aIsPlaying)
+    , time(aTime)
+  {
+  }
+
+  friend bool operator==(const ApiStartStopState& lhs, const ApiStartStopState& rhs)
+  {
+    return std::tie(lhs.isPlaying, lhs.time) == std::tie(rhs.isPlaying, rhs.time);
+  }
+
+  friend bool operator!=(const ApiStartStopState& lhs, const ApiStartStopState& rhs)
+  {
+    return !(lhs == rhs);
+  }
+
+  bool isPlaying{false};
+  std::chrono::microseconds time{0};
+};
 } // namespace link
 } // namespace ableton
