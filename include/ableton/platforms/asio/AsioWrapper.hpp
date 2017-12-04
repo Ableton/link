@@ -42,6 +42,9 @@
 #if __has_warning("-Wcomma")
 #pragma clang diagnostic ignored "-Wcomma"
 #endif
+#if __has_warning("-Wunused-local-typedef")
+#pragma clang diagnostic ignored "-Wunused-local-typedef"
+#endif
 #endif
 
 #if defined(_MSC_VER)
