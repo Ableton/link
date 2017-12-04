@@ -62,6 +62,18 @@ struct MockIoContext
     }
   };
 
+  template <std::size_t BufferSize>
+  Socket<BufferSize> openUnicastSocket(const asio::ip::address_v4&)
+  {
+    return {};
+  }
+
+  template <std::size_t BufferSize>
+  Socket<BufferSize> openMulticastSocket(const asio::ip::address_v4&)
+  {
+    return {};
+  }
+
   std::vector<asio::ip::address> scanNetworkInterfaces()
   {
     return {};
@@ -126,6 +138,7 @@ TEST_CASE("Controller | ConstructOptimistically", "[Controller]")
     util::injectVal(MockIoContext{}));
 
   CHECK(!controller.isEnabled());
+  CHECK(!controller.isStartStopSyncEnabled());
   CHECK(0 == controller.numPeers());
   const auto tl = controller.timeline();
   CHECK(Tempo{100.0} == tl.tempo);
@@ -142,6 +155,28 @@ TEST_CASE("Controller | ConstructWithInvalidTempo", "[Controller]")
     MockClock{}, util::injectVal(MockIoContext{}));
   const auto tlHigh = controllerHighTempo.timeline();
   CHECK(Tempo{999.0} == tlHigh.tempo);
+}
+
+TEST_CASE("Controller | EnableDisable", "[Controller]")
+{
+  MockController controller(Tempo{100.0}, [](std::size_t) {}, [](Tempo) {}, MockClock{},
+    util::injectVal(MockIoContext{}));
+
+  controller.enable(true);
+  CHECK(controller.isEnabled());
+  controller.enable(false);
+  CHECK(!controller.isEnabled());
+}
+
+TEST_CASE("Controller | EnableDisableStartStopSync", "[Controller]")
+{
+  MockController controller(Tempo{100.0}, [](std::size_t) {}, [](Tempo) {}, MockClock{},
+    util::injectVal(MockIoContext{}));
+
+  controller.enableStartStopSync(true);
+  CHECK(controller.isStartStopSyncEnabled());
+  controller.enableStartStopSync(false);
+  CHECK(!controller.isStartStopSyncEnabled());
 }
 
 } // namespace link
