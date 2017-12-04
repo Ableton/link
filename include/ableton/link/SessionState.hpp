@@ -55,6 +55,14 @@ struct ClientState
   StartStopState startStopState;
 };
 
+struct RtClientState
+{
+  Timeline timeline;
+  StartStopState startStopState;
+  std::chrono::microseconds timelineTimestamp;
+  std::chrono::microseconds startStopStateTimestamp;
+};
+
 struct IncomingClientState
 {
   OptionalTimeline timeline;

@@ -60,6 +60,12 @@ inline ClientState initClientState(const SessionState& sessionState)
   return {Timeline{sessionState.timeline.tempo, Beats{0.}, hostTime}, StartStopState{}};
 }
 
+inline RtClientState initRtClientState(const ClientState& clientState)
+{
+  using namespace std::chrono;
+  return {clientState.timeline, StartStopState{}, microseconds{0}, microseconds{0}};
+}
+
 // The timespan in which local modifications to the timeline will be
 // preferred over any modifications coming from the network.
 const auto kLocalModGracePeriod = std::chrono::milliseconds(1000);
@@ -103,10 +109,7 @@ public:
     , mSessionState(detail::initSessionState(tempo, mClock))
     , mClientState(detail::initClientState(mSessionState))
     , mLastIsPlayingForStartStopStateCallback(false)
-    , mRtClientTimeline(mClientState.timeline)
-    , mRtClientTimelineTimestamp(0)
-    , mRtClientStartStopState()
-    , mRtClientStartStopStateTimestamp(0)
+    , mRtClientState(detail::initRtClientState(mClientState))
     , mSessionPeerCounter(*this, std::move(peerCallback))
     , mEnabled(false)
     , mStartStopSyncEnabled(false)
@@ -217,23 +220,24 @@ public:
     if (!mRtClientStateSetter.hasPendingClientStates())
     {
       const auto now = mClock.micros();
-      if (now - mRtClientTimelineTimestamp > detail::kLocalModGracePeriod)
+      if (now - mRtClientState.timelineTimestamp > detail::kLocalModGracePeriod)
       {
         if (mSessionStateGuard.try_lock())
         {
-          const auto clientTimeline = updateClientTimelineFromSession(
-            mRtClientTimeline, mSessionState.timeline, now, mSessionState.ghostXForm);
+          const auto clientTimeline =
+            updateClientTimelineFromSession(mRtClientState.timeline,
+              mSessionState.timeline, now, mSessionState.ghostXForm);
 
           mSessionStateGuard.unlock();
 
-          if (clientTimeline != mRtClientTimeline)
+          if (clientTimeline != mRtClientState.timeline)
           {
-            mRtClientTimeline = clientTimeline;
+            mRtClientState.timeline = clientTimeline;
           }
         }
       }
 
-      if (now - mRtClientStartStopStateTimestamp > detail::kLocalModGracePeriod)
+      if (now - mRtClientState.startStopStateTimestamp > detail::kLocalModGracePeriod)
       {
         if (mClientStateGuard.try_lock())
         {
@@ -241,15 +245,15 @@ public:
 
           mClientStateGuard.unlock();
 
-          if (startStopState != mRtClientStartStopState)
+          if (startStopState != mRtClientState.startStopState)
           {
-            mRtClientStartStopState = startStopState;
+            mRtClientState.startStopState = startStopState;
           }
         }
       }
     }
 
-    return {mRtClientTimeline, mRtClientStartStopState};
+    return {mRtClientState.timeline, mRtClientState.startStopState};
   }
 
   // should only be called from the audio thread
@@ -264,7 +268,7 @@ public:
     {
       // Prevent updating client start stop state with an outdated start stop state
       *newClientState.startStopState = detail::selectPreferredStartStopState(
-        mRtClientStartStopState, *newClientState.startStopState);
+        mRtClientState.startStopState, *newClientState.startStopState);
     }
 
     // This will fail in case the Fifo in the RtClientStateSetter is full. This indicates
@@ -277,13 +281,13 @@ public:
       if (newClientState.timeline)
       {
         // Cache the new timeline and StartStopState for serving back to the client
-        mRtClientTimeline = *newClientState.timeline;
-        mRtClientTimelineTimestamp = makeRtTimestamp(now);
+        mRtClientState.timeline = *newClientState.timeline;
+        mRtClientState.timelineTimestamp = makeRtTimestamp(now);
       }
       if (newClientState.startStopState)
       {
-        mRtClientStartStopState = *newClientState.startStopState;
-        mRtClientStartStopStateTimestamp = makeRtTimestamp(now);
+        mRtClientState.startStopState = *newClientState.startStopState;
+        mRtClientState.startStopStateTimestamp = makeRtTimestamp(now);
       }
     }
   }
@@ -695,11 +699,7 @@ private:
   ClientState mClientState;
   bool mLastIsPlayingForStartStopStateCallback;
 
-  mutable Timeline mRtClientTimeline;
-  std::chrono::microseconds mRtClientTimelineTimestamp;
-
-  mutable StartStopState mRtClientStartStopState;
-  std::chrono::microseconds mRtClientStartStopStateTimestamp;
+  mutable RtClientState mRtClientState;
 
   SessionPeerCounter mSessionPeerCounter;
 
