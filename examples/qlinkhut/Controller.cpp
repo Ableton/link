@@ -46,7 +46,6 @@ void Controller::setIsPlaying(bool isPlaying)
   {
     mAudioPlatform.mEngine.stopPlaying();
   }
-  Q_EMIT onIsPlayingChanged();
 }
 
 bool Controller::isPlaying()
@@ -89,6 +88,17 @@ void Controller::setLinkEnabled(const bool isEnabled)
 bool Controller::isLinkEnabled()
 {
   return mLink.isEnabled();
+}
+
+void Controller::setStartStopSyncEnabled(const bool isEnabled)
+{
+  mAudioPlatform.mEngine.setStartStopSyncEnabled(isEnabled);
+  Q_EMIT onIsStartStopSyncEnabledChanged();
+}
+
+bool Controller::isStartStopSyncEnabled()
+{
+  return mAudioPlatform.mEngine.isStartStopSyncEnabled();
 }
 
 double Controller::beatTime()
