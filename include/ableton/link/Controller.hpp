@@ -27,6 +27,7 @@
 #include <ableton/link/NodeState.hpp>
 #include <ableton/link/Peers.hpp>
 #include <ableton/link/Sessions.hpp>
+#include <ableton/link/StartStopState.hpp>
 #include <mutex>
 
 namespace ableton
@@ -92,7 +93,8 @@ public:
         util::injectRef(*mIo),
         mClock)
     , mDiscovery(
-        std::make_pair(NodeState{mNodeId, mSessionId, mSessionTimeline}, mGhostXForm),
+        std::make_pair(NodeState{mNodeId, mSessionId, mSessionTimeline, StartStopState{}},
+          mGhostXForm),
         GatewayFactory{*this},
         util::injectVal(mIo->clone(UdpSendExceptionHandler{*this})))
   {
@@ -219,8 +221,8 @@ private:
       }
 
       // Push the change to the discovery service
-      mDiscovery.updateNodeState(
-        std::make_pair(NodeState{mNodeId, mSessionId, newTimeline}, newXForm));
+      mDiscovery.updateNodeState(std::make_pair(
+        NodeState{mNodeId, mSessionId, newTimeline, StartStopState{}}, newXForm));
 
       if (oldTimeline.tempo != newTimeline.tempo)
       {
