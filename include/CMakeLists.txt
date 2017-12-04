@@ -31,6 +31,7 @@ set(link_core_HEADERS
   ${link_core_DIR}/PingResponder.hpp
   ${link_core_DIR}/SessionId.hpp
   ${link_core_DIR}/Sessions.hpp
+  ${link_core_DIR}/StartStopState.hpp
   ${link_core_DIR}/Tempo.hpp
   ${link_core_DIR}/Timeline.hpp
   ${link_core_DIR}/v1/Messages.hpp
