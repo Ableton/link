@@ -48,9 +48,20 @@ struct SessionTimelineCallback
   std::vector<std::pair<SessionId, Timeline>> sessionTimelines;
 };
 
+struct SessionStartStopStateCallback
+{
+  void operator()(const SessionId& sessionId, const StartStopState& startStopState)
+  {
+    sessionStartStopStates.push_back(std::make_pair(sessionId, startStopState));
+  }
+
+  std::vector<std::pair<SessionId, StartStopState>> sessionStartStopStates;
+};
+
 const auto fooPeer =
   PeerState{{NodeId::random(), NodeId::random(),
-              Timeline{Tempo{60.}, Beats{1.}, std::chrono::microseconds{1234}}, {}},
+              Timeline{Tempo{60.}, Beats{1.}, std::chrono::microseconds{1234}},
+              StartStopState{false, std::chrono::microseconds{2345}}},
     {}};
 
 const auto barPeer =
@@ -68,7 +79,8 @@ const auto gateway2 = asio::ip::address::from_string("210.210.210.210");
 
 using PeerVector = std::vector<typename Peers<test::serial_io::Context,
   SessionMembershipCallback,
-  SessionTimelineCallback>::Peer>;
+  SessionTimelineCallback,
+  SessionStartStopStateCallback>::Peer>;
 
 void expectPeers(const PeerVector& expected, const PeerVector& actual)
 {
@@ -81,13 +93,20 @@ void expectSessionTimelines(const std::vector<std::pair<SessionId, Timeline>>& e
   CHECK(expected == callback.sessionTimelines);
 }
 
+void expectStartStopStates(
+  const std::vector<std::pair<SessionId, StartStopState>>& expected,
+  const SessionStartStopStateCallback& callback)
+{
+  CHECK(expected == callback.sessionStartStopStates);
+}
+
 } // anonymous namespace
 
 TEST_CASE("Peers | EmptySessionPeersAfterInit", "[Peers]")
 {
   test::serial_io::Fixture io;
   auto peers = makePeers(util::injectVal(io.makeIoContext()), SessionMembershipCallback{},
-    SessionTimelineCallback{});
+    SessionTimelineCallback{}, SessionStartStopStateCallback{});
   io.flush();
   expectPeers({}, peers.sessionPeers(fooPeer.sessionId()));
 }
@@ -97,8 +116,9 @@ TEST_CASE("Peers | AddAndFindPeer", "[Peers]")
   test::serial_io::Fixture io;
   auto membership = SessionMembershipCallback{};
   auto sessions = SessionTimelineCallback{};
-  auto peers = makePeers(
-    util::injectVal(io.makeIoContext()), std::ref(membership), std::ref(sessions));
+  auto startStops = SessionStartStopStateCallback{};
+  auto peers = makePeers(util::injectVal(io.makeIoContext()), std::ref(membership),
+    std::ref(sessions), std::ref(startStops));
   auto observer = makeGatewayObserver(peers, gateway1);
 
   sawPeer(observer, fooPeer);
@@ -107,14 +127,16 @@ TEST_CASE("Peers | AddAndFindPeer", "[Peers]")
   expectPeers({{fooPeer, gateway1}}, peers.sessionPeers(fooPeer.sessionId()));
   CHECK(1u == membership.calls);
   expectSessionTimelines({make_pair(fooPeer.sessionId(), fooPeer.timeline())}, sessions);
+  expectStartStopStates(
+    {make_pair(fooPeer.sessionId(), fooPeer.startStopState())}, startStops);
 }
 
 TEST_CASE("Peers | AddAndRemovePeer", "[Peers]")
 {
   test::serial_io::Fixture io;
   auto membership = SessionMembershipCallback{};
-  auto peers = makePeers(
-    util::injectVal(io.makeIoContext()), std::ref(membership), SessionTimelineCallback{});
+  auto peers = makePeers(util::injectVal(io.makeIoContext()), std::ref(membership),
+    SessionTimelineCallback{}, SessionStartStopStateCallback{});
   auto observer = makeGatewayObserver(peers, gateway1);
 
   sawPeer(observer, fooPeer);
@@ -130,8 +152,9 @@ TEST_CASE("Peers | AddTwoPeersRemoveOne", "[Peers]")
   test::serial_io::Fixture io;
   auto membership = SessionMembershipCallback{};
   auto sessions = SessionTimelineCallback{};
-  auto peers = makePeers(
-    util::injectVal(io.makeIoContext()), std::ref(membership), std::ref(sessions));
+  auto startStops = SessionStartStopStateCallback{};
+  auto peers = makePeers(util::injectVal(io.makeIoContext()), std::ref(membership),
+    std::ref(sessions), std::ref(startStops));
   auto observer = makeGatewayObserver(peers, gateway1);
 
   sawPeer(observer, fooPeer);
@@ -149,8 +172,9 @@ TEST_CASE("Peers | AddThreePeersTwoOnSameGateway", "[Peers]")
   test::serial_io::Fixture io;
   auto membership = SessionMembershipCallback{};
   auto sessions = SessionTimelineCallback{};
-  auto peers = makePeers(
-    util::injectVal(io.makeIoContext()), std::ref(membership), std::ref(sessions));
+  auto startStops = SessionStartStopStateCallback{};
+  auto peers = makePeers(util::injectVal(io.makeIoContext()), std::ref(membership),
+    std::ref(sessions), std::ref(startStops));
   auto observer1 = makeGatewayObserver(peers, gateway1);
   auto observer2 = makeGatewayObserver(peers, gateway2);
 
@@ -170,8 +194,9 @@ TEST_CASE("Peers | CloseGateway", "[Peers]")
   test::serial_io::Fixture io;
   auto membership = SessionMembershipCallback{};
   auto sessions = SessionTimelineCallback{};
-  auto peers = makePeers(
-    util::injectVal(io.makeIoContext()), std::ref(membership), std::ref(sessions));
+  auto startStops = SessionStartStopStateCallback{};
+  auto peers = makePeers(util::injectVal(io.makeIoContext()), std::ref(membership),
+    std::ref(sessions), std::ref(startStops));
   auto observer1 = makeGatewayObserver(peers, gateway1);
   {
     // The observer will close the gateway when it goes out of scope
