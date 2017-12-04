@@ -48,6 +48,15 @@ matrix:
           packages: ['clang-3.8', 'g++-5', 'valgrind', 'p7zip-full', 'portaudio19-dev', 'cmake', 'cmake-data']
       env: COMPILER=clang++-3.8 WORDSIZE=64 CONFIGURATION=Release AUDIO=Jack
 
+    # Linux with Clang 5.0, 64-bit Debug, Alsa
+    - os: linux
+      compiler: clang
+      addons:
+        apt:
+          sources: ['llvm-toolchain-trusty-5.0', 'ubuntu-toolchain-r-test']
+          packages: ['clang-5.0', 'g++-5', 'valgrind', 'p7zip-full', 'portaudio19-dev', 'cmake', 'cmake-data']
+      env: COMPILER=clang++-5.0 WORDSIZE=64 CONFIGURATION=Debug AUDIO=Alsa
+
     # Linux with GCC 5.x, 32-bit Release
 #    - os: linux
 #      compiler: gcc
