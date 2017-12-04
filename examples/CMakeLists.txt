@@ -108,7 +108,10 @@ function(configure_qlinkhut_executable target)
   target_link_libraries(${target} Qt5::Quick)
 
   if(${CMAKE_CXX_COMPILER_ID} MATCHES Clang)
-    target_compile_options(${target} PRIVATE "-Wno-undefined-reinterpret-cast")
+    target_compile_options(${target} PRIVATE
+      "-Wno-global-constructors"
+      "-Wno-undefined-reinterpret-cast"
+      )
   endif()
 
   if(MSVC_VERSION VERSION_GREATER 1900)
