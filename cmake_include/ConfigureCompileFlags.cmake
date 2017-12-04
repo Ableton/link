@@ -36,7 +36,6 @@ if(UNIX)
       "-Wno-padded"
       "-Wno-reserved-id-macro"
       "-Wno-unknown-warning-option"
-      "-Wno-unused-macros"
       "-Wno-unused-member-function"
       "-Wno-zero-as-null-pointer-constant"
     )

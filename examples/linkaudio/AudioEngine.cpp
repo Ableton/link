@@ -20,7 +20,9 @@
 #include "AudioEngine.hpp"
 
 // Make sure to define this before <cmath> is included for Windows
+#ifdef LINK_PLATFORM_WINDOWS
 #define _USE_MATH_DEFINES
+#endif
 #include <cmath>
 
 namespace ableton
