@@ -107,8 +107,15 @@ inline void Link::commitAudioSessionState(const Link::SessionState state)
 {
   if (state.mOriginalSessionState != state.mSessionState)
   {
-    mController.setSessionStateRtSafe({state.mSessionState.timeline,
-      state.mSessionState.startStopState, mClock.micros()});
+    const auto timeline =
+      state.mOriginalSessionState.timeline != state.mSessionState.timeline
+        ? link::OptionalTimeline{state.mSessionState.timeline}
+        : link::OptionalTimeline{};
+    const auto startStopState =
+      state.mOriginalSessionState.startStopState != state.mSessionState.startStopState
+        ? link::OptionalStartStopState{state.mSessionState.startStopState}
+        : link::OptionalStartStopState{};
+    mController.setSessionStateRtSafe({timeline, startStopState, mClock.micros()});
   }
 }
 
@@ -121,8 +128,15 @@ inline void Link::commitAppSessionState(const Link::SessionState state)
 {
   if (state.mOriginalSessionState != state.mSessionState)
   {
-    mController.setSessionState({state.mSessionState.timeline,
-      state.mSessionState.startStopState, mClock.micros()});
+    const auto timeline =
+      state.mOriginalSessionState.timeline != state.mSessionState.timeline
+        ? link::OptionalTimeline{state.mSessionState.timeline}
+        : link::OptionalTimeline{};
+    const auto startStopState =
+      state.mOriginalSessionState.startStopState != state.mSessionState.startStopState
+        ? link::OptionalStartStopState{state.mSessionState.startStopState}
+        : link::OptionalStartStopState{};
+    mController.setSessionState({timeline, startStopState, mClock.micros()});
   }
 }
 

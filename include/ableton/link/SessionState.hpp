@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include <ableton/link/Optional.hpp>
 #include <ableton/link/StartStopState.hpp>
 #include <ableton/link/Timeline.hpp>
 
@@ -26,6 +27,9 @@ namespace ableton
 {
 namespace link
 {
+
+using OptionalTimeline = Optional<Timeline>;
+using OptionalStartStopState = Optional<StartStopState>;
 
 struct SessionState
 {
@@ -46,8 +50,8 @@ struct SessionState
 
 struct IncomingSessionState
 {
-  Timeline timeline;
-  StartStopState startStopState;
+  OptionalTimeline timeline;
+  OptionalStartStopState startStopState;
   std::chrono::microseconds timestamp;
 };
 
