@@ -32,13 +32,20 @@ namespace ableton
 /*! @class Link
  *  @brief Class that represents a participant in a Link session.
  *
- *  @discussion Each Link instance has its own beat timeline that
- *  starts running from beat 0 at the initial tempo when
- *  constructed. A Link instance is initially disabled after
- *  construction, which means that it will not communicate on the
- *  network. Once enabled, a Link instance initiates network
- *  communication in an effort to discover other peers. When peers are
- *  discovered, they immediately become part of a shared Link session.
+ *  @discussion Each Link instance has its own session state which
+ *  represents a beat timeline and a transport start/stop state. The
+ *  timeline starts running from beat 0 at the initial tempo when
+ *  constructed. The timeline always advances at a speed defined by
+ *  its current tempo, even if transport is stopped. Synchronizing to the
+ *  transport start/stop state of Link is optional for every peer.
+ *  The transport start/stop state is only shared with other peers when
+ *  start/stop synchronization is enabled.
+ *
+ *  A Link instance is initially disabled after construction, which
+ *  means that it will not communicate on the network. Once enabled,
+ *  a Link instance initiates network communication in an effort to
+ *  discover other peers. When peers are discovered, they immediately
+ *  become part of a shared Link session.
  *
  *  Each method of the Link type documents its thread-safety and
  *  realtime-safety properties. When a method is marked thread-safe,
@@ -206,13 +213,25 @@ public:
   void commitAppSessionState(SessionState state);
 
   /*! @class SessionState
-   *  @brief Representation of a mapping between time and beats for
-   *  varying quanta.
+   *  @brief Representation of a timeline and the start/stop state
    *
-   *  @discussion A SessionState object is intended for use in a local
-   *  scope within a single thread - none of its methods are
-   *  thread-safe. All of its methods are non-blocking, so it is safe
-   *  to use from a realtime thread.
+   *  @discussion A SessionState object is intended for use in a local scope within
+   *  a single thread - none of its methods are thread-safe. All of its methods are
+   *  non-blocking, so it is safe to use from a realtime thread.
+   *  It provides functions to observe and manipulate the timeline and start/stop
+   *  state.
+   *
+   *  The timeline is a representation of a mapping between time and beats for varying
+   *  quanta.
+   *  The start/stop state represents the user intention to start or stop transport at
+   *  a specific time. Start stop synchronization is an optional feature that allows to
+   *  share the user request to start or stop transport between a subgroup of peers in
+   *  a Link session. When observing a change of start/stop state, audio playback of a
+   *  peer should be started or stopped the same way it would have happened if the user
+   *  had requested that change at the according time locally. The start/stop state can
+   *  only be changed by the user. This means that the current local start/stop state
+   *  persists when joining or leaving a Link session. After joining a Link session
+   *  start/stop change requests will be communicated to all connected peers.
    */
   class SessionState
   {
@@ -310,6 +329,29 @@ public:
      *  join.
      */
     void forceBeatAtTime(double beat, std::chrono::microseconds time, double quantum);
+
+    /*! @brief: Set if transport should be playing or stopped, taking effect
+     *  at the given time.
+     */
+    void setIsPlaying(bool isPlaying, std::chrono::microseconds time);
+
+    /*! @brief: Is transport playing? */
+    bool isPlaying() const;
+
+    /*! @brief: Get the time at which a transport start/stop occurs */
+    std::chrono::microseconds timeForIsPlaying() const;
+
+    /*! @brief: Convenience function to attempt to map the given beat to the time
+     *  when transport is starting to play in context of the given quantum.
+     *  This function evaluates to a no-op if isPlaying() equals false.
+     */
+    void requestBeatAtStartPlayingTime(double beat, double quantum);
+
+    /*! @brief: Convenience function to start or stop transport at a given time and
+     *  attempt to map the given beat to this time in context of the given quantum.
+     */
+    void setIsPlayingAndRequestBeatAtTime(
+      bool isPlaying, std::chrono::microseconds time, double beat, double quantum);
 
   private:
     friend Link;
