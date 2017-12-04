@@ -235,6 +235,30 @@ struct Deserialize<int64_t>
   }
 };
 
+// bool
+inline std::uint32_t sizeInByteStream(bool)
+{
+  return sizeof(uint8_t);
+}
+
+template <typename It>
+It toNetworkByteStream(bool bl, It out)
+{
+  return toNetworkByteStream(static_cast<uint8_t>(bl), std::move(out));
+}
+
+template <>
+struct Deserialize<bool>
+{
+  template <typename It>
+  static std::pair<bool, It> fromNetworkByteStream(It begin, It end)
+  {
+    auto result =
+      Deserialize<uint8_t>::fromNetworkByteStream(std::move(begin), std::move(end));
+    return std::make_pair(result.first != 0, result.second);
+  }
+};
+
 // std::chrono::microseconds
 inline std::uint32_t sizeInByteStream(const std::chrono::microseconds micros)
 {
