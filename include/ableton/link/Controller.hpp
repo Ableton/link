@@ -376,13 +376,17 @@ private:
 
     if (mStartStopSyncEnabled && sessionState.startStopState)
     {
-      // Prevent updating the session start stop state with an outdated start stop state
+      // Prevent updating with an outdated start stop state
       const auto newGhostTime =
         mGhostXForm.hostToGhost(sessionState.startStopState->time);
       if (newGhostTime > mSessionStartStopState.time)
       {
         mSessionStartStopState =
           StartStopState{sessionState.startStopState->isPlaying, newGhostTime};
+        {
+          std::lock_guard<std::mutex> lock(mClientSessionStateGuard);
+          mClientStartStopState = *sessionState.startStopState;
+        }
 
         mustUpdateDiscovery = true;
       }
