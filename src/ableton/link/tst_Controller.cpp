@@ -239,6 +239,51 @@ void testSetAndGetClientState(
   }
 }
 
+
+template <typename SetClientStateFunctionT>
+void testCallbackInvocation(SetClientStateFunctionT setClientState)
+{
+  using namespace std::chrono;
+
+  auto clock = MockClock{};
+  auto tempoCallback = TempoClientCallback{};
+  auto startStopStateCallback = StartStopStateClientCallback{};
+  MockController controller(Tempo{100.0}, [](std::size_t) {}, std::ref(tempoCallback),
+    std::ref(startStopStateCallback), clock, util::injectVal(MockIoContext{}));
+
+  clock.advance();
+
+  const auto initialTempo = Tempo{50.};
+  const auto initialIsPlaying = true;
+
+  const auto initialTimeline =
+    Optional<Timeline>{Timeline{initialTempo, Beats{0.}, kAnyTime}};
+  const auto initialStartStopState = Optional<StartStopState>{
+    StartStopState{initialIsPlaying, kAnyBeatTime, clock.micros()}};
+  setClientState(controller, {initialTimeline, initialStartStopState, clock.micros()});
+
+  SECTION("Callbacks are called when setting new client state")
+  {
+    CHECK(std::vector<Tempo>{initialTempo} == tempoCallback.tempos);
+    CHECK(std::vector<bool>{initialIsPlaying} == startStopStateCallback.startStopStates);
+
+    clock.advance();
+    tempoCallback.tempos = {};
+    startStopStateCallback.startStopStates = {};
+
+    SECTION("Callbacks mustn't be called if Tempo and isPlaying don't change")
+    {
+      const auto timeline =
+        Optional<Timeline>{Timeline{initialTempo, Beats{1.}, kAnyTime}};
+      const auto startStopState = Optional<StartStopState>{
+        StartStopState{initialIsPlaying, kAnyBeatTime, clock.micros()}};
+      setClientState(controller, {timeline, startStopState, clock.micros()});
+      CHECK(tempoCallback.tempos.empty());
+      CHECK(startStopStateCallback.startStopStates.empty());
+    }
+  }
+}
+
 } // anon namespace
 
 
@@ -309,45 +354,9 @@ TEST_CASE("Controller | SetAndGetClientStateRealtimeSafe", "[Controller]")
 
 TEST_CASE("Controller | CallbacksCalledBySettingClientStateThreadSafe", "[Controller]")
 {
-  using namespace std::chrono;
-
-  auto clock = MockClock{};
-  auto tempoCallback = TempoClientCallback{};
-  auto startStopStateCallback = StartStopStateClientCallback{};
-  MockController controller(Tempo{100.0}, [](std::size_t) {}, std::ref(tempoCallback),
-    std::ref(startStopStateCallback), clock, util::injectVal(MockIoContext{}));
-
-  clock.advance();
-
-  const auto initialTempo = Tempo{50.};
-  const auto initialIsPlaying = true;
-
-  const auto initialTimeline =
-    Optional<Timeline>{Timeline{initialTempo, Beats{0.}, kAnyTime}};
-  const auto initialStartStopState = Optional<StartStopState>{
-    StartStopState{initialIsPlaying, kAnyBeatTime, clock.micros()}};
-  controller.setClientState({initialTimeline, initialStartStopState, clock.micros()});
-
-  SECTION("Callbacks are called when setting new client state")
-  {
-    CHECK(std::vector<Tempo>{initialTempo} == tempoCallback.tempos);
-    CHECK(std::vector<bool>{initialIsPlaying} == startStopStateCallback.startStopStates);
-
-    clock.advance();
-    tempoCallback.tempos = {};
-    startStopStateCallback.startStopStates = {};
-
-    SECTION("Callbacks mustn't be called if Tempo and isPlaying don't change")
-    {
-      const auto timeline =
-        Optional<Timeline>{Timeline{initialTempo, Beats{1.}, kAnyTime}};
-      const auto startStopState = Optional<StartStopState>{
-        StartStopState{initialIsPlaying, kAnyBeatTime, clock.micros()}};
-      controller.setClientState({timeline, startStopState, clock.micros()});
-      CHECK(tempoCallback.tempos.empty());
-      CHECK(startStopStateCallback.startStopStates.empty());
-    }
-  }
+  testCallbackInvocation([](MockController& controller, IncomingClientState clientState) {
+    controller.setClientState(clientState);
+  });
 }
 
 TEST_CASE("Controller | CallbacksCalledBySettingClientStateRealtimeSafe", "[Controller]")
