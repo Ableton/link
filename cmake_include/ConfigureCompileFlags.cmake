@@ -28,7 +28,6 @@ if(UNIX)
       "-Werror"
       "-Wno-c++98-compat"
       "-Wno-c++98-compat-pedantic"
-      "-Wno-conversion"
       "-Wno-deprecated"
       "-Wno-disabled-macro-expansion"
       "-Wno-exit-time-destructors"

@@ -66,7 +66,7 @@ int AudioPlatform::audioCallback(jack_nframes_t nframes)
   {
     float* buffer = static_cast<float*>(jack_port_get_buffer(mpJackPorts[k], nframes));
     for (unsigned long i = 0; i < nframes; ++i)
-      buffer[i] = engine.mBuffer[i];
+      buffer[i] = static_cast<float>(engine.mBuffer[i]);
   }
 
   return 0;
