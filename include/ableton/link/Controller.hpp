@@ -91,6 +91,7 @@ public:
     , mClientTimeline({mSessionTimeline.tempo, Beats{0.},
         mGhostXForm.ghostToHost(std::chrono::microseconds{0})})
     , mClientStartStopState()
+    , mLastIsPlayingForStartStopStateCallback(false)
     , mRtClientTimeline(mClientTimeline)
     , mRtClientTimelineTimestamp(0)
     , mSessionStartStopState()
@@ -283,6 +284,22 @@ private:
     return isEnabled() ? now : std::chrono::microseconds(0);
   }
 
+  void invokeStartStopStateCallbackIfChanged()
+  {
+    bool shouldInvokeCallback = false;
+    {
+      std::lock_guard<std::mutex> lock(mClientSessionStateGuard);
+      shouldInvokeCallback =
+        mLastIsPlayingForStartStopStateCallback != mClientStartStopState.isPlaying;
+      mLastIsPlayingForStartStopStateCallback = mClientStartStopState.isPlaying;
+    }
+
+    if (shouldInvokeCallback)
+    {
+      mStartStopStateCallback(mLastIsPlayingForStartStopStateCallback);
+    }
+  }
+
   void updateDiscovery()
   {
     // Push the change to the discovery service
@@ -353,7 +370,7 @@ private:
           mClientStartStopState = StartStopState{
             startStopState.isPlaying, mGhostXForm.ghostToHost(startStopState.time)};
         }
-        mStartStopStateCallback(startStopState.isPlaying);
+        invokeStartStopStateCallbackIfChanged();
       }
     }
   }
@@ -397,10 +414,7 @@ private:
       updateDiscovery();
     }
 
-    if (sessionState.startStopState)
-    {
-      mStartStopStateCallback(sessionState.startStopState->isPlaying);
-    }
+    invokeStartStopStateCallbackIfChanged();
   }
 
   void handleRtSessionState(IncomingSessionState sessionState)
@@ -670,6 +684,7 @@ private:
   mutable std::mutex mClientSessionStateGuard;
   Timeline mClientTimeline;
   StartStopState mClientStartStopState;
+  bool mLastIsPlayingForStartStopStateCallback;
 
   mutable Timeline mRtClientTimeline;
   std::chrono::microseconds mRtClientTimelineTimestamp;

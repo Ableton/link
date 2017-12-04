@@ -289,14 +289,23 @@ TEST_CASE("Controller | CallbacksCalledBySettingSessionStateThreadSafe", "[Contr
     std::ref(startStopStateCallback), MockClock{}, util::injectVal(MockIoContext{}));
 
   const auto expectedTempo = Tempo{50.};
-  const auto timeline =
-    Optional<Timeline>{Timeline{expectedTempo, Beats{0.}, microseconds{0}}};
+  auto timeline = Optional<Timeline>{Timeline{expectedTempo, Beats{0.}, microseconds{0}}};
   const auto expectedIsPlaying = true;
-  const auto startStopState =
+  auto startStopState =
     Optional<StartStopState>{StartStopState{expectedIsPlaying, microseconds{1}}};
   controller.setSessionState({timeline, startStopState, microseconds{0}});
   CHECK(std::vector<Tempo>{expectedTempo} == tempoCallback.tempos);
   CHECK(std::vector<bool>{expectedIsPlaying} == startStopStateCallback.startStopStates);
+
+  // Callbacks mustn't be called if Tempo and isPlaying don't change
+  tempoCallback.tempos = {};
+  startStopStateCallback.startStopStates = {};
+  timeline = Optional<Timeline>{Timeline{expectedTempo, Beats{1.}, microseconds{2}}};
+  startStopState =
+    Optional<StartStopState>{StartStopState{expectedIsPlaying, microseconds{2}}};
+  controller.setSessionState({timeline, startStopState, microseconds{3}});
+  CHECK(tempoCallback.tempos.empty());
+  CHECK(startStopStateCallback.startStopStates.empty());
 }
 
 TEST_CASE("Controller | CallbacksCalledBySettingSessionStateRealtimeSafe", "[Controller]")
@@ -309,14 +318,23 @@ TEST_CASE("Controller | CallbacksCalledBySettingSessionStateRealtimeSafe", "[Con
     std::ref(startStopStateCallback), MockClock{}, util::injectVal(MockIoContext{}));
 
   const auto expectedTempo = Tempo{130.};
-  const auto timeline =
-    Optional<Timeline>{Timeline{expectedTempo, Beats{0.}, microseconds{0}}};
+  auto timeline = Optional<Timeline>{Timeline{expectedTempo, Beats{0.}, microseconds{0}}};
   const auto expectedIsPlaying = true;
-  const auto startStopState =
+  auto startStopState =
     Optional<StartStopState>{StartStopState{expectedIsPlaying, microseconds{1}}};
   controller.setSessionStateRtSafe({timeline, startStopState, microseconds{0}});
   CHECK(std::vector<Tempo>{expectedTempo} == tempoCallback.tempos);
   CHECK(std::vector<bool>{expectedIsPlaying} == startStopStateCallback.startStopStates);
+
+  // Callbacks mustn't be called if Tempo and isPlaying don't change
+  tempoCallback.tempos = {};
+  startStopStateCallback.startStopStates = {};
+  timeline = Optional<Timeline>{Timeline{expectedTempo, Beats{1.}, microseconds{2}}};
+  startStopState =
+    Optional<StartStopState>{StartStopState{expectedIsPlaying, microseconds{2}}};
+  controller.setSessionStateRtSafe({timeline, startStopState, microseconds{3}});
+  CHECK(tempoCallback.tempos.empty());
+  CHECK(startStopStateCallback.startStopStates.empty());
 }
 
 } // namespace link
