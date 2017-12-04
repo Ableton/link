@@ -209,5 +209,35 @@ TEST_CASE("Controller | SetAndGetSessionStateThreadSafe", "[Controller]")
   CHECK(expectedSessionState == sessionState);
 }
 
+TEST_CASE("Controller | SetAndGetSessionStateRealtimeSafe", "[Controller]")
+{
+  using namespace std::chrono;
+
+  MockController controller(Tempo{100.0}, [](std::size_t) {}, [](Tempo) {}, MockClock{},
+    util::injectVal(MockIoContext{}));
+
+  auto expectedTimeline = Timeline{Tempo{110.}, Beats{0.}, microseconds{0}};
+  auto expectedStartStopState = StartStopState{true, microseconds{1}};
+  auto expectedSessionState = SessionState{expectedTimeline, expectedStartStopState};
+  controller.setSessionStateRtSafe(expectedSessionState, microseconds{0});
+  auto sessionState = controller.sessionState();
+  CHECK(expectedSessionState == sessionState);
+
+  // Set session state with an outdated StartStopState
+  const auto outdatedStartStopState = StartStopState{false, microseconds{0}};
+  controller.setSessionStateRtSafe(
+    SessionState{expectedTimeline, outdatedStartStopState}, microseconds{0});
+  sessionState = controller.sessionStateRtSafe();
+  CHECK(expectedSessionState == sessionState);
+
+  // Set session state with a new StartStopState
+  expectedTimeline = Timeline{Tempo{90.}, Beats{1.4}, microseconds{5}};
+  expectedStartStopState = StartStopState{false, microseconds{6}};
+  expectedSessionState = SessionState{expectedTimeline, expectedStartStopState};
+  controller.setSessionStateRtSafe(expectedSessionState, microseconds{0});
+  sessionState = controller.sessionStateRtSafe();
+  CHECK(expectedSessionState == sessionState);
+}
+
 } // namespace link
 } // namespace ableton
