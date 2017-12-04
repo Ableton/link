@@ -105,15 +105,14 @@ inline Link::SessionState Link::captureAudioSessionState() const
 
 inline void Link::commitAudioSessionState(const Link::SessionState state)
 {
-  if (state.mOriginalSessionState != state.mSessionState)
+  if (state.mOriginalState != state.mState)
   {
-    const auto timeline =
-      state.mOriginalSessionState.timeline != state.mSessionState.timeline
-        ? link::OptionalTimeline{state.mSessionState.timeline}
-        : link::OptionalTimeline{};
+    const auto timeline = state.mOriginalState.timeline != state.mState.timeline
+                            ? link::OptionalTimeline{state.mState.timeline}
+                            : link::OptionalTimeline{};
     const auto startStopState =
-      state.mOriginalSessionState.startStopState != state.mSessionState.startStopState
-        ? link::OptionalStartStopState{state.mSessionState.startStopState}
+      state.mOriginalState.startStopState != state.mState.startStopState
+        ? link::OptionalStartStopState{state.mState.startStopState}
         : link::OptionalStartStopState{};
     mController.setSessionStateRtSafe({timeline, startStopState, mClock.micros()});
   }
@@ -126,15 +125,14 @@ inline Link::SessionState Link::captureAppSessionState() const
 
 inline void Link::commitAppSessionState(const Link::SessionState state)
 {
-  if (state.mOriginalSessionState != state.mSessionState)
+  if (state.mOriginalState != state.mState)
   {
-    const auto timeline =
-      state.mOriginalSessionState.timeline != state.mSessionState.timeline
-        ? link::OptionalTimeline{state.mSessionState.timeline}
-        : link::OptionalTimeline{};
+    const auto timeline = state.mOriginalState.timeline != state.mState.timeline
+                            ? link::OptionalTimeline{state.mState.timeline}
+                            : link::OptionalTimeline{};
     const auto startStopState =
-      state.mOriginalSessionState.startStopState != state.mSessionState.startStopState
-        ? link::OptionalStartStopState{state.mSessionState.startStopState}
+      state.mOriginalState.startStopState != state.mState.startStopState
+        ? link::OptionalStartStopState{state.mState.startStopState}
         : link::OptionalStartStopState{};
     mController.setSessionState({timeline, startStopState, mClock.micros()});
   }
@@ -143,32 +141,31 @@ inline void Link::commitAppSessionState(const Link::SessionState state)
 // Link::SessionState
 
 inline Link::SessionState::SessionState(
-  const link::SessionState sessionState, const bool bRespectQuantum)
-  : mOriginalSessionState(sessionState)
-  , mSessionState(sessionState)
+  const link::SessionState state, const bool bRespectQuantum)
+  : mOriginalState(state)
+  , mState(state)
   , mbRespectQuantum(bRespectQuantum)
 {
 }
 
 inline double Link::SessionState::tempo() const
 {
-  return mSessionState.timeline.tempo.bpm();
+  return mState.timeline.tempo.bpm();
 }
 
 inline void Link::SessionState::setTempo(
   const double bpm, const std::chrono::microseconds atTime)
 {
   const auto desiredTl = link::clampTempo(
-    link::Timeline{link::Tempo(bpm), mSessionState.timeline.toBeats(atTime), atTime});
-  mSessionState.timeline.tempo = desiredTl.tempo;
-  mSessionState.timeline.timeOrigin =
-    desiredTl.fromBeats(mSessionState.timeline.beatOrigin);
+    link::Timeline{link::Tempo(bpm), mState.timeline.toBeats(atTime), atTime});
+  mState.timeline.tempo = desiredTl.tempo;
+  mState.timeline.timeOrigin = desiredTl.fromBeats(mState.timeline.beatOrigin);
 }
 
 inline double Link::SessionState::beatAtTime(
   const std::chrono::microseconds time, const double quantum) const
 {
-  return link::toPhaseEncodedBeats(mSessionState.timeline, time, link::Beats{quantum})
+  return link::toPhaseEncodedBeats(mState.timeline, time, link::Beats{quantum})
     .floating();
 }
 
@@ -183,7 +180,7 @@ inline std::chrono::microseconds Link::SessionState::timeAtBeat(
   const double beat, const double quantum) const
 {
   return link::fromPhaseEncodedBeats(
-    mSessionState.timeline, link::Beats{beat}, link::Beats{quantum});
+    mState.timeline, link::Beats{beat}, link::Beats{quantum});
 }
 
 inline void Link::SessionState::requestBeatAtTime(
@@ -207,27 +204,26 @@ inline void Link::SessionState::forceBeatAtTime(
   const auto curBeatAtTime = link::Beats{beatAtTime(time, quantum)};
   const auto closestInPhase =
     link::closestPhaseMatch(curBeatAtTime, link::Beats{beat}, link::Beats{quantum});
-  mSessionState.timeline =
-    shiftClientTimeline(mSessionState.timeline, closestInPhase - curBeatAtTime);
+  mState.timeline = shiftClientTimeline(mState.timeline, closestInPhase - curBeatAtTime);
   // Now adjust the magnitude
-  mSessionState.timeline.beatOrigin =
-    mSessionState.timeline.beatOrigin + (link::Beats{beat} - closestInPhase);
+  mState.timeline.beatOrigin =
+    mState.timeline.beatOrigin + (link::Beats{beat} - closestInPhase);
 }
 
 inline void Link::SessionState::setIsPlaying(
   const bool isPlaying, const std::chrono::microseconds time)
 {
-  mSessionState.startStopState = {isPlaying, time};
+  mState.startStopState = {isPlaying, time};
 }
 
 inline bool Link::SessionState::isPlaying() const
 {
-  return mSessionState.startStopState.isPlaying;
+  return mState.startStopState.isPlaying;
 }
 
 inline std::chrono::microseconds Link::SessionState::timeForIsPlaying() const
 {
-  return mSessionState.startStopState.time;
+  return mState.startStopState.time;
 }
 
 inline void Link::SessionState::requestBeatAtStartPlayingTime(
@@ -235,14 +231,14 @@ inline void Link::SessionState::requestBeatAtStartPlayingTime(
 {
   if (isPlaying())
   {
-    requestBeatAtTime(beat, mSessionState.startStopState.time, quantum);
+    requestBeatAtTime(beat, mState.startStopState.time, quantum);
   }
 }
 
 inline void Link::SessionState::setIsPlayingAndRequestBeatAtTime(
   bool isPlaying, std::chrono::microseconds time, double beat, double quantum)
 {
-  mSessionState.startStopState = {isPlaying, time};
+  mState.startStopState = {isPlaying, time};
   requestBeatAtStartPlayingTime(beat, quantum);
 }
 
