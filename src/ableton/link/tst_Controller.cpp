@@ -142,6 +142,8 @@ using MockController = Controller<PeerCountCallback,
 
 const auto kAnyBeatTime = Beats{5.};
 
+const auto kAnyTime = std::chrono::microseconds{6};
+
 struct TempoClientCallback
 {
   void operator()(const Tempo bpm)
@@ -227,8 +229,7 @@ TEST_CASE("Controller | SetAndGetClientStateThreadSafe", "[Controller]")
     clock, util::injectVal(MockIoContext{}));
 
   clock.advance();
-  auto expectedTimeline =
-    Optional<Timeline>{Timeline{Tempo{60.}, Beats{0.}, microseconds{0}}};
+  auto expectedTimeline = Optional<Timeline>{Timeline{Tempo{60.}, Beats{0.}, kAnyTime}};
   auto expectedStartStopState =
     Optional<StartStopState>{StartStopState{true, kAnyBeatTime, clock.micros()}};
   auto expectedClientState =
@@ -277,8 +278,8 @@ TEST_CASE("Controller | SetAndGetClientStateThreadSafe", "[Controller]")
   SECTION("Set client state with new Timeline and StartStopState")
   {
     clock.advance();
-    expectedTimeline =
-      Optional<Timeline>{Timeline{Tempo{80.}, Beats{1.}, microseconds{6}}};
+
+    expectedTimeline = Optional<Timeline>{Timeline{Tempo{80.}, Beats{1.}, kAnyTime}};
     expectedStartStopState =
       Optional<StartStopState>{StartStopState{false, kAnyBeatTime, clock.micros()}};
     expectedClientState =
@@ -298,8 +299,7 @@ TEST_CASE("Controller | SetAndGetClientStateRealtimeSafe", "[Controller]")
     clock, util::injectVal(MockIoContext{}));
 
   clock.advance();
-  auto expectedTimeline =
-    Optional<Timeline>{Timeline{Tempo{110.}, Beats{0.}, microseconds{0}}};
+  auto expectedTimeline = Optional<Timeline>{Timeline{Tempo{110.}, Beats{0.}, kAnyTime}};
   auto expectedStartStopState =
     Optional<StartStopState>{StartStopState{true, kAnyBeatTime, clock.micros()}};
   auto expectedClientState =
@@ -335,8 +335,7 @@ TEST_CASE("Controller | SetAndGetClientStateRealtimeSafe", "[Controller]")
 
   // Set client state with a new StartStopState
   clock.advance();
-  expectedTimeline =
-    Optional<Timeline>{Timeline{Tempo{90.}, Beats{1.4}, microseconds{5}}};
+  expectedTimeline = Optional<Timeline>{Timeline{Tempo{90.}, Beats{1.4}, kAnyTime}};
   expectedStartStopState =
     Optional<StartStopState>{StartStopState{false, kAnyBeatTime, clock.micros()}};
   expectedClientState =
@@ -358,7 +357,7 @@ TEST_CASE("Controller | CallbacksCalledBySettingClientStateThreadSafe", "[Contro
 
   clock.advance();
   const auto expectedTempo = Tempo{50.};
-  auto timeline = Optional<Timeline>{Timeline{expectedTempo, Beats{0.}, microseconds{0}}};
+  auto timeline = Optional<Timeline>{Timeline{expectedTempo, Beats{0.}, kAnyTime}};
   const auto expectedIsPlaying = true;
   auto startStopState = Optional<StartStopState>{
     StartStopState{expectedIsPlaying, kAnyBeatTime, clock.micros()}};
@@ -370,7 +369,7 @@ TEST_CASE("Controller | CallbacksCalledBySettingClientStateThreadSafe", "[Contro
   clock.advance();
   tempoCallback.tempos = {};
   startStopStateCallback.startStopStates = {};
-  timeline = Optional<Timeline>{Timeline{expectedTempo, Beats{1.}, microseconds{2}}};
+  timeline = Optional<Timeline>{Timeline{expectedTempo, Beats{1.}, kAnyTime}};
   startStopState = Optional<StartStopState>{
     StartStopState{expectedIsPlaying, kAnyBeatTime, clock.micros()}};
   controller.setClientState({timeline, startStopState, clock.micros()});
@@ -390,7 +389,7 @@ TEST_CASE("Controller | CallbacksCalledBySettingClientStateRealtimeSafe", "[Cont
 
   clock.advance();
   const auto expectedTempo = Tempo{130.};
-  auto timeline = Optional<Timeline>{Timeline{expectedTempo, Beats{0.}, microseconds{0}}};
+  auto timeline = Optional<Timeline>{Timeline{expectedTempo, Beats{0.}, kAnyTime}};
   const auto expectedIsPlaying = true;
   auto startStopState = Optional<StartStopState>{
     StartStopState{expectedIsPlaying, kAnyBeatTime, clock.micros()}};
@@ -402,7 +401,7 @@ TEST_CASE("Controller | CallbacksCalledBySettingClientStateRealtimeSafe", "[Cont
   clock.advance();
   tempoCallback.tempos = {};
   startStopStateCallback.startStopStates = {};
-  timeline = Optional<Timeline>{Timeline{expectedTempo, Beats{1.}, microseconds{2}}};
+  timeline = Optional<Timeline>{Timeline{expectedTempo, Beats{1.}, kAnyTime}};
   startStopState = Optional<StartStopState>{
     StartStopState{expectedIsPlaying, kAnyBeatTime, clock.micros()}};
   controller.setClientStateRtSafe({timeline, startStopState, clock.micros()});
