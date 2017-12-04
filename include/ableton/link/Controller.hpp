@@ -197,9 +197,7 @@ public:
 
     mIo->async([this, newSessionState, atTime] {
       handleTimelineAndStartStopStateFromClient(
-        updateSessionTimelineFromClient(
-          mSessionTimeline, newSessionState.timeline, atTime, mGhostXForm),
-        newSessionState.startStopState);
+        newSessionState.timeline, newSessionState.startStopState, atTime);
     });
   }
 
@@ -339,12 +337,16 @@ private:
     }
   }
 
-  void handleTimelineAndStartStopStateFromClient(
-    const Timeline timeline, const StartStopState startStopState)
+  void handleTimelineAndStartStopStateFromClient(const Timeline timeline,
+    const StartStopState startStopState,
+    const std::chrono::microseconds atTime)
   {
-    mSessions.resetTimeline(timeline);
-    mPeers.setSessionTimeline(mSessionId, timeline);
-    updateSessionTiming(std::move(timeline), mGhostXForm);
+    auto sessionTimeline =
+      updateSessionTimelineFromClient(mSessionTimeline, timeline, atTime, mGhostXForm);
+
+    mSessions.resetTimeline(sessionTimeline);
+    mPeers.setSessionTimeline(mSessionId, sessionTimeline);
+    updateSessionTiming(std::move(sessionTimeline), mGhostXForm);
 
     if (mStartStopSyncEnabled)
     {
@@ -373,9 +375,7 @@ private:
       mClientStartStopState = newStartStopState;
     }
 
-    handleTimelineAndStartStopStateFromClient(
-      updateSessionTimelineFromClient(mSessionTimeline, timeline, atTime, mGhostXForm),
-      newStartStopState);
+    handleTimelineAndStartStopStateFromClient(timeline, newStartStopState, atTime);
   }
 
   void joinSession(const Session& session)
