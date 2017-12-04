@@ -322,23 +322,32 @@ TEST_CASE("Controller | CallbacksCalledBySettingClientStateThreadSafe", "[Contro
   const auto initialTempo = Tempo{50.};
   const auto initialIsPlaying = true;
 
-  auto timeline = Optional<Timeline>{Timeline{initialTempo, Beats{0.}, kAnyTime}};
-  auto startStopState = Optional<StartStopState>{
+  const auto initialTimeline =
+    Optional<Timeline>{Timeline{initialTempo, Beats{0.}, kAnyTime}};
+  const auto initialStartStopState = Optional<StartStopState>{
     StartStopState{initialIsPlaying, kAnyBeatTime, clock.micros()}};
-  controller.setClientState({timeline, startStopState, clock.micros()});
-  CHECK(std::vector<Tempo>{initialTempo} == tempoCallback.tempos);
-  CHECK(std::vector<bool>{initialIsPlaying} == startStopStateCallback.startStopStates);
+  controller.setClientState({initialTimeline, initialStartStopState, clock.micros()});
 
-  // Callbacks mustn't be called if Tempo and isPlaying don't change
-  clock.advance();
-  tempoCallback.tempos = {};
-  startStopStateCallback.startStopStates = {};
-  timeline = Optional<Timeline>{Timeline{initialTempo, Beats{1.}, kAnyTime}};
-  startStopState = Optional<StartStopState>{
-    StartStopState{initialIsPlaying, kAnyBeatTime, clock.micros()}};
-  controller.setClientState({timeline, startStopState, clock.micros()});
-  CHECK(tempoCallback.tempos.empty());
-  CHECK(startStopStateCallback.startStopStates.empty());
+  SECTION("Callbacks are called when setting new client state")
+  {
+    CHECK(std::vector<Tempo>{initialTempo} == tempoCallback.tempos);
+    CHECK(std::vector<bool>{initialIsPlaying} == startStopStateCallback.startStopStates);
+
+    clock.advance();
+    tempoCallback.tempos = {};
+    startStopStateCallback.startStopStates = {};
+
+    SECTION("Callbacks mustn't be called if Tempo and isPlaying don't change")
+    {
+      const auto timeline =
+        Optional<Timeline>{Timeline{initialTempo, Beats{1.}, kAnyTime}};
+      const auto startStopState = Optional<StartStopState>{
+        StartStopState{initialIsPlaying, kAnyBeatTime, clock.micros()}};
+      controller.setClientState({timeline, startStopState, clock.micros()});
+      CHECK(tempoCallback.tempos.empty());
+      CHECK(startStopStateCallback.startStopStates.empty());
+    }
+  }
 }
 
 TEST_CASE("Controller | CallbacksCalledBySettingClientStateRealtimeSafe", "[Controller]")
