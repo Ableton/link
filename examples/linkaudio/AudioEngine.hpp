@@ -40,14 +40,17 @@ public:
   void setTempo(double tempo);
   double quantum() const;
   void setQuantum(double quantum);
+  bool isStartStopSyncEnabled() const;
+  void setStartStopSyncEnabled(bool enabled);
 
 private:
   struct EngineData
   {
     double requestedTempo;
-    bool resetBeatTime;
-    bool isPlaying;
+    bool requestStart;
+    bool requestStop;
     double quantum;
+    bool startStopSyncOn;
   };
 
   void setBufferSize(std::size_t size);
@@ -66,6 +69,7 @@ private:
   EngineData mSharedEngineData;
   EngineData mLockfreeEngineData;
   std::chrono::microseconds mTimeAtLastClick;
+  bool mIsPlaying;
   std::mutex mEngineDataGuard;
 
   friend class AudioPlatform;

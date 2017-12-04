@@ -68,6 +68,38 @@ Item {
     }
 
     Rectangle {
+        id: startStopSyncView
+        x: parent.width - width - 31
+        y: 25
+        width: 300
+        height: 50
+
+        border.color: "#404040"
+        border.width: 1
+        color: controller.isStartStopSyncEnabled ? "#E6E6E6" : "#FFFFFF"
+
+        Label {
+            id: startStopSyncLabel
+            text: controller.isStartStopSyncEnabled ?
+                "StartStopSync On" : "StartStopSync Off"
+            color: "#404040"
+            font.pixelSize: 36
+            font.family: "Calibri"
+            anchors.fill: parent
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
+        }
+
+        MouseArea {
+            anchors.fill: parent
+
+            onPressed: {
+                controller.isStartStopSyncEnabled = !controller.isStartStopSyncEnabled
+            }
+        }
+    }
+
+    Rectangle {
         id: loopView
         x: 30
         y: 90
@@ -179,7 +211,7 @@ Item {
     }
 
     Label {
-        x: (parent.width - width) / 2 - 90 
+        x: (parent.width - width) / 2 - 90
         y: 460
         width: 170
         height: 30
@@ -234,6 +266,7 @@ Item {
     }
 
     Label {
+        id: beatTimeView
         x: (parent.width - width) / 2 + 90
         y: 460
         width: 170
@@ -274,6 +307,8 @@ Item {
         onTriggered: {
             var beatTime = controller.beatTime()
             beatTimeText.text = beatTime.toFixed(1)
+            transportText.text = controller.isPlaying ? "Pause" : "Play";
+            transportView.color = controller.isPlaying ? "#E6E6E6" : "#FFFFFF";
         }
     }
 
@@ -285,10 +320,9 @@ Item {
         height: 50
         border.width: 1
         border.color: "#404040"
-        color: controller.isPlaying ? "#E6E6E6" : "#FFFFFF"
 
         Label {
-            text: controller.isPlaying ? "Pause" : "Play";
+            id: transportText
             color: "#404040"
             font.pixelSize: 36
             font.family: "Calibri"

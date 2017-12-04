@@ -38,7 +38,7 @@ public:
   void setIsPlaying(bool);
   bool isPlaying();
   Q_SIGNAL void onIsPlayingChanged();
-  Q_PROPERTY(bool isPlaying READ isPlaying WRITE setIsPlaying NOTIFY onIsPlayingChanged)
+  Q_PROPERTY(bool isPlaying READ isPlaying WRITE setIsPlaying)
 
   void setTempo(double);
   double tempo();
@@ -59,6 +59,12 @@ public:
   Q_SIGNAL void onIsLinkEnabledChanged();
   Q_PROPERTY(bool isLinkEnabled WRITE setLinkEnabled READ isLinkEnabled NOTIFY
       onIsLinkEnabledChanged)
+
+  void setStartStopSyncEnabled(bool isEnabled);
+  bool isStartStopSyncEnabled();
+  Q_SIGNAL void onIsStartStopSyncEnabledChanged();
+  Q_PROPERTY(bool isStartStopSyncEnabled WRITE setStartStopSyncEnabled READ
+      isStartStopSyncEnabled NOTIFY onIsStartStopSyncEnabledChanged)
 
   Q_INVOKABLE double beatTime();
 

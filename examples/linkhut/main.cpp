@@ -79,18 +79,22 @@ void printHelp()
   std::cout << "  start / stop: space" << std::endl;
   std::cout << "  decrease / increase tempo: w / e" << std::endl;
   std::cout << "  decrease / increase quantum: r / t" << std::endl;
+  std::cout << "  enable / disable start stop sync: s" << std::endl;
   std::cout << "  quit: q" << std::endl << std::endl;
 }
 
 void printState(const std::chrono::microseconds time,
   const ableton::Link::SessionState sessionState,
   const std::size_t numPeers,
-  const double quantum)
+  const double quantum,
+  const bool startStopSyncOn)
 {
   const auto beats = sessionState.beatAtTime(time, quantum);
   const auto phase = sessionState.phaseAtTime(time, quantum);
+  const auto startStop = startStopSyncOn ? "on" : "off";
   std::cout << std::defaultfloat << "peers: " << numPeers << " | "
             << "quantum: " << quantum << " | "
+            << "start stop sync: " << startStop << " | "
             << "tempo: " << sessionState.tempo() << " | " << std::fixed
             << "beats: " << beats << " | ";
   for (int i = 0; i < ceil(quantum); ++i)
@@ -145,6 +149,9 @@ void input(State& state)
   case 't':
     engine.setQuantum(std::max(1., engine.quantum() + 1));
     break;
+  case 's':
+    engine.setStartStopSyncEnabled(!engine.isStartStopSyncEnabled());
+    break;
   case ' ':
     if (engine.isPlaying())
     {
@@ -173,8 +180,9 @@ int main(int, char**)
   {
     const auto time = state.link.clock().micros();
     auto sessionState = state.link.captureAppSessionState();
-    printState(
-      time, sessionState, state.link.numPeers(), state.audioPlatform.mEngine.quantum());
+    printState(time, sessionState, state.link.numPeers(),
+      state.audioPlatform.mEngine.quantum(),
+      state.audioPlatform.mEngine.isStartStopSyncEnabled());
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
   }
 
