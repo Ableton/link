@@ -479,9 +479,9 @@ private:
     {
       auto result = mSessionStateFifo.clearAndPopLast();
 
-      if (result.valid)
+      if (result)
       {
-        const auto sessionState = std::move(result.item);
+        const auto sessionState = std::move(*result);
         mController.mIo->async([this, sessionState]() {
           mController.handleRtTimelineAndStartStopState(sessionState.first.timeline,
             sessionState.first.startStopState, sessionState.second);

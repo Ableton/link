@@ -39,11 +39,11 @@ TEST_CASE("CircularFifo | PushNPop", "[CircularFifo]")
   for (int i = 0; i < 2; ++i)
   {
     auto result = cf.pop();
-    CHECK(result.valid);
-    CHECK(result.item == i);
+    CHECK(result);
+    CHECK(*result == i);
   }
 
-  CHECK(!cf.pop().valid);
+  CHECK(!cf.pop());
 }
 
 TEST_CASE("CircularFifo | Wrap", "[CircularFifo]")
@@ -54,8 +54,8 @@ TEST_CASE("CircularFifo | Wrap", "[CircularFifo]")
   {
     CHECK(cf.push(i));
     auto result = cf.pop();
-    CHECK(result.valid);
-    CHECK(result.item == i);
+    CHECK(result);
+    CHECK(*result == i);
   }
 }
 
@@ -71,11 +71,11 @@ TEST_CASE("CircularFifo | IsEmpty", "[CircularFifo]")
   CHECK(!cf.push(3));
   CHECK(!cf.isEmpty());
 
-  CHECK(cf.pop().valid);
+  CHECK(cf.pop());
   CHECK(!cf.isEmpty());
-  CHECK(cf.pop().valid);
+  CHECK(cf.pop());
   CHECK(cf.isEmpty());
-  CHECK(!cf.pop().valid);
+  CHECK(!cf.pop());
   CHECK(cf.isEmpty());
 }
 
@@ -84,7 +84,7 @@ TEST_CASE("CircularFifo | PopLast", "[CircularFifo]")
   CircularFifo<int, 5> cf;
 
   auto result = cf.clearAndPopLast();
-  CHECK(!result.valid);
+  CHECK(!result);
 
   for (int i = 0; i < 4; ++i)
   {
@@ -92,11 +92,11 @@ TEST_CASE("CircularFifo | PopLast", "[CircularFifo]")
   }
 
   result = cf.clearAndPopLast();
-  CHECK(result.valid);
-  CHECK(result.item == 3);
+  CHECK(result);
+  CHECK(*result == 3);
 
   result = cf.clearAndPopLast();
-  CHECK(!result.valid);
+  CHECK(!result);
 
   // once more with wrap
   for (int i = 0; i < 5; ++i)
@@ -105,11 +105,11 @@ TEST_CASE("CircularFifo | PopLast", "[CircularFifo]")
   }
 
   result = cf.clearAndPopLast();
-  CHECK(result.valid);
-  CHECK(result.item == 4);
+  CHECK(result);
+  CHECK(*result == 4);
 
   result = cf.clearAndPopLast();
-  CHECK(!result.valid);
+  CHECK(!result);
 }
 
 } // namespace link
