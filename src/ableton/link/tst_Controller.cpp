@@ -233,45 +233,60 @@ TEST_CASE("Controller | SetAndGetClientStateThreadSafe", "[Controller]")
     Optional<StartStopState>{StartStopState{true, kAnyBeatTime, clock.micros()}};
   auto expectedClientState =
     IncomingClientState{expectedTimeline, expectedStartStopState, clock.micros()};
+
   controller.setClientState(expectedClientState);
-  auto clientState = controller.clientState();
-  expectClientStateEquals(expectedClientState, clientState);
 
-  // Set client state with a StartStopState having the same timestamp as the current
-  // StartStopState - don't advance clock
-  auto outdatedStartStopState =
-    Optional<StartStopState>{StartStopState{false, kAnyBeatTime, clock.micros()}};
-  controller.setClientState(
-    IncomingClientState{Optional<Timeline>{}, outdatedStartStopState, clock.micros()});
-  clientState = controller.clientState();
-  expectClientStateEquals(expectedClientState, clientState);
+  SECTION("Client state is correct after initial set")
+  {
+    const auto clientState = controller.clientState();
+    expectClientStateEquals(expectedClientState, clientState);
+  }
 
-  // Set client state with an outdated StartStopState
-  clock.advance();
-  outdatedStartStopState =
-    Optional<StartStopState>{StartStopState{false, kAnyBeatTime, microseconds{0}}};
-  controller.setClientState(
-    IncomingClientState{Optional<Timeline>{}, outdatedStartStopState, clock.micros()});
-  clientState = controller.clientState();
-  expectClientStateEquals(expectedClientState, clientState);
+  SECTION("Set outdated start stop state (timestamp unchanged)")
+  {
+    // Set client state with a StartStopState having the same timestamp as the current
+    // StartStopState - don't advance clock
+    const auto outdatedStartStopState =
+      Optional<StartStopState>{StartStopState{false, kAnyBeatTime, clock.micros()}};
+    controller.setClientState(
+      IncomingClientState{Optional<Timeline>{}, outdatedStartStopState, clock.micros()});
+    const auto clientState = controller.clientState();
+    expectClientStateEquals(expectedClientState, clientState);
+  }
 
-  // Set client state without Timeline and StartStopState
-  clock.advance();
-  controller.setClientState(IncomingClientState{
-    Optional<Timeline>{}, Optional<StartStopState>{}, clock.micros()});
-  clientState = controller.clientState();
-  expectClientStateEquals(expectedClientState, clientState);
+  SECTION("Set outdated start stop state (timestamp in past)")
+  {
+    clock.advance();
+    const auto outdatedStartStopState =
+      Optional<StartStopState>{StartStopState{false, kAnyBeatTime, microseconds{0}}};
+    controller.setClientState(
+      IncomingClientState{Optional<Timeline>{}, outdatedStartStopState, clock.micros()});
+    const auto clientState = controller.clientState();
+    expectClientStateEquals(expectedClientState, clientState);
+  }
 
-  // Set client state with a new StartStopState
-  clock.advance();
-  expectedTimeline = Optional<Timeline>{Timeline{Tempo{80.}, Beats{1.}, microseconds{6}}};
-  expectedStartStopState =
-    Optional<StartStopState>{StartStopState{false, kAnyBeatTime, clock.micros()}};
-  expectedClientState =
-    IncomingClientState{expectedTimeline, expectedStartStopState, clock.micros()};
-  controller.setClientState(expectedClientState);
-  clientState = controller.clientState();
-  expectClientStateEquals(expectedClientState, clientState);
+  SECTION("Set empty client state")
+  {
+    clock.advance();
+    controller.setClientState(IncomingClientState{
+      Optional<Timeline>{}, Optional<StartStopState>{}, clock.micros()});
+    const auto clientState = controller.clientState();
+    expectClientStateEquals(expectedClientState, clientState);
+  }
+
+  SECTION("Set client state with new Timeline and StartStopState")
+  {
+    clock.advance();
+    expectedTimeline =
+      Optional<Timeline>{Timeline{Tempo{80.}, Beats{1.}, microseconds{6}}};
+    expectedStartStopState =
+      Optional<StartStopState>{StartStopState{false, kAnyBeatTime, clock.micros()}};
+    expectedClientState =
+      IncomingClientState{expectedTimeline, expectedStartStopState, clock.micros()};
+    controller.setClientState(expectedClientState);
+    const auto clientState = controller.clientState();
+    expectClientStateEquals(expectedClientState, clientState);
+  }
 }
 
 TEST_CASE("Controller | SetAndGetClientStateRealtimeSafe", "[Controller]")
