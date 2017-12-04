@@ -80,7 +80,8 @@ struct Deserialize
 
 // Default size implementation. Works for primitive types.
 
-template <typename T>
+template <typename T,
+  typename std::enable_if<std::is_fundamental<T>::value>::type* = nullptr>
 std::uint32_t sizeInByteStream(T)
 {
   return sizeof(T);
