@@ -68,22 +68,6 @@ public:
     return Optional<Type>{std::move(item)};
   }
 
-  Optional<Type> clearAndPopLast()
-  {
-    auto hasData = false;
-    auto currentHead = head.load();
-    while (currentHead != tail.load())
-    {
-      currentHead = nextIndex(currentHead);
-      hasData = true;
-    }
-
-    auto item = data[previousIndex(currentHead)];
-    head.store(currentHead);
-
-    return hasData ? Optional<Type>{std::move(item)} : Optional<Type>{};
-  }
-
   bool isEmpty() const
   {
     return tail == head;
