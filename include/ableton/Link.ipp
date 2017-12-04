@@ -198,4 +198,36 @@ inline void Link::SessionState::forceBeatAtTime(
     mSessionState.timeline.beatOrigin + (link::Beats{beat} - closestInPhase);
 }
 
+inline void Link::SessionState::setIsPlaying(
+  const bool isPlaying, const std::chrono::microseconds time)
+{
+  mSessionState.startStopState = {isPlaying, time};
+}
+
+inline bool Link::SessionState::isPlaying() const
+{
+  return mSessionState.startStopState.isPlaying;
+}
+
+inline std::chrono::microseconds Link::SessionState::timeForIsPlaying() const
+{
+  return mSessionState.startStopState.time;
+}
+
+inline void Link::SessionState::requestBeatAtStartPlayingTime(
+  const double beat, const double quantum)
+{
+  if (isPlaying())
+  {
+    requestBeatAtTime(beat, mSessionState.startStopState.time, quantum);
+  }
+}
+
+inline void Link::SessionState::setIsPlayingAndRequestBeatAtTime(
+  bool isPlaying, std::chrono::microseconds time, double beat, double quantum)
+{
+  mSessionState.startStopState = {isPlaying, time};
+  requestBeatAtStartPlayingTime(beat, quantum);
+}
+
 } // ableton
