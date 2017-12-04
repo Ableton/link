@@ -369,6 +369,33 @@ struct Deserialize<std::vector<T, Alloc>>
   }
 };
 
+// 2-tuple
+template <typename X, typename Y>
+std::uint32_t sizeInByteStream(const std::tuple<X, Y>& tup)
+{
+  return sizeInByteStream(std::get<0>(tup)) + sizeInByteStream(std::get<1>(tup));
+}
+
+template <typename X, typename Y, typename It>
+It toNetworkByteStream(const std::tuple<X, Y>& tup, It out)
+{
+  return toNetworkByteStream(
+    std::get<1>(tup), toNetworkByteStream(std::get<0>(tup), std::move(out)));
+}
+
+template <typename X, typename Y>
+struct Deserialize<std::tuple<X, Y>>
+{
+  template <typename It>
+  static std::pair<std::tuple<X, Y>, It> fromNetworkByteStream(It begin, It end)
+  {
+    using namespace std;
+    auto xres = Deserialize<X>::fromNetworkByteStream(begin, end);
+    auto yres = Deserialize<Y>::fromNetworkByteStream(xres.second, end);
+    return make_pair(make_tuple(move(xres.first), move(yres.first)), move(yres.second));
+  }
+};
+
 // 3-tuple
 template <typename X, typename Y, typename Z>
 std::uint32_t sizeInByteStream(const std::tuple<X, Y, Z>& tup)
