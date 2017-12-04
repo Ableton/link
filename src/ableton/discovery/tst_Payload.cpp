@@ -55,7 +55,7 @@ TEST_CASE("Payload | SingleEntryPayloadEncoding", "[Payload]")
 
 TEST_CASE("Payload | DoubleEntryPayloadSize", "[Payload]")
 {
-  CHECK(44 == sizeInByteStream(makePayload(test::Foo{}, test::Bar{{0, 1, 2}})));
+  CHECK(48 == sizeInByteStream(makePayload(test::Foo{}, test::Bar{{0, 1, 2}})));
 }
 
 TEST_CASE("Payload | DoubleEntryPayloadEncoding", "[Payload]")
@@ -67,12 +67,13 @@ TEST_CASE("Payload | DoubleEntryPayloadEncoding", "[Payload]")
   // Should have filled the buffer with the payload
   CHECK(bytes.size() == static_cast<size_t>(end - begin(bytes)));
   // Should have encoded the value 1 after the first payload entry header
-  // and 0,1,2 after the second payload entry header in network byte
-  // order
+  // and the number of elements of the vector as well as 0,1,2 after the
+  // second payload entry header in network byte order
   CHECK(1 == ntohl(reinterpret_cast<const std::uint32_t&>(*(begin(bytes) + 8))));
-  CHECK(0 == ntohll(reinterpret_cast<const std::uint64_t&>(*(begin(bytes) + 20))));
-  CHECK(1 == ntohll(reinterpret_cast<const std::uint64_t&>(*(begin(bytes) + 28))));
-  CHECK(2 == ntohll(reinterpret_cast<const std::uint64_t&>(*(begin(bytes) + 36))));
+  CHECK(3 == ntohl(reinterpret_cast<const std::uint32_t&>(*(begin(bytes) + 20))));
+  CHECK(0 == ntohll(reinterpret_cast<const std::uint64_t&>(*(begin(bytes) + 24))));
+  CHECK(1 == ntohll(reinterpret_cast<const std::uint64_t&>(*(begin(bytes) + 32))));
+  CHECK(2 == ntohll(reinterpret_cast<const std::uint64_t&>(*(begin(bytes) + 40))));
 }
 
 TEST_CASE("Payload | RoundtripSingleEntry", "[Payload]")
@@ -105,6 +106,20 @@ TEST_CASE("Payload | RoundtripDoubleEntry", "[Payload]")
 
   CHECK(expectedFoo.fooVal == actualFoo.fooVal);
   CHECK(expectedBar.barVals == actualBar.barVals);
+}
+
+TEST_CASE("Payload | RoundtripSingleEntryWithMultipleVectors", "[Payload]")
+{
+  const auto expectedFoobar = test::Foobar{{0, 1, 2}, {3, 4, 5}};
+  const auto payload = makePayload(expectedFoobar);
+  std::vector<char> bytes(sizeInByteStream(payload));
+  const auto end = toNetworkByteStream(payload, begin(bytes));
+
+  test::Foobar actualFoobar{};
+  parsePayload<test::Foobar>(begin(bytes), end,
+    [&actualFoobar](const test::Foobar& foobar) { actualFoobar = foobar; });
+
+  CHECK(expectedFoobar.asTuple() == actualFoobar.asTuple());
 }
 
 TEST_CASE("Payload | ParseSubset", "[Payload]")

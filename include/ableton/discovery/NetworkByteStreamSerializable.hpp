@@ -366,12 +366,13 @@ struct Deserialize<std::array<T, Size>>
 template <typename T, typename Alloc>
 std::uint32_t sizeInByteStream(const std::vector<T, Alloc>& vec)
 {
-  return detail::containerSizeInByteStream(vec);
+  return sizeof(uint32_t) + detail::containerSizeInByteStream(vec);
 }
 
 template <typename T, typename Alloc, typename It>
 It toNetworkByteStream(const std::vector<T, Alloc>& vec, It out)
 {
+  out = toNetworkByteStream(static_cast<uint32_t>(vec.size()), out);
   return detail::containerToNetworkByteStream(vec, std::move(out));
 }
 
@@ -383,13 +384,11 @@ struct Deserialize<std::vector<T, Alloc>>
     It bytesBegin, It bytesEnd)
   {
     using namespace std;
+    auto result_size =
+      Deserialize<uint32_t>::fromNetworkByteStream(move(bytesBegin), bytesEnd);
     vector<T, Alloc> result;
-    // Use the number of bytes remaining in the stream as the upper
-    // bound on the number of elements that could be deserialized
-    // since we don't have a better heuristic.
-    auto resultIt = detail::deserializeContainer<T>(move(bytesBegin), move(bytesEnd),
-      back_inserter(result), static_cast<uint32_t>(distance(bytesBegin, bytesEnd)));
-
+    auto resultIt = detail::deserializeContainer<T>(
+      move(result_size.second), move(bytesEnd), back_inserter(result), result_size.first);
     return make_pair(move(result), move(resultIt));
   }
 };
