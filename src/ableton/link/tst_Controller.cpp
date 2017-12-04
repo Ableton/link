@@ -240,8 +240,7 @@ TEST_CASE("Controller | SetAndGetClientStateThreadSafe", "[Controller]")
 
   SECTION("Client state is correct after initial set")
   {
-    const auto clientState = controller.clientState();
-    expectClientStateEquals(initialClientState, clientState);
+    expectClientStateEquals(initialClientState, controller.clientState());
   }
 
   SECTION("Set outdated start stop state (timestamp unchanged)")
@@ -252,8 +251,7 @@ TEST_CASE("Controller | SetAndGetClientStateThreadSafe", "[Controller]")
       Optional<StartStopState>{StartStopState{false, kAnyBeatTime, clock.micros()}};
     controller.setClientState(
       IncomingClientState{Optional<Timeline>{}, outdatedStartStopState, clock.micros()});
-    const auto clientState = controller.clientState();
-    expectClientStateEquals(initialClientState, clientState);
+    expectClientStateEquals(initialClientState, controller.clientState());
   }
 
   SECTION("Set outdated start stop state (timestamp in past)")
@@ -263,8 +261,7 @@ TEST_CASE("Controller | SetAndGetClientStateThreadSafe", "[Controller]")
       Optional<StartStopState>{StartStopState{false, kAnyBeatTime, microseconds{0}}};
     controller.setClientState(
       IncomingClientState{Optional<Timeline>{}, outdatedStartStopState, clock.micros()});
-    const auto clientState = controller.clientState();
-    expectClientStateEquals(initialClientState, clientState);
+    expectClientStateEquals(initialClientState, controller.clientState());
   }
 
   SECTION("Set empty client state")
@@ -272,8 +269,7 @@ TEST_CASE("Controller | SetAndGetClientStateThreadSafe", "[Controller]")
     clock.advance();
     controller.setClientState(IncomingClientState{
       Optional<Timeline>{}, Optional<StartStopState>{}, clock.micros()});
-    const auto clientState = controller.clientState();
-    expectClientStateEquals(initialClientState, clientState);
+    expectClientStateEquals(initialClientState, controller.clientState());
   }
 
   SECTION("Set client state with new Timeline and StartStopState")
@@ -287,8 +283,7 @@ TEST_CASE("Controller | SetAndGetClientStateThreadSafe", "[Controller]")
     const auto expectedClientState =
       IncomingClientState{expectedTimeline, expectedStartStopState, clock.micros()};
     controller.setClientState(expectedClientState);
-    const auto clientState = controller.clientState();
-    expectClientStateEquals(expectedClientState, clientState);
+    expectClientStateEquals(expectedClientState, controller.clientState());
   }
 }
 
