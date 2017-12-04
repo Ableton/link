@@ -31,6 +31,13 @@ namespace link
 using OptionalTimeline = Optional<Timeline>;
 using OptionalStartStopState = Optional<StartStopState>;
 
+struct SessionState
+{
+  Timeline timeline;
+  StartStopState startStopState;
+  GhostXForm ghostXForm;
+};
+
 struct ClientState
 {
   friend bool operator==(const ClientState& lhs, const ClientState& rhs)
