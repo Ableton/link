@@ -572,13 +572,29 @@ private:
     }
 
   private:
+    IncomingClientState buildMergedPendingClientState()
+    {
+      auto clientState = IncomingClientState{};
+      while (const auto result = mClientStateFifo.pop())
+      {
+        if (result->timeline)
+        {
+          clientState.timeline = result->timeline;
+          clientState.timelineTimestamp = result->timelineTimestamp;
+        }
+        if (result->startStopState)
+        {
+          clientState.startStopState = result->startStopState;
+        }
+      }
+      return clientState;
+    }
+
     void processPendingClientStates()
     {
-      auto result = mClientStateFifo.clearAndPopLast();
-
-      if (result)
+      const auto clientState = buildMergedPendingClientState();
+      if (clientState.timeline || clientState.startStopState)
       {
-        const auto clientState = std::move(*result);
         mController.mIo->async([this, clientState]() {
           mController.handleRtClientState(clientState);
           mHasPendingClientStates = false;
