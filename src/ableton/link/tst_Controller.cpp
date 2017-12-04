@@ -300,57 +300,11 @@ TEST_CASE("Controller | SetAndGetClientStateThreadSafe", "[Controller]")
 
 TEST_CASE("Controller | SetAndGetClientStateRealtimeSafe", "[Controller]")
 {
-  using namespace std::chrono;
-
-  auto clock = MockClock{};
-  MockController controller(Tempo{100.0}, [](std::size_t) {}, [](Tempo) {}, [](bool) {},
-    clock, util::injectVal(MockIoContext{}));
-
-  clock.advance();
-  auto expectedTimeline = Optional<Timeline>{Timeline{Tempo{110.}, Beats{0.}, kAnyTime}};
-  auto expectedStartStopState =
-    Optional<StartStopState>{StartStopState{true, kAnyBeatTime, clock.micros()}};
-  auto expectedClientState =
-    IncomingClientState{expectedTimeline, expectedStartStopState, clock.micros()};
-  controller.setClientStateRtSafe(expectedClientState);
-  auto clientState = controller.clientState();
-  CHECK(expectedClientState == clientState);
-
-  // Set client state with a StartStopState having the same timestamp as the current
-  // StartStopState - don't advance clock
-  auto outdatedStartStopState =
-    Optional<StartStopState>{StartStopState{false, kAnyBeatTime, clock.micros()}};
-  controller.setClientStateRtSafe(
-    IncomingClientState{Optional<Timeline>{}, outdatedStartStopState, clock.micros()});
-  clientState = controller.clientStateRtSafe();
-  CHECK(expectedClientState == clientState);
-
-  // Set client state with an outdated StartStopState
-  clock.advance();
-  outdatedStartStopState =
-    Optional<StartStopState>{StartStopState{false, kAnyBeatTime, microseconds{0}}};
-  controller.setClientStateRtSafe(
-    IncomingClientState{Optional<Timeline>{}, outdatedStartStopState, clock.micros()});
-  clientState = controller.clientStateRtSafe();
-  CHECK(expectedClientState == clientState);
-
-  // Set client state without Timeline and StartStopState
-  clock.advance();
-  controller.setClientStateRtSafe(IncomingClientState{
-    Optional<Timeline>{}, Optional<StartStopState>{}, clock.micros()});
-  clientState = controller.clientStateRtSafe();
-  CHECK(expectedClientState == clientState);
-
-  // Set client state with a new StartStopState
-  clock.advance();
-  expectedTimeline = Optional<Timeline>{Timeline{Tempo{90.}, Beats{1.4}, kAnyTime}};
-  expectedStartStopState =
-    Optional<StartStopState>{StartStopState{false, kAnyBeatTime, clock.micros()}};
-  expectedClientState =
-    IncomingClientState{expectedTimeline, expectedStartStopState, clock.micros()};
-  controller.setClientStateRtSafe(expectedClientState);
-  clientState = controller.clientStateRtSafe();
-  CHECK(expectedClientState == clientState);
+  testSetAndGetClientState(
+    [](MockController& controller, IncomingClientState clientState) {
+      controller.setClientStateRtSafe(clientState);
+    },
+    [](MockController& controller) { return controller.clientStateRtSafe(); });
 }
 
 TEST_CASE("Controller | CallbacksCalledBySettingClientStateThreadSafe", "[Controller]")
