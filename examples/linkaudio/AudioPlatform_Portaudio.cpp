@@ -93,10 +93,10 @@ void AudioPlatform::initialize()
   outputParameters.sampleFormat = paFloat32;
   outputParameters.suggestedLatency =
     Pa_GetDeviceInfo(outputParameters.device)->defaultLowOutputLatency;
-  outputParameters.hostApiSpecificStreamInfo = NULL;
+  outputParameters.hostApiSpecificStreamInfo = nullptr;
   mEngine.mOutputLatency =
     std::chrono::microseconds(llround(outputParameters.suggestedLatency * 1.0e6));
-  result = Pa_OpenStream(&pStream, NULL, &outputParameters, mEngine.mSampleRate,
+  result = Pa_OpenStream(&pStream, nullptr, &outputParameters, mEngine.mSampleRate,
     mEngine.mBuffer.size(), paClipOff, &audioCallback, this);
 
   if (result)

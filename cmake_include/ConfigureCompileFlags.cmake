@@ -35,7 +35,6 @@ if(UNIX)
       "-Wno-reserved-id-macro"
       "-Wno-unknown-warning-option"
       "-Wno-unused-member-function"
-      "-Wno-zero-as-null-pointer-constant"
     )
 
   # GCC-specific flags

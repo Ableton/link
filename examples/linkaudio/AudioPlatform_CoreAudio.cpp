@@ -75,7 +75,7 @@ void AudioPlatform::initialize()
   cd.componentType = kAudioUnitType_Output;
   cd.componentSubType = kAudioUnitSubType_DefaultOutput;
 
-  AudioComponent component = AudioComponentFindNext(NULL, &cd);
+  AudioComponent component = AudioComponentFindNext(nullptr, &cd);
   OSStatus result = AudioComponentInstanceNew(component, &mIoUnit);
   if (result)
   {

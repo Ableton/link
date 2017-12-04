@@ -112,6 +112,7 @@ function(configure_qlinkhut_executable target)
       "-Wno-global-constructors"
       "-Wno-missing-prototypes"
       "-Wno-undefined-reinterpret-cast"
+      "-Wno-zero-as-null-pointer-constant"
       )
   endif()
 
