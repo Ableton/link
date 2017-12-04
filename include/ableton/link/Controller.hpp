@@ -229,6 +229,13 @@ public:
   }
 
 private:
+  void updateDiscovery()
+  {
+    // Push the change to the discovery service
+    mDiscovery.updateNodeState(std::make_pair(
+      NodeState{mNodeId, mSessionId, mSessionTimeline, StartStopState{}}, mGhostXForm));
+  }
+
   void updateSessionTiming(const Timeline newTimeline, const GhostXForm newXForm)
   {
     const auto oldTimeline = mSessionTimeline;
@@ -249,10 +256,6 @@ private:
           mClientTimeline, mSessionTimeline, mClock.micros(), mGhostXForm);
       }
 
-      // Push the change to the discovery service
-      mDiscovery.updateNodeState(std::make_pair(
-        NodeState{mNodeId, mSessionId, newTimeline, StartStopState{}}, newXForm));
-
       if (oldTimeline.tempo != newTimeline.tempo)
       {
         mTempoCallback(newTimeline.tempo);
@@ -265,6 +268,7 @@ private:
     mSessions.resetTimeline(timeline);
     mPeers.setSessionTimeline(mSessionId, timeline);
     updateSessionTiming(std::move(timeline), mGhostXForm);
+    updateDiscovery();
   }
 
   void handleTimelineFromSession(SessionId id, Timeline timeline)
@@ -273,6 +277,7 @@ private:
                       << " for session: " << id;
     updateSessionTiming(
       mSessions.sawSessionTimeline(std::move(id), std::move(timeline)), mGhostXForm);
+    updateDiscovery();
   }
 
   void handleRtTimeline(const Timeline timeline, const std::chrono::microseconds time)
@@ -290,6 +295,7 @@ private:
     const bool sessionIdChanged = mSessionId != session.sessionId;
     mSessionId = session.sessionId;
     updateSessionTiming(session.timeline, session.measurement.xform);
+    updateDiscovery();
 
     if (sessionIdChanged)
     {
@@ -315,6 +321,7 @@ private:
       xform.hostToGhost(hostTime)};
 
     updateSessionTiming(newTl, xform);
+    updateDiscovery();
 
     mSessions.resetSession({mNodeId, newTl, {xform, hostTime}});
     mPeers.resetPeers();
