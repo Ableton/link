@@ -42,7 +42,7 @@ matrix:
       addons:
         apt:
           sources: ['ubuntu-toolchain-r-test']
-          packages: ['clang-3.6', 'g++-5', 'valgrind', 'p7zip-full', 'portaudio19-dev', 'cmake', 'cmake-data']
+          packages: ['clang-3.6', 'g++-5', 'valgrind', 'p7zip-full', 'portaudio19-dev']
       env: COMPILER=clang++-3.6 WORDSIZE=64 CONFIGURATION=Debug AUDIO=Alsa
 
     # Linux with Clang 3.6, 64-bit Release, Jack
@@ -51,7 +51,7 @@ matrix:
       addons:
         apt:
           sources: ['llvm-toolchain-precise-3.8', 'ubuntu-toolchain-r-test']
-          packages: ['clang-3.8', 'g++-5', 'valgrind', 'p7zip-full', 'portaudio19-dev', 'cmake', 'cmake-data']
+          packages: ['clang-3.8', 'g++-5', 'valgrind', 'p7zip-full', 'portaudio19-dev']
       env: COMPILER=clang++-3.8 WORDSIZE=64 CONFIGURATION=Release AUDIO=Jack
 
     # Linux with Clang 5.0, 64-bit Debug, Alsa
@@ -60,7 +60,7 @@ matrix:
       addons:
         apt:
           sources: ['llvm-toolchain-trusty-5.0', 'ubuntu-toolchain-r-test']
-          packages: ['clang-5.0', 'g++-5', 'valgrind', 'p7zip-full', 'portaudio19-dev', 'cmake', 'cmake-data']
+          packages: ['clang-5.0', 'g++-5', 'valgrind', 'p7zip-full', 'portaudio19-dev']
       env: COMPILER=clang++-5.0 WORDSIZE=64 CONFIGURATION=Debug AUDIO=Alsa
 
     # Linux with GCC 5.x, 32-bit Release
@@ -72,7 +72,7 @@ matrix:
 #          packages: ['g++-5', 'g++-5-multilib', 'linux-libc-dev:i386', 'valgrind:i386',
 #                     'p7zip-full', 'libxext-dev:i386', 'libglapi-mesa:i386',
 #                     'libgl1-mesa-glx:i386', 'libgl1-mesa-dev:i386',
-#                     'portaudio19-dev:i386', 'libglib2.0-0:i386', 'cmake', 'cmake-data']
+#                     'portaudio19-dev:i386', 'libglib2.0-0:i386']
 #      env: COMPILER=g++-5 WORDSIZE=32 CONFIGURATION=Release
 
     # Linux with GCC 5.x, 64-bit Release, Alsa
@@ -81,7 +81,7 @@ matrix:
       addons:
         apt:
           sources: ['ubuntu-toolchain-r-test']
-          packages: ['g++-5', 'valgrind', 'p7zip-full', 'portaudio19-dev', 'cmake', 'cmake-data']
+          packages: ['g++-5', 'valgrind', 'p7zip-full', 'portaudio19-dev']
       env: COMPILER=g++-5 WORDSIZE=64 CONFIGURATION=Release AUDIO=Alsa
 
     # Linux with GCC 6.x, 64-bit Release, Alsa
@@ -90,7 +90,7 @@ matrix:
       addons:
         apt:
           sources: ['ubuntu-toolchain-r-test']
-          packages: ['g++-6', 'valgrind', 'p7zip-full', 'portaudio19-dev', 'cmake', 'cmake-data']
+          packages: ['g++-6', 'valgrind', 'p7zip-full', 'portaudio19-dev']
       env: COMPILER=g++-6 WORDSIZE=64 CONFIGURATION=Release AUDIO=Alsa
 
     # Code formatting verification
