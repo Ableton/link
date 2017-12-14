@@ -128,6 +128,7 @@ elseif(${CMAKE_CXX_COMPILER_ID} STREQUAL MSVC)
       ${build_flags_COMMON_LIST}
       "/wd4987" # nonstandard extension used: 'throw (...)'
       "/wd4774" # 'printf_s' : format string expected in argument 1 is not a string literal
+      "/wd5039" # "pointer or reference to potentially throwing function passed to extern C function under -EHc. Undefined behavior may occur if this function throws an exception."
     )
   endif()
 
