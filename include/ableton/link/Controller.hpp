@@ -288,6 +288,11 @@ public:
   // should only be called from the audio thread
   void setClientStateRtSafe(IncomingClientState newClientState)
   {
+    if (!newClientState.timeline && !newClientState.startStopState)
+    {
+      return;
+    }
+
     if (newClientState.timeline)
     {
       *newClientState.timeline = clampTempo(*newClientState.timeline);
@@ -303,8 +308,7 @@ public:
     // This will fail in case the Fifo in the RtClientStateSetter is full. This indicates
     // a very high rate of calls to the setter. In this case we ignore one value because
     // we expect the setter to be called again soon.
-    if ((newClientState.timeline || newClientState.startStopState)
-        && mRtClientStateSetter.tryPush(newClientState))
+    if (mRtClientStateSetter.tryPush(newClientState))
     {
       const auto now = mClock.micros();
       // Cache the new timeline and StartStopState for serving back to the client
