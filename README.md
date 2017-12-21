@@ -1,3 +1,4 @@
+
 # Ableton Link
 
 This is the codebase for Ableton Link, a technology that synchronizes musical beat, tempo,
@@ -33,7 +34,7 @@ $ cmake --build .
 ```
 
 In order to build the GUI example application **QLinkHut**, the [Qt][qt] installation
-path must be set in the system PATH and `LINK_BUILD_QT_EXAMPLES` must be set:
+the path must be set in the system PATH and `LINK_BUILD_QT_EXAMPLES` must be set:
 
 ```
 $ mkdir build
@@ -43,7 +44,7 @@ $ cmake --build .
 ```
 
 The output binaries for the example applications and the unit-tests will be placed in a
-`bin` subdirectory of the CMake binary directory. Also note that the word size of the Qt
+`bin` subdirectory of the CMake binary directory. Also, note that the word size of the Qt
 installation must match how Link has been configured. Look for the value of
 `LINK_WORD_SIZE` in the CMake output to verify that the word size matches Qt's.
 
@@ -60,9 +61,9 @@ PATH=$(Path);C:\path\to\Qt\5.5\msvc64_bin\bin
 ## Test Plan
 
 To make sure users have the best possible experience using Link it is important all apps
-supporting Link behave consistently. This includes for example playing in sync with other
+supporting Link behave consistently. This includes, for example, playing in sync with other
 apps as well as not hijacking a jams tempo when joining. To make sure your app behaves as
-intended make sure it complies to the [Test Plan](TEST-PLAN.md).
+intended make sure it complies with the [Test Plan](TEST-PLAN.md).
 
 ## Building Link
 
@@ -85,7 +86,7 @@ Link's CMakeLists.txt.
 
 ### Other Build Systems
 
-To include the Link library in your non CMake project, you must do the following:
+To include the Link library in your non-CMake project, you must do the following:
 
  - Add the `link/include` and `modules/asio-standalone/asio/include` directories to your
    list of include paths
@@ -106,7 +107,7 @@ insight as to the compiler flags needed to build Link.
 | Linux    | Clang 3.6 or GCC 5.2 | libportaudio19-dev                    |
 
 
-Other compilers with good C++11 support should work, but are not verified.
+Other compilers with good C++11 support should work but are not verified.
 
 iOS developers should not use this repo. See http://ableton.github.io/linkkit for
 information on the LinkKit SDK for iOS.
@@ -120,7 +121,7 @@ repo for an example usage of the `Link` type.
 
 ## Time and Clocks
 
-Link works by calculating a relationship between the system clocks of devices in a session.
+The link works by calculating a relationship between the system clocks of devices in a session.
 Since the mechanism for obtaining a system time value and the unit of these values differ
 across platforms, Link defines a `Clock` abstraction with platform-specific
 implementations. Please see:
