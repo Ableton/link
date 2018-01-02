@@ -139,6 +139,7 @@ public:
     , mClientState(detail::initClientState(mSessionState))
     , mLastIsPlayingForStartStopStateCallback(false)
     , mRtClientState(detail::initRtClientState(mClientState))
+    , mHasPendingRtClientStates(false)
     , mSessionPeerCounter(*this, std::move(peerCallback))
     , mEnabled(false)
     , mStartStopSyncEnabled(false)
@@ -246,7 +247,7 @@ public:
     // block on them. If we can't access one or both because of concurrent modification
     // we fall back to our cached version of the timeline and/or start stop state.
 
-    if (!mRtClientStateSetter.hasPendingClientStates())
+    if (!mHasPendingRtClientStates)
     {
       const auto now = mClock.micros();
       if (now - mRtClientState.timelineTimestamp > detail::kLocalModGracePeriod)
@@ -305,6 +306,9 @@ public:
         mRtClientState.startStopState, *newClientState.startStopState);
     }
 
+    // This flag ensures that mRtClientState is only updated after all incoming
+    // client states were processed
+    mHasPendingRtClientStates = true;
     // This will fail in case the Fifo in the RtClientStateSetter is full. This indicates
     // a very high rate of calls to the setter. In this case we ignore one value because
     // we expect the setter to be called again soon.
@@ -488,6 +492,7 @@ private:
     }
 
     handleClientState(clientState);
+    mHasPendingRtClientStates = false;
   }
 
   void joinSession(const Session& session)
@@ -554,7 +559,6 @@ private:
 
     RtClientStateSetter(Controller& controller)
       : mController(controller)
-      , mHasPendingClientStates(false)
       , mCallbackDispatcher(
           [this] { processPendingClientStates(); }, detail::kRtHandlerFallbackPeriod)
     {
@@ -562,18 +566,12 @@ private:
 
     bool tryPush(const IncomingClientState clientState)
     {
-      mHasPendingClientStates = true;
       const auto success = mClientStateFifo.push(clientState);
       if (success)
       {
         mCallbackDispatcher.invoke();
       }
       return success;
-    }
-
-    bool hasPendingClientStates() const
-    {
-      return mHasPendingClientStates;
     }
 
   private:
@@ -598,10 +596,8 @@ private:
     void processPendingClientStates()
     {
       const auto clientState = buildMergedPendingClientState();
-      mController.mIo->async([this, clientState]() {
-        mController.handleRtClientState(clientState);
-        mHasPendingClientStates = false;
-      });
+      mController.mIo->async(
+        [this, clientState]() { mController.handleRtClientState(clientState); });
     }
 
     Controller& mController;
@@ -610,7 +606,6 @@ private:
     // per ms.
     static const std::size_t kBufferSize = 16;
     CircularFifo<IncomingClientState, kBufferSize> mClientStateFifo;
-    std::atomic<bool> mHasPendingClientStates;
     CallbackDispatcher mCallbackDispatcher;
   };
 
@@ -750,6 +745,7 @@ private:
   bool mLastIsPlayingForStartStopStateCallback;
 
   mutable RtClientState mRtClientState;
+  std::atomic<bool> mHasPendingRtClientStates;
 
   SessionPeerCounter mSessionPeerCounter;
 
