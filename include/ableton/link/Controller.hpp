@@ -598,13 +598,10 @@ private:
     void processPendingClientStates()
     {
       const auto clientState = buildMergedPendingClientState();
-      if (clientState.timeline || clientState.startStopState)
-      {
-        mController.mIo->async([this, clientState]() {
-          mController.handleRtClientState(clientState);
-          mHasPendingClientStates = false;
-        });
-      }
+      mController.mIo->async([this, clientState]() {
+        mController.handleRtClientState(clientState);
+        mHasPendingClientStates = false;
+      });
     }
 
     Controller& mController;
