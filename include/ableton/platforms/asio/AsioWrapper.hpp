@@ -54,6 +54,7 @@
 #endif
 
 #if defined(_MSC_VER)
+#define _SCL_SECURE_NO_WARNINGS 1
 #pragma warning(push, 0)
 #pragma warning(disable : 4242)
 #pragma warning(disable : 4702)
@@ -71,6 +72,7 @@
 
 #if defined(_MSC_VER)
 #pragma warning(pop)
+#undef _SCL_SECURE_NO_WARNINGS
 #endif
 
 #if defined(__clang__)
