@@ -37,6 +37,12 @@
 #define INCL_EXTRA_HTON_FUNCTIONS 1
 #endif
 
+#if defined(WIN32) || defined(_WIN32)
+#if !defined(_WIN32_WINNT)
+#define _WIN32_WINNT 0x0501
+#endif
+#endif
+
 #if defined(__clang__)
 #pragma clang diagnostic push
 #if __has_warning("-Wcomma")
