@@ -37,6 +37,12 @@
 #define INCL_EXTRA_HTON_FUNCTIONS 1
 #endif
 
+#if defined(WIN32) || defined(_WIN32)
+#if !defined(_WIN32_WINNT)
+#define _WIN32_WINNT 0x0501
+#endif
+#endif
+
 #if defined(__clang__)
 #pragma clang diagnostic push
 #if __has_warning("-Wcomma")
@@ -48,6 +54,7 @@
 #endif
 
 #if defined(_MSC_VER)
+#define _SCL_SECURE_NO_WARNINGS 1
 #pragma warning(push, 0)
 #pragma warning(disable : 4242)
 #pragma warning(disable : 4702)
@@ -65,6 +72,7 @@
 
 #if defined(_MSC_VER)
 #pragma warning(pop)
+#undef _SCL_SECURE_NO_WARNINGS
 #endif
 
 #if defined(__clang__)
