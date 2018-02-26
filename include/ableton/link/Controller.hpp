@@ -250,35 +250,26 @@ public:
     if (!mHasPendingRtClientStates)
     {
       const auto now = mClock.micros();
-      if (now - mRtClientState.timelineTimestamp > detail::kLocalModGracePeriod)
+      const auto timelineGracePeriodOver =
+        now - mRtClientState.timelineTimestamp > detail::kLocalModGracePeriod;
+      const auto startStopStateGracePeriodOver =
+        now - mRtClientState.startStopStateTimestamp > detail::kLocalModGracePeriod;
+
+      if ((timelineGracePeriodOver || startStopStateGracePeriodOver)
+          && mClientStateGuard.try_lock())
       {
-        if (mSessionStateGuard.try_lock())
+        const auto clientState = mClientState;
+        mClientStateGuard.unlock();
+
+        if (timelineGracePeriodOver && clientState.timeline != mRtClientState.timeline)
         {
-          const auto clientTimeline =
-            updateClientTimelineFromSession(mRtClientState.timeline,
-              mSessionState.timeline, now, mSessionState.ghostXForm);
-
-          mSessionStateGuard.unlock();
-
-          if (clientTimeline != mRtClientState.timeline)
-          {
-            mRtClientState.timeline = clientTimeline;
-          }
+          mRtClientState.timeline = clientState.timeline;
         }
-      }
 
-      if (now - mRtClientState.startStopStateTimestamp > detail::kLocalModGracePeriod)
-      {
-        if (mClientStateGuard.try_lock())
+        if (startStopStateGracePeriodOver
+            && clientState.startStopState != mRtClientState.startStopState)
         {
-          const auto startStopState = mClientState.startStopState;
-
-          mClientStateGuard.unlock();
-
-          if (startStopState != mRtClientState.startStopState)
-          {
-            mRtClientState.startStopState = startStopState;
-          }
+          mRtClientState.startStopState = clientState.startStopState;
         }
       }
     }

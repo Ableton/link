@@ -358,6 +358,27 @@ TEST_CASE("Controller | SetAndGetClientStateRealtimeSafe", "[Controller]")
     [](MockController& controller) { return controller.clientStateRtSafe(); });
 }
 
+TEST_CASE("Controller | SetClientStateRealtimeSafeAndGetItThreadSafe", "[Controller]")
+{
+  testSetAndGetClientState(
+    [](MockController& controller, IncomingClientState clientState) {
+      controller.setClientStateRtSafe(clientState);
+    },
+    [](MockController& controller) { return controller.clientState(); });
+}
+
+TEST_CASE("Controller | SetClientStateThreadSafeAndGetItRealtimeSafe", "[Controller]")
+{
+  testSetAndGetClientState(
+    [](MockController& controller, IncomingClientState clientState) {
+      controller.setClientState(clientState);
+    },
+    [](MockController& controller) {
+      MockClock{}.advance(seconds{2});
+      return controller.clientStateRtSafe();
+    });
+}
+
 TEST_CASE("Controller | CallbacksCalledBySettingClientStateThreadSafe", "[Controller]")
 {
   testCallbackInvocation([](MockController& controller, IncomingClientState clientState) {
