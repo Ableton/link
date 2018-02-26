@@ -393,5 +393,47 @@ TEST_CASE("Controller | CallbacksCalledBySettingClientStateRealtimeSafe", "[Cont
   });
 }
 
+TEST_CASE("Controller | GetClientStateRtSafeGracePeriod", "[Controller]")
+{
+  using namespace std::chrono;
+
+  auto clock = MockClock{};
+  auto tempoCallback = TempoClientCallback{};
+  auto startStopStateCallback = StartStopStateClientCallback{};
+  MockController controller(Tempo{100.0}, [](std::size_t) {}, std::ref(tempoCallback),
+    std::ref(startStopStateCallback), clock, util::injectVal(MockIoContext{}));
+  controller.enable(true);
+
+  clock.advance(microseconds{1});
+  const auto initialTimeline =
+    Optional<Timeline>{Timeline{Tempo{50.}, Beats{0.}, clock.micros()}};
+  const auto initialStartStopState =
+    Optional<StartStopState>{StartStopState{true, kAnyBeatTime, clock.micros()}};
+  const auto initialState =
+    IncomingClientState{initialTimeline, initialStartStopState, clock.micros()};
+
+  controller.setClientStateRtSafe(
+    {initialTimeline, initialStartStopState, clock.micros()});
+  REQUIRE(initialState == controller.clientState());
+  REQUIRE(initialState == controller.clientStateRtSafe());
+
+  clock.advance(microseconds{1});
+  const auto newTimeline =
+    Optional<Timeline>{Timeline{Tempo{70.}, Beats{1.}, clock.micros()}};
+  const auto newStartStopState =
+    Optional<StartStopState>{StartStopState{false, kAnyBeatTime, clock.micros()}};
+  const auto newState =
+    IncomingClientState{newTimeline, newStartStopState, clock.micros()};
+
+  controller.setClientState({newTimeline, newStartStopState, clock.micros()});
+  clock.advance(milliseconds{500});
+  CHECK(newState == controller.clientState());
+  CHECK(initialState == controller.clientStateRtSafe());
+
+  clock.advance(milliseconds{500});
+  CHECK(newState == controller.clientState());
+  CHECK(newState == controller.clientStateRtSafe());
+}
+
 } // namespace link
 } // namespace ableton
