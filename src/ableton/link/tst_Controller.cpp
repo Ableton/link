@@ -41,17 +41,23 @@ namespace
 
 struct MockClock
 {
-  void advance()
+  template <typename T, typename Rep>
+  void advance(std::chrono::duration<T, Rep> duration)
   {
-    time += microseconds{1};
+    now() += duration;
   }
 
   microseconds micros() const
   {
-    return time;
+    return now();
   }
 
-  microseconds time{1};
+private:
+  static microseconds& now()
+  {
+    static microseconds now{1};
+    return now;
+  }
 };
 
 struct MockIoContext
@@ -181,7 +187,7 @@ void testSetAndGetClientState(
   MockController controller(Tempo{100.0}, [](std::size_t) {}, [](Tempo) {}, [](bool) {},
     clock, util::injectVal(MockIoContext{}));
 
-  clock.advance();
+  clock.advance(microseconds{1});
   const auto initialTimeline =
     Optional<Timeline>{Timeline{Tempo{60.}, Beats{0.}, kAnyTime}};
   const auto initialStartStopState =
@@ -207,7 +213,7 @@ void testSetAndGetClientState(
     CHECK(initialClientState == getClientState(controller));
   }
 
-  clock.advance();
+  clock.advance(microseconds{1});
 
   SECTION("Set outdated start stop state (timestamp in past)")
   {
@@ -251,7 +257,7 @@ void testCallbackInvocation(SetClientStateFunctionT setClientState)
   MockController controller(Tempo{100.0}, [](std::size_t) {}, std::ref(tempoCallback),
     std::ref(startStopStateCallback), clock, util::injectVal(MockIoContext{}));
 
-  clock.advance();
+  clock.advance(microseconds{1});
 
   const auto initialTempo = Tempo{50.};
   const auto initialIsPlaying = true;
@@ -267,7 +273,7 @@ void testCallbackInvocation(SetClientStateFunctionT setClientState)
     CHECK(std::vector<Tempo>{initialTempo} == tempoCallback.tempos);
     CHECK(std::vector<bool>{initialIsPlaying} == startStopStateCallback.startStopStates);
 
-    clock.advance();
+    clock.advance(microseconds{1});
     tempoCallback.tempos = {};
     startStopStateCallback.startStopStates = {};
 
