@@ -15,6 +15,10 @@ def parse_args():
         default='clang-format-5.0',
         help='Path to clang-format executable')
 
+    arg_parser.add_argument(
+        '-f', '--fix', action='store_true',
+        help='Automatically fix all files with formatting errors')
+
     return arg_parser.parse_args(sys.argv[1:])
 
 
@@ -23,6 +27,16 @@ def parse_clang_xml(xml):
         if line.startswith('<replacement '):
             return False
     return True
+
+
+def fix_file(args, file_absolute_path):
+    logging.info('Fixing formatting errors in file: {}'.format(file_absolute_path))
+    clang_format_args = [args.clang_format, '-style=file', '-i', file_absolute_path]
+    try:
+        subprocess.check_call(clang_format_args)
+    except subprocess.CalledProcessError:
+        logging.error('Error running clang-format on {},'
+                      ' please run clang-format -i by hand'.format(file_absolute_path))
 
 
 def check_files_in_path(args, path):
@@ -46,8 +60,12 @@ def check_files_in_path(args, path):
                     sys.exit(2)
 
                 if not parse_clang_xml(clang_format_output):
-                    logging.warn('{} has formatting errors'.format(file_absolute_path))
-                    errors_found = True
+                    if args.fix:
+                        fix_file(args, file_absolute_path)
+                    else:
+                        logging.warning(
+                            '{} has formatting errors'.format(file_absolute_path))
+                        errors_found = True
 
     return errors_found
 
