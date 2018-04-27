@@ -144,7 +144,7 @@ script:
         python ci/configure.py --configuration $CONFIGURATION --with-qt -a $AUDIO
       else
         PATH=$PWD/5.5/gcc:${PATH}
-        python ci/configure.py --configuration $CONFIGURATION -a AUDIO --flags "\-DCMAKE_CXX_FLAGS=\"\-m32\""
+        python ci/configure.py --configuration $CONFIGURATION -a $AUDIO --flags "\-DCMAKE_CXX_FLAGS=\"\-m32\""
       fi
       python ci/build.py --configuration $CONFIGURATION --arguments "VERBOSE=1 -j8"
     fi
