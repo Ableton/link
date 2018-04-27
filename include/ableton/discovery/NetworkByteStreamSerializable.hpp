@@ -330,7 +330,7 @@ BytesIt deserializeContainer(BytesIt bytesBegin,
   return bytesBegin;
 }
 
-} // detail
+} // namespace detail
 
 // Need specific overloads for each container type, but use above
 // utilities for common implementation

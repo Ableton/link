@@ -252,4 +252,4 @@ inline void Link::SessionState::setIsPlayingAndRequestBeatAtTime(
   requestBeatAtStartPlayingTime(beat, quantum);
 }
 
-} // ableton
+} // namespace ableton

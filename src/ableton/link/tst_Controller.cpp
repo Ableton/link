@@ -290,7 +290,7 @@ void testCallbackInvocation(SetClientStateFunctionT setClientState)
   }
 }
 
-} // anon namespace
+} // namespace
 
 
 TEST_CASE("Controller | ConstructOptimistically", "[Controller]")

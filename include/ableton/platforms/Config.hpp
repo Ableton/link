@@ -62,6 +62,6 @@ using IoContext =
 using Controller =
   Controller<PeerCountCallback, TempoCallback, StartStopStateCallback, Clock, IoContext>;
 
-} // platform
-} // link
-} // ableton
+} // namespace platform
+} // namespace link
+} // namespace ableton

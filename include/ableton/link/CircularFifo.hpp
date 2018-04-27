@@ -89,5 +89,5 @@ private:
   std::array<Type, size + 1> data;
 };
 
-} // link
-} // ableton
+} // namespace link
+} // namespace ableton

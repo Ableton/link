@@ -93,5 +93,5 @@ private:
   bool mHasValue;
 };
 
-} // link
-} // ableton
+} // namespace link
+} // namespace ableton

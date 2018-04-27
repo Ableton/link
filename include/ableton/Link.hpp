@@ -369,6 +369,6 @@ private:
   link::platform::Controller mController;
 };
 
-} // ableton
+} // namespace ableton
 
 #include <ableton/Link.ipp>

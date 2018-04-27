@@ -156,7 +156,7 @@ struct TestHandler
   std::vector<ByeBye<TestNodeState::IdType>> byeByes;
 };
 
-} // unnamed
+} // namespace
 
 TEST_CASE("UdpMessenger | Receive", "[UdpMessenger]")
 {
@@ -221,7 +221,7 @@ MessengerWrapper<Messenger> wrapMessenger(Messenger messenger)
 {
   return {std::move(messenger)};
 }
-}
+} // namespace
 
 TEST_CASE("UdpMessenger | MovingMessengerDoesntSendByeBye", "[UdpMessenger]")
 {

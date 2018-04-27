@@ -36,7 +36,7 @@ const auto four = Beats{4.};
 using std::chrono::microseconds;
 const auto tl0 = Timeline{Tempo{120.}, one, microseconds{0}};
 const auto tl1 = Timeline{Tempo{60.}, Beats{-9.5}, microseconds{2000000}};
-}
+} // namespace
 
 TEST_CASE("phase | phase(x, 0) == 0", "[Phase]")
 {
@@ -126,7 +126,7 @@ std::chrono::microseconds phaseEncodingRoundtrip(
 {
   return fromPhaseEncodedBeats(tl, toPhaseEncodedBeats(tl, t, quantum), quantum);
 }
-}
+} // namespace
 
 TEST_CASE("fromPhaseEncodedBeats | inverse of toPhaseEncodedBeats", "[Phase]")
 {

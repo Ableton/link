@@ -167,7 +167,7 @@ void input(State& state)
   input(state);
 }
 
-} // anon namespace
+} // namespace
 
 int main(int, char**)
 {

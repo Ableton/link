@@ -78,6 +78,6 @@ struct Socket
   ReceiveFn mReceiveFn;
 };
 
+} // namespace serial_io
 } // namespace test
-} // namespace platforms
 } // namespace ableton

@@ -32,7 +32,7 @@ using std::chrono::microseconds;
 const auto b0 = Beats{-1.};
 const auto t0 = microseconds{-1};
 const auto xform = GhostXForm{1., microseconds{-1000000}};
-}
+} // namespace
 
 TEST_CASE("session->client | UpdatesTempo", "[ClientSessionTimelines]")
 {
