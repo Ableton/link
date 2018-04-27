@@ -96,17 +96,16 @@ matrix:
     # Code formatting verification
     - os: linux
       compiler: clang
-      addons:
-        apt:
-          sources: ['llvm-toolchain-trusty-5.0']
-          packages: ['clang-format-5.0']
-      env: CONFIGURATION=Formatting LLVM_VERSION=5.0
+      env: CONFIGURATION=Formatting LLVM_VERSION=6.0
+      services:
+        - docker
 
 before_install:
   # Do indentation check
   - |
     if [ "$CONFIGURATION" = "Formatting" ]; then
-      python ci/check-formatting.py -c $(which clang-format-5.0)
+      docker pull dalg24/clang-format:18.04.0
+      docker run -v $TRAVIS_BUILD_DIR:/ws dalg24/clang-format python /ws/ci/check-formatting.py -c /usr/bin/clang-format-6.0
       exit $?
     fi
 

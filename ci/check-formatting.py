@@ -12,7 +12,7 @@ def parse_args():
 
     arg_parser.add_argument(
         '-c', '--clang-format',
-        default='clang-format-5.0',
+        default='clang-format-6.0',
         help='Path to clang-format executable')
 
     arg_parser.add_argument(
