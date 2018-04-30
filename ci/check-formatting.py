@@ -39,7 +39,7 @@ def check_files_in_path(args, path):
 
                 try:
                     clang_format_output = subprocess.check_output(clang_format_args)
-                except:
+                except subprocess.CalledProcessError:
                     logging.error(
                         'Could not execute {}, try running this script with the'
                         '--clang-format option'.format(args.clang_format))
