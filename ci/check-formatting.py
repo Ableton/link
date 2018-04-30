@@ -71,13 +71,11 @@ def check_files_in_path(args, path):
 
 
 def check_formatting(args):
-    if not os.path.exists('.clang-format'):
-        logging.error('Script must be run from top-level project directory')
-        return 2
-
     errors_found = False
+    script_dir = os.path.dirname(os.path.realpath(__file__))
     for path in ['examples', 'include', 'src']:
-        if check_files_in_path(args, path):
+        subdir_abs_path = os.path.join(script_dir, path)
+        if check_files_in_path(args, subdir_abs_path):
             errors_found = True
 
     if errors_found:
