@@ -63,7 +63,7 @@ def check_formatting(args):
             errors_found = True
 
     if errors_found:
-        logging.warn(
+        logging.warning(
             'Formatting errors found, please fix with clang-format -style=file -i')
     else:
         logging.debug('No formatting errors found!')
