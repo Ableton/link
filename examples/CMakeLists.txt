@@ -165,6 +165,7 @@ if(WIN32)
     "/wd4619" # #pragma warning : there is no warning number 'number'
     "/wd4668" # 'symbol' is not defined as a preprocessor macro, replacing with '0' for 'directives'
     "/wd4702" # unreachable code
+    "/wd4946" # reinterpret_cast used between related classes: 'class1' and 'class2'
   )
   if(LINK_BUILD_ASIO)
     set(extra_ignored_warnings_LIST
