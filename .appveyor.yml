@@ -15,43 +15,51 @@ environment:
     - AUDIO_DRIVER: Asio
       CONFIGURATION: Release
       GENERATOR: Visual Studio 12 2013
+      QT_VERSION: 5.6
       QT: msvc2013
     # Visual Studio 2013, 64-bit Release, Asio driver
     - AUDIO_DRIVER: Asio
       CONFIGURATION: Release
       GENERATOR: Visual Studio 12 2013 Win64
+      QT_VERSION: 5.10
       QT: msvc2013_64
     # Visual Studio 2013, 64-bit Debug, Wasapi driver
     - AUDIO_DRIVER: Wasapi
       CONFIGURATION: Debug
       GENERATOR: Visual Studio 12 2013 Win64
+      QT_VERSION: 5.10
       QT: msvc2013_64
     # Visual Studio 2015, 32-bit Release, Asio driver
     - AUDIO_DRIVER: Asio
       CONFIGURATION: Release
       GENERATOR: Visual Studio 14 2015
+      QT_VERSION: 5.10
       QT: msvc2015
     # Visual Studio 2015, 64-bit Debug, Asio driver
     - AUDIO_DRIVER: Asio
       CONFIGURATION: Debug
       GENERATOR: Visual Studio 14 2015 Win64
+      QT_VERSION: 5.10
       QT: msvc2015_64
     # Visual Studio 2015, 64-bit Release, Asio driver
     - AUDIO_DRIVER: Asio
       CONFIGURATION: Release
       GENERATOR: Visual Studio 14 2015 Win64
+      QT_VERSION: 5.10
       QT: msvc2015_64
     # Visual Studio 2015, 64-bit Release, Wasapi driver
     - AUDIO_DRIVER: Wasapi
       CONFIGURATION: Release
       GENERATOR: Visual Studio 14 2015 Win64
+      QT_VERSION: 5.10
       QT: msvc2015_64
     # Visual Studio 2017, 64-bit Release, Asio driver
     - AUDIO_DRIVER: Asio
       CONFIGURATION: Release
       GENERATOR: Visual Studio 15 2017 Win64
+      QT_VERSION: 5.10
       QT: msvc2017_64
-  
+
 matrix:
   exclude:
     - image: Visual Studio 2015
@@ -67,7 +75,7 @@ matrix:
 
 install:
   - git submodule update --init --recursive
-  - set PATH=%PATH%;C:\Qt\5.8\%QT%\bin;C:\Qt\5.9\%QT%\bin
+  - set PATH=%PATH%;C:\Qt\%QT_VERSION%\%QT%\bin
 
 build_script:
   - python ci/configure.py -q -a %AUDIO_DRIVER% -g "%GENERATOR%"
