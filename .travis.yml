@@ -118,7 +118,7 @@ before_install:
   # Install QT for Linux
   - |
     if [ "$TRAVIS_OS_NAME" = "linux" ]; then
-      sudo apt-add-repository -y ppa:beineri/opt-qt58-trusty
+      sudo apt-add-repository -y ppa:beineri/opt-qt-5.10.1-trusty
       sudo apt-get -qy update
       sudo apt-get -qy install qtdeclarative5-dev
     fi
