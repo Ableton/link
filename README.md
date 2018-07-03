@@ -171,6 +171,10 @@ to system time values before passing them to Link methods. Examples of this late
 compensation can be found in the [platform](examples/linkaudio) implementations of the
 example apps.
 
+## Technical summary
+
+A technical overview of the Link protocol is available in the paper ["Ableton Link - A technology to synchronize music software"](https://depositonce.tu-berlin.de/bitstream/11303/7886/4/LAC2018_proceedings.pdf#page=51) published in the [Proceedings of the Linux Audio Conference 2018](https://lac.linuxaudio.org/2018/). A video presentation is available [here](https://media.ccc.de/v/lac2018-42-ableton_link_a_technology_to_synchronize_music_software)
+
 [asio]: https://www.steinberg.net/en/company/developers.html
 [catch]: https://github.com/philsquared/Catch
 [cmake]: https://www.cmake.org
