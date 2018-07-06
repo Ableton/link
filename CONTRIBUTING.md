@@ -46,7 +46,7 @@ Code Formatting
 ---------------
 
 Link uses [clang-format][clang-format] to enforce our preferred code style. At the moment,
-we use **clang-format version 3.9**. Note that other versions may format code differently.
+we use **clang-format version 6.0**. Note that other versions may format code differently.
 
 Any PRs submitted to Link are also checked with clang-format by the Travis CI service. If
 you get a build failure, then you can format your code by running the following command:
