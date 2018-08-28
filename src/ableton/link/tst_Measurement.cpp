@@ -19,7 +19,6 @@
 
 #include <ableton/discovery/Payload.hpp>
 #include <ableton/discovery/test/Socket.hpp>
-#include <ableton/link/GhostXForm.hpp>
 #include <ableton/link/Measurement.hpp>
 #include <ableton/link/SessionId.hpp>
 #include <ableton/link/v1/Messages.hpp>
@@ -78,16 +77,7 @@ struct TFixture
     PeerState mState;
   };
 
-  struct GhostXFormQuery
-  {
-    GhostXForm operator()() const
-    {
-      return {1.0, std::chrono::microseconds{0}};
-    }
-  };
-
   StateQuery mStateQuery;
-  GhostXFormQuery mGhostXFormQuery;
   asio::ip::address_v4 mAddress;
   Measurement<util::test::IoService, MockClock, discovery::test::Socket, util::NullLog>
     mMeasurement;
