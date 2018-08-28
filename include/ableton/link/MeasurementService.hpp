@@ -55,8 +55,6 @@ public:
     discovery::Socket<v1::kMaxMessageSize>,
     Log>;
 
-  static const std::size_t kNumberThreads = 1;
-
   MeasurementService(asio::ip::address_v4 address,
     SessionId sessionId,
     GhostXForm ghostXForm,
