@@ -47,10 +47,9 @@ struct MockClock
 struct TFixture
 {
   TFixture()
-    : mAddress(asio::ip::address_v4::from_string("127.0.0.1"))
-    , mMeasurement(mStateQuery(),
+    : mMeasurement(mStateQuery(),
         [](std::vector<std::pair<double, double>>) {},
-        mAddress,
+        {},
         MockClock{},
         util::injectVal(util::NullLog{}))
   {
@@ -78,7 +77,6 @@ struct TFixture
   };
 
   StateQuery mStateQuery;
-  asio::ip::address_v4 mAddress;
   Measurement<util::test::IoService, MockClock, discovery::test::Socket, util::NullLog>
     mMeasurement;
 };
