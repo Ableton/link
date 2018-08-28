@@ -105,8 +105,8 @@ public:
 
       try
       {
-        mMeasurementMap[nodeId] =
-          MeasurementInstance{state, move(callback), move(addr), mClock, mLog};
+        mMeasurementMap[nodeId] = std::unique_ptr<MeasurementInstance>(
+          new MeasurementInstance{state, move(callback), move(addr), mClock, mLog});
       }
       catch (const runtime_error& err)
       {
@@ -172,7 +172,7 @@ private:
   // Make sure the measurement map outlives the io service so that the rest of
   // the members are guaranteed to be valid when any final handlers
   // are begin run.
-  using MeasurementMap = std::map<NodeId, MeasurementInstance>;
+  using MeasurementMap = std::map<NodeId, std::unique_ptr<MeasurementInstance>>;
   MeasurementMap mMeasurementMap;
   Clock mClock;
   util::Injected<Log> mLog;
