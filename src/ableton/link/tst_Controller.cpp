@@ -20,6 +20,7 @@
 #include <ableton/link/Controller.hpp>
 #include <ableton/link/Tempo.hpp>
 #include <ableton/test/CatchWrapper.hpp>
+#include <ableton/util/Log.hpp>
 #include <ableton/util/test/Timer.hpp>
 
 namespace ableton
