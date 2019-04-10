@@ -57,7 +57,6 @@ set(link_discovery_HEADERS
   ${link_discovery_DIR}/PeerGateway.hpp
   ${link_discovery_DIR}/PeerGateways.hpp
   ${link_discovery_DIR}/Service.hpp
-  ${link_discovery_DIR}/Socket.hpp
   ${link_discovery_DIR}/UdpMessenger.hpp
   ${link_discovery_DIR}/v1/Messages.hpp
   PARENT_SCOPE

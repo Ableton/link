@@ -19,7 +19,6 @@
 
 #pragma once
 
-#include <ableton/discovery/Socket.hpp>
 #include <ableton/link/GhostXForm.hpp>
 #include <ableton/link/Kalman.hpp>
 #include <ableton/link/LinearRegression.hpp>
