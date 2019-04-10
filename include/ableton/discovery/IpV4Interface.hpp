@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include <ableton/platforms/asio/AsioService.hpp>
+#include <ableton/platforms/asio/AsioWrapper.hpp>
 #include <ableton/util/Injected.hpp>
 
 namespace ableton

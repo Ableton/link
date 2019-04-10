@@ -21,7 +21,6 @@
 
 #include <ableton/discovery/UdpMessenger.hpp>
 #include <ableton/discovery/v1/Messages.hpp>
-#include <ableton/platforms/asio/AsioService.hpp>
 #include <ableton/util/SafeAsyncHandler.hpp>
 #include <memory>
 
