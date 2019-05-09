@@ -40,6 +40,8 @@ public:
 private:
   static int audioCallback(jack_nframes_t nframes, void* pvUserData);
   int audioCallback(jack_nframes_t nframes);
+  static void latencyCallback(jack_latency_callback_mode_t mode, void* pvUserData);
+  void updateLatency();
 
   void initialize();
   void uninitialize();
