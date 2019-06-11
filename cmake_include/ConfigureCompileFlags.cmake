@@ -109,6 +109,7 @@ elseif(${CMAKE_CXX_COMPILER_ID} STREQUAL MSVC)
     "/wd4711" # Function 'function' selected for inline expansion
     "/wd4738" # Storing 32-bit float result in memory, possible loss of performance
     "/wd4820" # 'Bytes': bytes padding added after construct 'member_name'
+    "/wd5045" # Compiler will insert Spectre mitigation for memory load if /Qspectre switch specified
   )
 
   if(MSVC_VERSION VERSION_GREATER 1800)
