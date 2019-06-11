@@ -113,7 +113,7 @@ before_install:
   - CXX=$COMPILER
 
   # Install homebrew packages for Mac OS X
-  - if [ "$TRAVIS_OS_NAME" = "osx" ]; then brew update && brew install ninja qt5; fi
+  - if [ "$TRAVIS_OS_NAME" = "osx" ]; then HOMEBREW_NO_AUTO_UPDATE=1 brew install qt5 && brew update && brew install ninja; fi
 
   # Install QT for Linux
   - |
