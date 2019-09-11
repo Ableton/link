@@ -48,6 +48,9 @@
 #if __has_warning("-Wcomma")
 #pragma clang diagnostic ignored "-Wcomma"
 #endif
+#if __has_warning("-Wshorten-64-to-32")
+#pragma clang diagnostic ignored "-Wshorten-64-to-32"
+#endif
 #if __has_warning("-Wunused-local-typedef")
 #pragma clang diagnostic ignored "-Wunused-local-typedef"
 #endif
