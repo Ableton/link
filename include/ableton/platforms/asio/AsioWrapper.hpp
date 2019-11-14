@@ -26,11 +26,13 @@
  * by Link.
  */
 
+#if !defined(ESP_PLATFORM)
 #pragma push_macro("ASIO_STANDALONE")
 #define ASIO_STANDALONE 1
 
 #pragma push_macro("ASIO_NO_TYPEID")
 #define ASIO_NO_TYPEID 1
+#endif
 
 #if defined(LINK_PLATFORM_WINDOWS)
 #pragma push_macro("INCL_EXTRA_HTON_FUNCTIONS")
