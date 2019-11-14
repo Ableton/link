@@ -37,6 +37,11 @@
 #include <ableton/platforms/linux/Clock.hpp>
 #include <ableton/platforms/posix/ScanIpIfAddrs.hpp>
 #include <ableton/platforms/stl/Random.hpp>
+#elif defined(ESP_PLATFORM)
+#include <ableton/platforms/asio/Context.hpp>
+#include <ableton/platforms/esp32/Clock.hpp>
+#include <ableton/platforms/esp32/Random.hpp>
+#include <ableton/platforms/esp32/ScanIpIfAddrs.hpp>
 #endif
 
 namespace ableton
@@ -64,6 +69,11 @@ using IoContext =
   platforms::asio::Context<platforms::posix::ScanIpIfAddrs, util::NullLog>;
 using Random = platforms::stl::Random;
 
+#elif defined(ESP_PLATFORM)
+using Clock = platforms::esp32::Clock;
+using IoContext =
+  platforms::asio::Context<platforms::esp32::ScanIpIfAddrs, util::NullLog>;
+using Random = platforms::esp32::Random;
 #endif
 
 using Controller =

@@ -24,6 +24,8 @@
 #include <ableton/platforms/darwin/Darwin.hpp>
 #elif defined(LINK_PLATFORM_LINUX)
 #include <ableton/platforms/linux/Linux.hpp>
+#elif defined(ESP_PLATFORM)
+#include <ableton/platforms/esp32/Esp32.hpp>
 #endif
 
 #include <chrono>
