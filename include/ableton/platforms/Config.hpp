@@ -24,16 +24,19 @@
 
 #if defined(LINK_PLATFORM_WINDOWS)
 #include <ableton/platforms/asio/Context.hpp>
+#include <ableton/platforms/stl/Random.hpp>
 #include <ableton/platforms/windows/Clock.hpp>
 #include <ableton/platforms/windows/ScanIpIfAddrs.hpp>
 #elif defined(LINK_PLATFORM_MACOSX)
 #include <ableton/platforms/asio/Context.hpp>
 #include <ableton/platforms/darwin/Clock.hpp>
 #include <ableton/platforms/posix/ScanIpIfAddrs.hpp>
+#include <ableton/platforms/stl/Random.hpp>
 #elif defined(LINK_PLATFORM_LINUX)
 #include <ableton/platforms/asio/Context.hpp>
 #include <ableton/platforms/linux/Clock.hpp>
 #include <ableton/platforms/posix/ScanIpIfAddrs.hpp>
+#include <ableton/platforms/stl/Random.hpp>
 #endif
 
 namespace ableton
@@ -47,20 +50,24 @@ namespace platform
 using Clock = platforms::windows::Clock;
 using IoContext =
   platforms::asio::Context<platforms::windows::ScanIpIfAddrs, util::NullLog>;
+using Random = platforms::stl::Random;
 
 #elif defined(LINK_PLATFORM_MACOSX)
 using Clock = platforms::darwin::Clock;
 using IoContext =
   platforms::asio::Context<platforms::posix::ScanIpIfAddrs, util::NullLog>;
+using Random = platforms::stl::Random;
 
 #elif defined(LINK_PLATFORM_LINUX)
 using Clock = platforms::linux::ClockMonotonicRaw;
 using IoContext =
   platforms::asio::Context<platforms::posix::ScanIpIfAddrs, util::NullLog>;
+using Random = platforms::stl::Random;
+
 #endif
 
 using Controller =
-  Controller<PeerCountCallback, TempoCallback, StartStopStateCallback, Clock, IoContext>;
+  Controller<PeerCountCallback, TempoCallback, StartStopStateCallback, Clock, Random, IoContext>;
 
 } // namespace platform
 } // namespace link

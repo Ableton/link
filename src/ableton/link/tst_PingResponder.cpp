@@ -24,6 +24,7 @@
 #include <ableton/link/PayloadEntries.hpp>
 #include <ableton/link/PingResponder.hpp>
 #include <ableton/link/v1/Messages.hpp>
+#include <ableton/platforms/stl/Random.hpp>
 #include <ableton/test/CatchWrapper.hpp>
 #include <ableton/util/test/IoService.hpp>
 #include <array>
@@ -34,6 +35,8 @@ namespace link
 {
 namespace
 {
+
+using Random = ableton::platforms::stl::Random;
 
 struct MockClock
 {
@@ -75,7 +78,7 @@ struct RpFixture
   RpFixture()
     : mAddress(asio::ip::address_v4::from_string("127.0.0.1"))
     , mResponder(mAddress,
-        NodeId::random(),
+        NodeId::random<Random>(),
         GhostXForm{1.0, std::chrono::microseconds{0}},
         MockClock{},
         util::injectRef(*mIo))
