@@ -93,6 +93,15 @@ matrix:
           packages: ['g++-6', 'valgrind', 'portaudio19-dev']
       env: COMPILER=g++-6 WORDSIZE=64 CONFIGURATION=Release AUDIO=Alsa
 
+    # ESP32
+    - os: linux
+      compiler: clang
+      addons:
+        apt:
+          sources: ['llvm-toolchain-trusty-5.0', 'ubuntu-toolchain-r-test']
+          packages: ['wget', 'flex', 'bison', 'gperf', 'python-pip', 'ninja-build', 'ccache']
+      env: IDF_RELEASE=v4.0-rc IDF_PATH=${HOME}/esp-idf-${IDF_RELEASE} COMPILER=clang
+
     # Code formatting verification
     - os: linux
       compiler: clang
@@ -129,23 +138,35 @@ install:
 script:
   - |
     set -e
-    if [ "$TRAVIS_OS_NAME" = "osx" ]; then
-      PATH=`brew --prefix qt5`/bin:${PATH}
-      if [ "$WORDSIZE" -eq 64 ]; then
-        python ci/configure.py --configuration $CONFIGURATION --generator Ninja --with-qt
-      else
-        python ci/configure.py --configuration $CONFIGURATION --generator Ninja --flags "\-DCMAKE_OSX_ARCHITECTURES=i386"
-      fi
-      python ci/build.py --configuration $CONFIGURATION --arguments "all -v"
+    if [ ! -z "$IDF_PATH" ]; then
+      mkdir -p ${IDF_PATH}
+      wget -P ${HOME} https://github.com/espressif/esp-idf/releases/download/${IDF_RELEASE}/esp-idf-${IDF_RELEASE}.zip
+      unzip -o ${HOME}/esp-idf-${IDF_RELEASE}.zip -d ${HOME}
+      ${IDF_PATH}/install.sh
+      . ${IDF_PATH}/export.sh
+      . ${IDF_PATH}/add_path.sh
+      PATH=${IDF_PATH}/tools:${PATH}
+      cd examples/esp32
+      idf.py build
     else
-      if [ "$WORDSIZE" -eq 64 ]; then
-        PATH=$PWD/5.5/gcc_64:${PATH}
-        python ci/configure.py --configuration $CONFIGURATION --with-qt -a $AUDIO
+      if [ "$TRAVIS_OS_NAME" = "osx" ]; then
+        PATH=`brew --prefix qt5`/bin:${PATH}
+        if [ "$WORDSIZE" -eq 64 ]; then
+          python ci/configure.py --configuration $CONFIGURATION --generator Ninja --with-qt
+        else
+          python ci/configure.py --configuration $CONFIGURATION --generator Ninja --flags "\-DCMAKE_OSX_ARCHITECTURES=i386"
+        fi
+        python ci/build.py --configuration $CONFIGURATION --arguments "all -v"
       else
-        PATH=$PWD/5.5/gcc:${PATH}
-        python ci/configure.py --configuration $CONFIGURATION -a $AUDIO --flags "\-DCMAKE_CXX_FLAGS=\"\-m32\""
+        if [ "$WORDSIZE" -eq 64 ]; then
+          PATH=$PWD/5.5/gcc_64:${PATH}
+          python ci/configure.py --configuration $CONFIGURATION --with-qt -a $AUDIO
+        else
+          PATH=$PWD/5.5/gcc:${PATH}
+          python ci/configure.py --configuration $CONFIGURATION -a $AUDIO --flags "\-DCMAKE_CXX_FLAGS=\"\-m32\""
+        fi
+        python ci/build.py --configuration $CONFIGURATION --arguments "VERBOSE=1 -j8"
       fi
-      python ci/build.py --configuration $CONFIGURATION --arguments "VERBOSE=1 -j8"
     fi
     set +e
 
@@ -154,11 +175,13 @@ script:
   # compiled by brew and this takes way too much time on the build server.
   - |
     set -e
-    if [ "$TRAVIS_OS_NAME" = "linux" ]; then
-      python ci/run-tests.py --target LinkCoreTest --valgrind
-      python ci/run-tests.py --target LinkDiscoveryTest --valgrind
-    else
-      python ci/run-tests.py --target LinkCoreTest
-      python ci/run-tests.py --target LinkDiscoveryTest
+    if  [ -z "$IDF_PATH" ]; then
+      if [ "$TRAVIS_OS_NAME" = "linux" ]; then
+        python ci/run-tests.py --target LinkCoreTest --valgrind
+        python ci/run-tests.py --target LinkDiscoveryTest --valgrind
+      else
+        python ci/run-tests.py --target LinkCoreTest
+        python ci/run-tests.py --target LinkDiscoveryTest
+      fi
     fi
     set +e
