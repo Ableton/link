@@ -33,9 +33,9 @@
 #include <vector>
 
 #if defined(LINK_PLATFORM_WINDOWS)
-#include <WS2tcpip.h>
-#include <WinSock2.h>
-#include <Windows.h>
+#include <ws2tcpip.h>
+#include <winsock2.h>
+#include <windows.h>
 #endif
 
 namespace ableton
@@ -202,7 +202,7 @@ struct Deserialize<int32_t>
 template <typename It>
 It toNetworkByteStream(uint64_t ll, It out)
 {
-  return detail::copyToByteStream(htonll(ll), std::move(out));
+  return detail::copyToByteStream((((uint64_t)htonl(ll)) << 32) + htonl((ll) >> 32), std::move(out));
 }
 
 template <>
@@ -212,7 +212,7 @@ struct Deserialize<uint64_t>
   static std::pair<uint64_t, It> fromNetworkByteStream(It begin, It end)
   {
     auto result = detail::copyFromByteStream<uint64_t>(std::move(begin), std::move(end));
-    result.first = ntohll(result.first);
+    result.first = (((uint64_t)htonl(result.first)) << 32) + htonl((result.first) >> 32);
     return result;
   }
 };
