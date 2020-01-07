@@ -50,7 +50,7 @@ audible discontinuity should occur. - **Disable** Link **&rArr;** No beat time j
 audible discontinuity should occur.
 
 ### BEATTIME-2: App's beat time does not change if another participant joins its session.
-- Open App and **enable** Link. - Start playing. - Open LinkHut, whenusing QLinkHut
+- Open App and **enable** Link. - Start playing. - Open LinkHut, when using QLinkHut
 **enable** Link **&rArr;** No beat time jump or audible discontinuity should occur in the
 App.
 
@@ -58,6 +58,24 @@ App.
 session's tempo and phase, which will usually result in a beat time jump. Apps that are
 already in a session should never have any kind of beat time or audio discontinuity when
 a new participant joins the session.
+
+## Start Stop States
+
+### STARTSTOPSTATE-1: Listening to start/stop commands from other peers.
+- Open App, set Link and Start Stop Sync to **Enabled**.
+- Open LinkHut and set Start Stop Sync to **Enabled**. When using QLinkHut click the **Link** button to enable
+Link. Press **Play** **&rArr;** App should start playing according to its quantization.
+- Stop playback in LinkHut **&rArr;** App should stop playing.
+
+### STARTSTOPSTATE-2: Sending start/stop commands to other peers.
+- Open LinkHut and set Start Stop Sync to **Enabled**. When using QLinkHut click the **Link** button to enable
+Link. Press **Play**.
+- Open App, set Link and Start Stop Sync to **Enabled** **&rArr;** App should not be
+playing while LinkHut continues playing.
+- Start playback in App **&rArr;** App should join playing according to its quantization.
+- Stop playback in App **&rArr;** App and LinkHut should stop playing.
+- Start playback in App **&rArr;** App and LinkHut should start playing according to
+their quantizations.
 
 ## Audio Engine
 
