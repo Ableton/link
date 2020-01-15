@@ -38,8 +38,8 @@
 #include <ableton/platforms/posix/ScanIpIfAddrs.hpp>
 #include <ableton/platforms/stl/Random.hpp>
 #elif defined(ESP_PLATFORM)
-#include <ableton/platforms/asio/Context.hpp>
 #include <ableton/platforms/esp32/Clock.hpp>
+#include <ableton/platforms/esp32/Context.hpp>
 #include <ableton/platforms/esp32/Random.hpp>
 #include <ableton/platforms/esp32/ScanIpIfAddrs.hpp>
 #endif
@@ -72,7 +72,7 @@ using Random = platforms::stl::Random;
 #elif defined(ESP_PLATFORM)
 using Clock = platforms::esp32::Clock;
 using IoContext =
-  platforms::asio::Context<platforms::esp32::ScanIpIfAddrs, util::NullLog>;
+  platforms::esp32::Context<platforms::esp32::ScanIpIfAddrs, util::NullLog>;
 using Random = platforms::esp32::Random;
 #endif
 

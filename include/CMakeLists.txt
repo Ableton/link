@@ -84,6 +84,7 @@ if(ESP_PLATFORM)
   set(link_platform_HEADERS
     ${link_platform_HEADERS}
     ${link_platform_DIR}/esp32/Clock.hpp
+    ${link_platform_DIR}/esp32/Context.hpp
     ${link_platform_DIR}/esp32/Esp32.hpp
     ${link_platform_DIR}/esp32/Random.hpp
     ${link_platform_DIR}/esp32/ScanIpIfAddrs.hpp
