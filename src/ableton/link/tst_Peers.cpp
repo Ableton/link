@@ -18,6 +18,7 @@
  */
 
 #include <ableton/link/Peers.hpp>
+#include <ableton/platforms/stl/Random.hpp>
 #include <ableton/test/CatchWrapper.hpp>
 #include <ableton/test/serial_io/Fixture.hpp>
 
@@ -27,6 +28,8 @@ namespace link
 {
 namespace
 {
+
+using Random = ableton::platforms::stl::Random;
 
 struct SessionMembershipCallback
 {
@@ -59,18 +62,18 @@ struct SessionStartStopStateCallback
 };
 
 const auto fooPeer =
-  PeerState{{NodeId::random(), NodeId::random(),
+  PeerState{{NodeId::random<Random>(), NodeId::random<Random>(),
               Timeline{Tempo{60.}, Beats{1.}, std::chrono::microseconds{1234}},
               StartStopState{false, Beats{0.}, std::chrono::microseconds{2345}}},
     {}};
 
 const auto barPeer =
-  PeerState{{NodeId::random(), NodeId::random(),
+  PeerState{{NodeId::random<Random>(), NodeId::random<Random>(),
               Timeline{Tempo{120.}, Beats{10.}, std::chrono::microseconds{500}}, {}},
     {}};
 
 const auto bazPeer =
-  PeerState{{NodeId::random(), NodeId::random(),
+  PeerState{{NodeId::random<Random>(), NodeId::random<Random>(),
               Timeline{Tempo{100.}, Beats{4.}, std::chrono::microseconds{100}}, {}},
     {}};
 

@@ -22,6 +22,7 @@
 #include <ableton/link/Measurement.hpp>
 #include <ableton/link/SessionId.hpp>
 #include <ableton/link/v1/Messages.hpp>
+#include <ableton/platforms/stl/Random.hpp>
 #include <ableton/test/CatchWrapper.hpp>
 #include <ableton/util/test/IoService.hpp>
 #include <array>
@@ -89,7 +90,8 @@ struct TFixture
   {
     StateQuery()
     {
-      mState.nodeState.sessionId = NodeId::random();
+      using Random = ableton::platforms::stl::Random;
+      mState.nodeState.sessionId = NodeId::random<Random>();
       mState.endpoint =
         asio::ip::udp::endpoint(asio::ip::address_v4::from_string("127.0.0.1"), 9999);
     }

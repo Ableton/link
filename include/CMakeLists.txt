@@ -80,7 +80,16 @@ set(link_platform_HEADERS
   ${link_platform_DIR}/asio/Util.hpp
 )
 
-if(UNIX)
+if(ESP_PLATFORM)
+  set(link_platform_HEADERS
+    ${link_platform_HEADERS}
+    ${link_platform_DIR}/esp32/Clock.hpp
+    ${link_platform_DIR}/esp32/Context.hpp
+    ${link_platform_DIR}/esp32/Esp32.hpp
+    ${link_platform_DIR}/esp32/Random.hpp
+    ${link_platform_DIR}/esp32/ScanIpIfAddrs.hpp
+  )
+elseif(UNIX)
   set(link_platform_HEADERS
     ${link_platform_HEADERS}
     ${link_platform_DIR}/posix/ScanIpIfAddrs.hpp
@@ -91,6 +100,7 @@ if(UNIX)
       ${link_platform_HEADERS}
       ${link_platform_DIR}/darwin/Clock.hpp
       ${link_platform_DIR}/darwin/Darwin.hpp
+      ${link_platform_DIR}/stl/Random.hpp
     )
   elseif(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     set(link_platform_HEADERS
@@ -98,11 +108,13 @@ if(UNIX)
       ${link_platform_DIR}/linux/Clock.hpp
       ${link_platform_DIR}/linux/Linux.hpp
       ${link_platform_DIR}/stl/Clock.hpp
+      ${link_platform_DIR}/stl/Random.hpp
     )
   endif()
 elseif(WIN32)
   set(link_platform_HEADERS
     ${link_platform_HEADERS}
+    ${link_platform_DIR}/stl/Random.hpp
     ${link_platform_DIR}/windows/Clock.hpp
     ${link_platform_DIR}/windows/ScanIpIfAddrs.hpp
   )

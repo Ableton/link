@@ -19,6 +19,7 @@
 
 #include <ableton/link/Controller.hpp>
 #include <ableton/link/Tempo.hpp>
+#include <ableton/platforms/stl/Random.hpp>
 #include <ableton/test/CatchWrapper.hpp>
 #include <ableton/util/Log.hpp>
 #include <ableton/util/test/Timer.hpp>
@@ -152,6 +153,7 @@ using MockController = Controller<PeerCountCallback,
   TempoCallback,
   StartStopStateCallback,
   MockClock,
+  platforms::stl::Random,
   MockIoContext>;
 
 const auto kAnyBeatTime = Beats{5.};

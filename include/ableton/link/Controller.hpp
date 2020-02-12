@@ -120,6 +120,7 @@ template <typename PeerCountCallback,
   typename TempoCallback,
   typename StartStopStateCallback,
   typename Clock,
+  typename Random,
   typename IoContext>
 class Controller
 {
@@ -133,7 +134,7 @@ public:
     : mTempoCallback(std::move(tempoCallback))
     , mStartStopStateCallback(std::move(startStopStateCallback))
     , mClock(std::move(clock))
-    , mNodeId(NodeId::random())
+    , mNodeId(NodeId::random<Random>())
     , mSessionId(mNodeId)
     , mSessionState(detail::initSessionState(tempo, mClock))
     , mClientState(detail::initClientState(mSessionState))
@@ -514,7 +515,7 @@ private:
 
   void resetState()
   {
-    mNodeId = NodeId::random();
+    mNodeId = NodeId::random<Random>();
     mSessionId = mNodeId;
 
     const auto xform = detail::initXForm(mClock);
