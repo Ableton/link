@@ -115,9 +115,6 @@ before_install:
   # Override Travis' CXX Flag
   - CXX=$COMPILER
 
-  # Install homebrew packages for Mac OS X
-  - if [ "$TRAVIS_OS_NAME" = "osx" ]; then brew update && brew install ninja; fi
-
 install:
   - git submodule update --init --recursive
 
@@ -137,18 +134,18 @@ script:
     else
       if [ "$TRAVIS_OS_NAME" = "osx" ]; then
         if [ "$WORDSIZE" -eq 64 ]; then
-          python ci/configure.py --configuration $CONFIGURATION --generator Ninja
+          python ci/configure.py --configuration $CONFIGURATION
         else
-          python ci/configure.py --configuration $CONFIGURATION --generator Ninja --flags "\-DCMAKE_OSX_ARCHITECTURES=i386"
+          python ci/configure.py --configuration $CONFIGURATION --flags "\-DCMAKE_OSX_ARCHITECTURES=i386"
         fi
-        python ci/build.py --configuration $CONFIGURATION --arguments "all -v"
+        python ci/build.py --configuration $CONFIGURATION
       else
         if [ "$WORDSIZE" -eq 64 ]; then
           python ci/configure.py --configuration $CONFIGURATION -a $AUDIO
         else
           python ci/configure.py --configuration $CONFIGURATION -a $AUDIO --flags "\-DCMAKE_CXX_FLAGS=\"\-m32\""
         fi
-        python ci/build.py --configuration $CONFIGURATION --arguments "VERBOSE=1 -j8"
+        python ci/build.py --configuration $CONFIGURATION
       fi
     fi
     set +e
