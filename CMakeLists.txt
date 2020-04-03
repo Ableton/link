@@ -11,7 +11,6 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 #       |_|
 
 # Note: Please use the LINK_* prefix for all project-specific options
-option(LINK_BUILD_QT_EXAMPLES "Build examples (Requires Qt)" OFF)
 
 if(UNIX)
   option(LINK_ENABLE_ASAN "Build with Address Sanitizier (ASan)" OFF)

@@ -45,7 +45,7 @@ matrix:
           packages: ['clang-3.6', 'g++-5', 'valgrind', 'portaudio19-dev']
       env: COMPILER=clang++-3.6 WORDSIZE=64 CONFIGURATION=Debug AUDIO=Alsa
 
-    # Linux with Clang 3.6, 64-bit Release, Jack
+    # Linux with Clang 3.8, 64-bit Release, Jack
     - os: linux
       dist: trusty
       compiler: clang
@@ -116,15 +116,7 @@ before_install:
   - CXX=$COMPILER
 
   # Install homebrew packages for Mac OS X
-  - if [ "$TRAVIS_OS_NAME" = "osx" ]; then HOMEBREW_NO_AUTO_UPDATE=1 brew install qt5 && brew update && brew install ninja; fi
-
-  # Install QT for Linux
-  - |
-    if [ "$TRAVIS_OS_NAME" = "linux" ]; then
-      sudo apt-add-repository -y ppa:beineri/opt-qt-5.10.1-trusty
-      sudo apt-get -qy update
-      sudo apt-get -qy install qtdeclarative5-dev
-    fi
+  - if [ "$TRAVIS_OS_NAME" = "osx" ]; then brew update && brew install ninja; fi
 
 install:
   - git submodule update --init --recursive
@@ -144,19 +136,16 @@ script:
       idf.py build
     else
       if [ "$TRAVIS_OS_NAME" = "osx" ]; then
-        PATH=`brew --prefix qt5`/bin:${PATH}
         if [ "$WORDSIZE" -eq 64 ]; then
-          python ci/configure.py --configuration $CONFIGURATION --generator Ninja --with-qt
+          python ci/configure.py --configuration $CONFIGURATION --generator Ninja
         else
           python ci/configure.py --configuration $CONFIGURATION --generator Ninja --flags "\-DCMAKE_OSX_ARCHITECTURES=i386"
         fi
         python ci/build.py --configuration $CONFIGURATION --arguments "all -v"
       else
         if [ "$WORDSIZE" -eq 64 ]; then
-          PATH=$PWD/5.5/gcc_64:${PATH}
-          python ci/configure.py --configuration $CONFIGURATION --with-qt -a $AUDIO
+          python ci/configure.py --configuration $CONFIGURATION -a $AUDIO
         else
-          PATH=$PWD/5.5/gcc:${PATH}
           python ci/configure.py --configuration $CONFIGURATION -a $AUDIO --flags "\-DCMAKE_CXX_FLAGS=\"\-m32\""
         fi
         python ci/build.py --configuration $CONFIGURATION --arguments "VERBOSE=1 -j8"

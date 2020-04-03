@@ -32,28 +32,8 @@ $ cmake ..
 $ cmake --build .
 ```
 
-In order to build the GUI example application **QLinkHut**, the [Qt][qt] installation
-path must be set in the system PATH and `LINK_BUILD_QT_EXAMPLES` must be set:
-
-```
-$ mkdir build
-$ cd build
-$ cmake -DLINK_BUILD_QT_EXAMPLES=ON ..
-$ cmake --build .
-```
-
 The output binaries for the example applications and the unit-tests will be placed in a
-`bin` subdirectory of the CMake binary directory. Also note that the word size of the Qt
-installation must match how Link has been configured. Look for the value of
-`LINK_WORD_SIZE` in the CMake output to verify that the word size matches Qt's.
-
-When running QLinkHut on Windows, the Qt binary path must be in the system `PATH` before
-launching the executable. So to launch QLinkHut from Visual Studio, one must go to the
-QLinkHut Properties -> Debugging -> Environment, and set it to:
-
-```
-PATH=$(Path);C:\path\to\Qt\5.5\msvc64_bin\bin
-```
+`bin` subdirectory of the CMake binary directory.
 
 # Integrating Link in your Application
 
@@ -100,7 +80,6 @@ insight as to the compiler flags needed to build Link.
 
 | Platform | Minimum Required     | Optional (only required for examples) |
 |----------|----------------------|---------------------------------------|
-| **All**  | CMake 3.0            | Qt 5.5                                |
 | Windows  | MSVC 2013            | Steinberg ASIO SDK 2.3                |
 | Mac      | Xcode 7.0            |                                       |
 | Linux    | Clang 3.6 or GCC 5.2 | libportaudio19-dev                    |
@@ -115,8 +94,8 @@ information on the LinkKit SDK for iOS.
 
 An overview of Link concepts can be found at http://ableton.github.io/link. Those that
 are new to Link should start there. The [Link.hpp](include/ableton/Link.hpp) header
-contains the full Link public interface. See the LinkHut and QLinkHut projects in this
-repo for an example usage of the `Link` type.
+contains the full Link public interface. See the LinkHut projects in this repo for an
+example usage of the `Link` type.
 
 ## Time and Clocks
 
@@ -175,4 +154,3 @@ example apps.
 [catch]: https://github.com/philsquared/Catch
 [cmake]: https://www.cmake.org
 [license]: LICENSE.md
-[qt]: https://www.qt.io

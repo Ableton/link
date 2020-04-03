@@ -27,11 +27,6 @@ def parse_args():
         help='Build configuration to use (not supported by IDE generators)')
 
     arg_parser.add_argument(
-        '-q', '--with-qt',
-        help='Build Qt example apps',
-        action='store_true')
-
-    arg_parser.add_argument(
         '-g', '--generator',
         help='CMake generator to use (default: Determined by CMake)')
 
@@ -53,9 +48,6 @@ def build_cmake_args(args):
     if args.generator is not None:
         cmake_args.append('-G')
         cmake_args.append(args.generator)
-
-    if args.with_qt:
-        cmake_args.append('-DLINK_BUILD_QT_EXAMPLES=ON')
 
     if args.configuration is not None:
         cmake_args.append('-DCMAKE_BUILD_TYPE=' + args.configuration)

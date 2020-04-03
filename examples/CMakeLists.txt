@@ -103,24 +103,6 @@ function(configure_linkhut_executable target)
   target_link_libraries(${target} Ableton::Link)
 endfunction()
 
-function(configure_qlinkhut_executable target)
-  configure_linkhut_executable(${target})
-  target_link_libraries(${target} Qt5::Quick)
-
-  if(${CMAKE_CXX_COMPILER_ID} MATCHES Clang)
-    target_compile_options(${target} PRIVATE
-      "-Wno-global-constructors"
-      "-Wno-missing-prototypes"
-      "-Wno-undefined-reinterpret-cast"
-      "-Wno-zero-as-null-pointer-constant"
-      )
-  endif()
-
-  if(MSVC_VERSION VERSION_GREATER 1900)
-    target_compile_options(${target} PRIVATE "/wd4946")
-  endif()
-endfunction()
-
 function(configure_linkhut_audio_sources target)
   if(APPLE)
     target_link_libraries(${target} "-framework AudioUnit")
@@ -209,67 +191,3 @@ add_executable(LinkHut
 configure_linkhut_audio_sources(LinkHut)
 configure_linkhut_executable(LinkHut)
 source_group("LinkHut" FILES ${linkhut_HEADERS} ${linkhut_SOURCES})
-
-#   ___  _     _       _    _   _       _
-#  / _ \| |   (_)_ __ | | _| | | |_   _| |_
-# | | | | |   | | '_ \| |/ / |_| | | | | __|
-# | |_| | |___| | | | |   <|  _  | |_| | |_
-#  \__\_\_____|_|_| |_|_|\_\_| |_|\__,_|\__|
-#
-
-if(LINK_BUILD_QT_EXAMPLES)
-
-  set(CMAKE_AUTOMOC ON)
-  set(CMAKE_INCLUDE_CURRENT_DIR ON)
-
-  find_package(Qt5Quick REQUIRED)
-
-  set(qlinkhut_HEADERS
-    linkaudio/AudioEngine.hpp
-    linkaudio/AudioPlatform.hpp
-    qlinkhut/Controller.hpp
-    ${link_HEADERS}
-  )
-
-  set(qlinkhut_SOURCES
-    linkaudio/AudioEngine.cpp
-    qlinkhut/Controller.cpp
-    qlinkhut/main.cpp
-    ${link_SOURCES}
-  )
-  source_group("QLinkHut" FILES ${qlinkhut_HEADERS} ${qlinkhut_SOURCES})
-  qt5_add_resources(UI_RESOURCES qlinkhut/resources.qrc)
-
-  add_executable(QLinkHut
-    ${qlinkhut_HEADERS}
-    ${qlinkhut_SOURCES}
-    ${linkhut_audio_SOURCES}
-    ${UI_RESOURCES}
-  )
-
-  configure_linkhut_audio_sources(QLinkHut)
-  configure_qlinkhut_executable(QLinkHut)
-
-  # A silent version of QLinkHut that uses the Link application context instead of
-  # the audio buffer context. It is the same as QLinkHut except that it doesn't
-  # generate sound.
-
-  add_executable(QLinkHutSilent
-    ${qlinkhut_HEADERS}
-    ${qlinkhut_SOURCES}
-    linkaudio/AudioPlatform_Dummy.hpp
-    ${UI_RESOURCES}
-  )
-
-  target_compile_definitions(QLinkHutSilent PRIVATE
-    -DLINKHUT_AUDIO_PLATFORM_DUMMY=1
-  )
-  if(UNIX)
-    set_target_properties(QLinkHutSilent
-      PROPERTIES
-      COMPILE_FLAGS "-Wno-unused"
-    )
-  endif()
-
-  configure_qlinkhut_executable(QLinkHutSilent)
-endif()
