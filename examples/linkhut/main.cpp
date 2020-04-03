@@ -42,7 +42,6 @@ struct State
     , link(120.)
     , audioPlatform(link)
   {
-    link.enable(true);
   }
 };
 
@@ -76,6 +75,7 @@ void printHelp()
 {
   std::cout << std::endl << " < L I N K  H U T >" << std::endl << std::endl;
   std::cout << "usage:" << std::endl;
+  std::cout << "  enable / disable Link: a" << std::endl;
   std::cout << "  start / stop: space" << std::endl;
   std::cout << "  decrease / increase tempo: w / e" << std::endl;
   std::cout << "  decrease / increase quantum: r / t" << std::endl;
@@ -85,14 +85,16 @@ void printHelp()
 
 void printState(const std::chrono::microseconds time,
   const ableton::Link::SessionState sessionState,
+  const bool linkEnabled,
   const std::size_t numPeers,
   const double quantum,
   const bool startStopSyncOn)
 {
+  const auto enabled = linkEnabled ? "enabled" : "disabled";
   const auto beats = sessionState.beatAtTime(time, quantum);
   const auto phase = sessionState.phaseAtTime(time, quantum);
   const auto startStop = startStopSyncOn ? "on" : "off";
-  std::cout << std::defaultfloat << "peers: " << numPeers << " | "
+  std::cout << std::defaultfloat << enabled << " | " << "peers: " << numPeers << " | "
             << "quantum: " << quantum << " | "
             << "start stop sync: " << startStop << " | "
             << "tempo: " << sessionState.tempo() << " | " << std::fixed
@@ -137,6 +139,9 @@ void input(State& state)
     state.running = false;
     clearLine();
     return;
+  case 'a':
+    state.link.enable(!state.link.isEnabled());
+    break;
   case 'w':
     engine.setTempo(tempo - 1);
     break;
@@ -180,7 +185,7 @@ int main(int, char**)
   {
     const auto time = state.link.clock().micros();
     auto sessionState = state.link.captureAppSessionState();
-    printState(time, sessionState, state.link.numPeers(),
+    printState(time, sessionState, state.link.isEnabled(), state.link.numPeers(),
       state.audioPlatform.mEngine.quantum(),
       state.audioPlatform.mEngine.isStartStopSyncEnabled());
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
