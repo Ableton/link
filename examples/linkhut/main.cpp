@@ -22,6 +22,7 @@
 #include <algorithm>
 #include <atomic>
 #include <chrono>
+#include <iomanip>
 #include <iostream>
 #include <thread>
 #if defined(LINK_PLATFORM_UNIX)
@@ -83,6 +84,13 @@ void printHelp()
   std::cout << "  quit: q" << std::endl << std::endl;
 }
 
+void printStateHeader()
+{
+  std::cout
+    << "enabled | num peers | quantum | start stop sync | tempo   | beats   | metro"
+    << std::endl;
+}
+
 void printState(const std::chrono::microseconds time,
   const ableton::Link::SessionState sessionState,
   const bool linkEnabled,
@@ -90,15 +98,15 @@ void printState(const std::chrono::microseconds time,
   const double quantum,
   const bool startStopSyncOn)
 {
-  const auto enabled = linkEnabled ? "enabled" : "disabled";
+  using namespace std;
+  const auto enabled = linkEnabled ? "yes" : "no";
   const auto beats = sessionState.beatAtTime(time, quantum);
   const auto phase = sessionState.phaseAtTime(time, quantum);
-  const auto startStop = startStopSyncOn ? "on" : "off";
-  std::cout << std::defaultfloat << enabled << " | " << "peers: " << numPeers << " | "
-            << "quantum: " << quantum << " | "
-            << "start stop sync: " << startStop << " | "
-            << "tempo: " << sessionState.tempo() << " | " << std::fixed
-            << "beats: " << beats << " | ";
+  const auto startStop = startStopSyncOn ? "yes" : "no";
+  cout << defaultfloat << left << setw(7) << enabled << " | " << setw(9) << numPeers
+       << " | " << setw(7) << quantum << " | " << setw(15) << startStop << " | " << fixed
+       << setw(7) << sessionState.tempo() << " | " << fixed << setprecision(2) << setw(7)
+       << beats << " | ";
   for (int i = 0; i < ceil(quantum); ++i)
   {
     if (i < phase)
@@ -178,6 +186,7 @@ int main(int, char**)
 {
   State state;
   printHelp();
+  printStateHeader();
   std::thread thread(input, std::ref(state));
   disableBufferedInput();
 
