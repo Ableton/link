@@ -105,9 +105,4 @@ extern "C" void app_main()
 
   xTaskCreatePinnedToCore(
     tickTask, "tick", 8192, tickSemphr, configMAX_PRIORITIES - 1, nullptr, 1);
-
-  while (true)
-  {
-    ableton::link::platform::IoContext::poll();
-  }
 }
