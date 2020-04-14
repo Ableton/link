@@ -22,8 +22,8 @@
 #include <ableton/discovery/IpV4Interface.hpp>
 #include <ableton/platforms/asio/AsioTimer.hpp>
 #include <ableton/platforms/asio/AsioWrapper.hpp>
+#include <ableton/platforms/asio/LockFreeCallbackDispatcher.hpp>
 #include <ableton/platforms/asio/Socket.hpp>
-#include <ableton/platforms/esp32/LockFreeCallbackDispatcher.hpp>
 #include <freertos/task.h>
 
 
@@ -37,55 +37,33 @@ namespace esp32
 template <typename ScanIpIfAddrs, typename LogT>
 class Context
 {
-  class ServiceRunner
+
+  template <typename ExceptionHandler>
+  struct UserParams
   {
-
-    static void run(void* userParams)
-    {
-      auto runner = static_cast<ServiceRunner*>(userParams);
-      for (;;)
-      {
-        try
-        {
-          runner->mpService->poll();
-        }
-        catch (const std::exception& e)
-        {
-        }
-        vTaskDelay(1);
-      }
-    }
-
-  public:
-    ServiceRunner()
-      : mpService(new ::asio::io_service())
-      , mpWork(new ::asio::io_service::work(*mpService))
-    {
-      xTaskCreatePinnedToCore(
-        run, "link", 8192, this, 2 | portPRIVILEGE_BIT, &mTaskHandle, 1);
-    }
-
-    ~ServiceRunner()
-    {
-      vTaskDelete(mTaskHandle);
-    }
-
-    template <typename Handler>
-    void async(Handler handler)
-    {
-      mpService->post(std::move(handler));
-    }
-
-    ::asio::io_service& service() const
-    {
-      return *mpService;
-    }
-
-  private:
-    TaskHandle_t mTaskHandle;
-    std::unique_ptr<::asio::io_service> mpService;
-    std::unique_ptr<::asio::io_service::work> mpWork;
+    ::asio::io_service& service;
+    ExceptionHandler exceptionHandler;
   };
+
+  template <typename ExceptionHandler>
+  static void runContext(void* userParams)
+  {
+    auto params = static_cast<UserParams<ExceptionHandler>*>(userParams);
+
+    for (;;)
+    {
+      try
+      {
+        params->service.run();
+        break;
+      }
+      catch (const typename ExceptionHandler::Exception& exception)
+      {
+        params->exceptionHandler(exception);
+      }
+      vTaskDelay(1);
+    }
+  }
 
 public:
   using Timer = ::ableton::platforms::asio::AsioTimer;
@@ -104,21 +82,39 @@ public:
 
   template <typename ExceptionHandler>
   explicit Context(ExceptionHandler exceptHandler)
+    : mpService(new ::asio::io_service())
+    , mpWork(new ::asio::io_service::work(*mpService))
+    , mpTaskHandle(new TaskHandle_t)
   {
+    auto params =
+      new UserParams<ExceptionHandler>{std::ref(*mpService), std::move(exceptHandler)};
+    xTaskCreate(runContext<ExceptionHandler>, "link", 8192, params, 2 | portPRIVILEGE_BIT,
+      &*mpTaskHandle);
   }
 
   Context(const Context&) = delete;
 
   Context(Context&& rhs)
-    : mLog(std::move(rhs.mLog))
+    : mpService(std::move(rhs.mpService))
+    , mpWork(std::move(rhs.mpWork))
+    , mpTaskHandle(std::move(rhs.mpTaskHandle))
+    , mLog(std::move(rhs.mLog))
     , mScanIpIfAddrs(std::move(rhs.mScanIpIfAddrs))
   {
+  }
+
+  ~Context()
+  {
+    if (mpTaskHandle)
+    {
+      vTaskDelete(*mpTaskHandle);
+    }
   }
 
   template <std::size_t BufferSize>
   Socket<BufferSize> openUnicastSocket(const ::asio::ip::address_v4& addr)
   {
-    auto socket = Socket<BufferSize>{serviceRunner().service()};
+    auto socket = Socket<BufferSize>{*mpService};
     socket.mpImpl->mSocket.set_option(
       ::asio::ip::multicast::enable_loopback(addr.is_loopback()));
     socket.mpImpl->mSocket.set_option(::asio::ip::multicast::outbound_interface(addr));
@@ -129,7 +125,7 @@ public:
   template <std::size_t BufferSize>
   Socket<BufferSize> openMulticastSocket(const ::asio::ip::address_v4& addr)
   {
-    auto socket = Socket<BufferSize>{serviceRunner().service()};
+    auto socket = Socket<BufferSize>{*mpService};
     socket.mpImpl->mSocket.set_option(::asio::ip::udp::socket::reuse_address(true));
     socket.mpImpl->mSocket.set_option(
       ::asio::socket_base::broadcast(!addr.is_loopback()));
@@ -150,7 +146,7 @@ public:
 
   Timer makeTimer() const
   {
-    return {serviceRunner().service()};
+    return {*mpService};
   }
 
   Log& log()
@@ -161,7 +157,7 @@ public:
   template <typename Handler>
   void async(Handler handler)
   {
-    serviceRunner().service().post(std::move(handler));
+    mpService->post(std::move(handler));
   }
 
   Context clone() const
@@ -190,12 +186,9 @@ private:
     }
   };
 
-  static ServiceRunner& serviceRunner()
-  {
-    static ServiceRunner runner;
-    return runner;
-  }
-
+  std::unique_ptr<::asio::io_service> mpService;
+  std::unique_ptr<::asio::io_service::work> mpWork;
+  std::unique_ptr<TaskHandle_t> mpTaskHandle;
   Log mLog;
   ScanIpIfAddrs mScanIpIfAddrs;
 };
