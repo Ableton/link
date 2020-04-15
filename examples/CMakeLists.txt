@@ -191,3 +191,33 @@ add_executable(LinkHut
 configure_linkhut_audio_sources(LinkHut)
 configure_linkhut_executable(LinkHut)
 source_group("LinkHut" FILES ${linkhut_HEADERS} ${linkhut_SOURCES})
+
+#  _     _       _    _   _       _   ____  _ _            _
+# | |   (_)_ __ | | _| | | |_   _| |_/ ___|(_) | ___ _ __ | |_
+# | |   | | '_ \| |/ / |_| | | | | __\___ \| | |/ _ \ '_ \| __|
+# | |___| | | | |   <|  _  | |_| | |_ ___) | | |  __/ | | | |_
+# |_____|_|_| |_|_|\_\_| |_|\__,_|\__|____/|_|_|\___|_| |_|\__|
+#
+
+set(linkhutsilent_HEADERS
+  linkaudio/AudioEngine.hpp
+  linkaudio/AudioPlatform_Dummy.hpp
+  ${link_HEADERS}
+)
+
+set(linkhutsilent_SOURCES
+  linkaudio/AudioEngine.cpp
+  linkhut/main.cpp
+)
+
+add_executable(LinkHutSilent
+  ${linkhutsilent_HEADERS}
+  ${linkhutsilent_SOURCES}
+)
+
+target_compile_definitions(LinkHutSilent PRIVATE
+  -DLINKHUT_AUDIO_PLATFORM_DUMMY=1
+)
+
+configure_linkhut_executable(LinkHutSilent)
+source_group("LinkHutSilent" FILES ${linkhutsilent_HEADERS} ${linkhutsilent_SOURCES})

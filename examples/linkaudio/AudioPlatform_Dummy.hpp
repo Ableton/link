@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include "AudioEngine.hpp"
+#include <ableton/Link.hpp>
 
 namespace ableton
 {
@@ -28,6 +28,77 @@ namespace linkaudio
 
 class AudioPlatform
 {
+  class AudioEngine
+  {
+  public:
+    AudioEngine(Link& link)
+      : mLink(link)
+      , mQuantum(4.)
+    {
+    }
+
+    void startPlaying()
+    {
+      auto sessionState = mLink.captureAppSessionState();
+      sessionState.setIsPlayingAndRequestBeatAtTime(true, now(), 0., mQuantum);
+      mLink.commitAppSessionState(sessionState);
+    }
+
+    void stopPlaying()
+    {
+      auto sessionState = mLink.captureAppSessionState();
+      sessionState.setIsPlaying(false, now());
+      mLink.commitAppSessionState(sessionState);
+    }
+
+    bool isPlaying() const
+    {
+      return mLink.captureAppSessionState().isPlaying();
+    }
+
+    double beatTime() const
+    {
+      auto sessionState = mLink.captureAppSessionState();
+      return sessionState.beatAtTime(now(), mQuantum);
+    }
+
+    void setTempo(double tempo)
+    {
+      auto sessionState = mLink.captureAppSessionState();
+      sessionState.setTempo(tempo, now());
+      mLink.commitAppSessionState(sessionState);
+    }
+
+    double quantum() const
+    {
+      return mQuantum;
+    }
+
+    void setQuantum(double quantum)
+    {
+      mQuantum = quantum;
+    }
+
+    bool isStartStopSyncEnabled() const
+    {
+      return mLink.isStartStopSyncEnabled();
+    }
+
+    void setStartStopSyncEnabled(bool enabled)
+    {
+      mLink.enableStartStopSync(enabled);
+    }
+
+  private:
+    std::chrono::microseconds now() const
+    {
+      return mLink.clock().micros();
+    }
+
+    Link& mLink;
+    double mQuantum;
+  };
+
 public:
   AudioPlatform(Link& link)
     : mEngine(link)
