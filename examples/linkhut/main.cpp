@@ -103,10 +103,11 @@ void printState(const std::chrono::microseconds time,
   const auto beats = sessionState.beatAtTime(time, quantum);
   const auto phase = sessionState.phaseAtTime(time, quantum);
   const auto startStop = startStopSyncOn ? "yes" : "no";
+  const auto isPlaying = sessionState.isPlaying() ? "[playing]" : "[stopped]";
   cout << defaultfloat << left << setw(7) << enabled << " | " << setw(9) << numPeers
-       << " | " << setw(7) << quantum << " | " << setw(15) << startStop << " | " << fixed
-       << setw(7) << sessionState.tempo() << " | " << fixed << setprecision(2) << setw(7)
-       << beats << " | ";
+       << " | " << setw(7) << quantum << " | " << setw(3) << startStop << " " << setw(11)
+       << isPlaying << " | " << fixed << setw(7) << sessionState.tempo() << " | " << fixed
+       << setprecision(2) << setw(7) << beats << " | ";
   for (int i = 0; i < ceil(quantum); ++i)
   {
     if (i < phase)
