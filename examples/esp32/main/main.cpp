@@ -3,10 +3,10 @@
 #include <driver/timer.h>
 #include <esp_event.h>
 #include <freertos/FreeRTOS.h>
-#include <freertos/semphr.h>
 #include <freertos/task.h>
 #include <nvs_flash.h>
 #include <protocol_examples_common.h>
+#include <esp_wifi.h>
 
 #define LED GPIO_NUM_2
 #define PRINT_LINK_STATE false
@@ -28,7 +28,7 @@ void IRAM_ATTR timer_group0_isr(void* userParam)
   TIMERG0.int_clr_timers.t0 = 1;
   TIMERG0.hw_timer[0].config.alarm_en = 1;
 
-  xSemaphoreGiveFromISR(userParam, &xHigherPriorityTaskWoken);
+  vTaskNotifyGiveFromISR(userParam, &xHigherPriorityTaskWoken);
   if (xHigherPriorityTaskWoken)
   {
     portYIELD_FROM_ISR();
@@ -78,14 +78,14 @@ void tickTask(void* userParam)
 
   if (PRINT_LINK_STATE)
   {
-    xTaskCreatePinnedToCore(printTask, "print", 8192, &link, 1, nullptr, 1);
+    xTaskCreate(printTask, "print", 8192, &link, 1, nullptr);
   }
 
   gpio_set_direction(LED, GPIO_MODE_OUTPUT);
 
   while (true)
   {
-    xSemaphoreTake(userParam, portMAX_DELAY);
+    ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
 
     const auto state = link.captureAudioSessionState();
     const auto phase = state.phaseAtTime(link.clock().micros(), 1.);
@@ -99,10 +99,9 @@ extern "C" void app_main()
   tcpip_adapter_init();
   ESP_ERROR_CHECK(esp_event_loop_create_default());
   ESP_ERROR_CHECK(example_connect());
+  esp_wifi_set_ps(WIFI_PS_NONE);
 
-  SemaphoreHandle_t tickSemphr = xSemaphoreCreateBinary();
-  timerGroup0Init(100, tickSemphr);
-
-  xTaskCreatePinnedToCore(
-    tickTask, "tick", 8192, tickSemphr, configMAX_PRIORITIES - 1, nullptr, 1);
+  TaskHandle_t tickTaskHandle;
+  xTaskCreate(tickTask, "tick", 8192, nullptr, configMAX_PRIORITIES - 1, &tickTaskHandle);
+  timerGroup0Init(100, tickTaskHandle);
 }

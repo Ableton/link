@@ -45,7 +45,7 @@ public:
     , mFallbackPeriod(std::move(fallbackPeriod))
     , mRunning(true)
   {
-    xTaskCreate(run, "link", 8192, this, tskIDLE_PRIORITY, &mTaskHandle);
+    xTaskCreate(run, "link", 4096, this, tskIDLE_PRIORITY, &mTaskHandle);
   }
 
   ~LockFreeCallbackDispatcher()
@@ -75,7 +75,7 @@ private:
         dispatcher->mCondition.wait_for(lock, dispatcher->mFallbackPeriod);
       }
       dispatcher->mCallback();
-      vTaskDelay(1);
+      portYIELD();
     }
   }
 

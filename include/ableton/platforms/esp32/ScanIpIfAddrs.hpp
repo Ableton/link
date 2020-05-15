@@ -37,8 +37,10 @@ struct ScanIpIfAddrs
   {
     std::vector<::asio::ip::address> addrs;
     tcpip_adapter_ip_info_t ip_info;
-    if (ESP_OK == tcpip_adapter_get_ip_info(TCPIP_ADAPTER_IF_STA, &ip_info)
-        && tcpip_adapter_is_netif_up(TCPIP_ADAPTER_IF_STA))
+    esp_err_t err =  tcpip_adapter_get_ip_info(TCPIP_ADAPTER_IF_STA, &ip_info); 
+    if (err == ESP_OK
+        && tcpip_adapter_is_netif_up(TCPIP_ADAPTER_IF_STA)
+        && ip_info.ip.addr)
     {
       addrs.emplace_back(::asio::ip::address_v4(ntohl(ip_info.ip.addr)));
     }
