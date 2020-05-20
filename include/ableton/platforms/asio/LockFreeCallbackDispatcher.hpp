@@ -27,13 +27,15 @@ namespace ableton
 {
 namespace platforms
 {
+namespace asio
+{
 
 // Utility to signal invocation of a callback on another thread in a lock free manner.
 // The callback is evoked on a thread owned by the instance of this class.
 //
 // A condition variable is used to notify a waiting thread, but only if the required
 // lock can be acquired immediately. If that fails, we fall back on signaling
-// after a timeout. This gives us a guaranteed minimum signalling rate which is defined
+// after a timeout. This gives us a guaranteed minimum signaling rate which is defined
 // by the fallbackPeriod parameter.
 
 template <typename Callback, typename Duration>
@@ -85,5 +87,6 @@ private:
   std::thread mThread;
 };
 
+} // namespace asio
 } // namespace platforms
 } // namespace ableton
