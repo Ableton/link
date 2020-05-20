@@ -78,7 +78,7 @@ void tickTask(void* userParam)
 
   if (PRINT_LINK_STATE)
   {
-    xTaskCreatePinnedToCore(printTask, "print", 8192, &link, 1, nullptr, 1);
+    xTaskCreate(printTask, "print", 8192, &link, 1, nullptr);
   }
 
   gpio_set_direction(LED, GPIO_MODE_OUTPUT);
@@ -104,6 +104,5 @@ extern "C" void app_main()
   SemaphoreHandle_t tickSemphr = xSemaphoreCreateBinary();
   timerGroup0Init(100, tickSemphr);
 
-  xTaskCreatePinnedToCore(
-    tickTask, "tick", 8192, tickSemphr, configMAX_PRIORITIES - 1, nullptr, 1);
+  xTaskCreate(tickTask, "tick", 8192, tickSemphr, configMAX_PRIORITIES - 1, nullptr);
 }
