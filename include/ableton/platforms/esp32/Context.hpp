@@ -22,8 +22,8 @@
 #include <ableton/discovery/IpV4Interface.hpp>
 #include <ableton/platforms/asio/AsioTimer.hpp>
 #include <ableton/platforms/asio/AsioWrapper.hpp>
-#include <ableton/platforms/asio/LockFreeCallbackDispatcher.hpp>
 #include <ableton/platforms/asio/Socket.hpp>
+#include <ableton/platforms/esp32/LockFreeCallbackDispatcher.hpp>
 #include <freertos/task.h>
 
 namespace ableton
