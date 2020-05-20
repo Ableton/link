@@ -90,6 +90,7 @@ void tickTask(void* userParam)
     const auto state = link.captureAudioSessionState();
     const auto phase = state.phaseAtTime(link.clock().micros(), 1.);
     gpio_set_level(LED, fmodf(phase, 1.) < 0.1);
+    portYIELD();
   }
 }
 
@@ -105,9 +106,4 @@ extern "C" void app_main()
 
   xTaskCreatePinnedToCore(
     tickTask, "tick", 8192, tickSemphr, configMAX_PRIORITIES - 1, nullptr, 1);
-
-  while (true)
-  {
-    ableton::link::platform::IoContext::poll();
-  }
 }
