@@ -16,20 +16,12 @@
 
 #pragma once
 
-#include <cstdint>
-
-inline uint64_t __bswap64(uint64_t _x)
-{
-  return ((uint64_t)((_x >> 56) | ((_x >> 40) & 0xff00) | ((_x >> 24) & 0xff0000)
-                     | ((_x >> 8) & 0xff000000) | ((_x << 8) & ((uint64_t)0xff << 32))
-                     | ((_x << 24) & ((uint64_t)0xff << 40))
-                     | ((_x << 40) & ((uint64_t)0xff << 48)) | ((_x << 56))));
-}
+#include <endian.h>
 
 #ifndef ntohll
-#define ntohll(x) __bswap64(x)
+#define ntohll(x) bswap64(x)
 #endif
 
 #ifndef htonll
-#define htonll(x) __bswap64(x)
+#define htonll(x) bswap64(x)
 #endif
