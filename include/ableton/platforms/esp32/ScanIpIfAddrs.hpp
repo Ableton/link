@@ -1,4 +1,5 @@
-/* Copyright 2019, Mathias Bredholt, Torso Electronics, Copenhagen. All rights reserved.
+/* Copyright 2020, Ableton AG, Berlin and 2019, Mathias Bredholt, Torso Electronics,
+ * Copenhagen. All rights reserved.
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,9 +20,8 @@
 #include <ableton/platforms/asio/AsioWrapper.hpp>
 #include <arpa/inet.h>
 #include <net/if.h>
+#include <tcpip_adapter.h>
 #include <vector>
-
-#include "tcpip_adapter.h"
 
 namespace ableton
 {
@@ -37,8 +37,11 @@ struct ScanIpIfAddrs
   {
     std::vector<::asio::ip::address> addrs;
     tcpip_adapter_ip_info_t ip_info;
-    tcpip_adapter_get_ip_info(TCPIP_ADAPTER_IF_STA, &ip_info);
-    addrs.emplace_back(::asio::ip::address_v4(ntohl(ip_info.ip.addr)));
+    if (ESP_OK == tcpip_adapter_get_ip_info(TCPIP_ADAPTER_IF_STA, &ip_info)
+        && tcpip_adapter_is_netif_up(TCPIP_ADAPTER_IF_STA) && ip_info.ip.addr)
+    {
+      addrs.emplace_back(::asio::ip::address_v4(ntohl(ip_info.ip.addr)));
+    }
     return addrs;
   }
 };
