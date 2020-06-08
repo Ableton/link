@@ -107,9 +107,12 @@ elseif(${CMAKE_CXX_COMPILER_ID} STREQUAL MSVC)
     "/wd4640" # 'Instance': construction of local static object is not thread-safe
     "/wd4710" # 'Function': function not inlined
     "/wd4711" # Function 'function' selected for inline expansion
+    "/wd4723" # potential divide by 0
     "/wd4738" # Storing 32-bit float result in memory, possible loss of performance
     "/wd4820" # 'Bytes': bytes padding added after construct 'member_name'
+    "/wd4996" # Your code uses a function, class member, variable, or typedef that's marked deprecated
     "/wd5045" # Compiler will insert Spectre mitigation for memory load if /Qspectre switch specified
+    "/wd5204" # 'class' : class has virtual functions, but destructor is not virtual
   )
 
   if(MSVC_VERSION VERSION_GREATER 1800)
