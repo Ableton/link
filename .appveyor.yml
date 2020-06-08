@@ -8,6 +8,7 @@ branches:
 image:
   - Visual Studio 2015
   - Visual Studio 2017
+  - Visual Studio 2019
 
 environment:
   matrix:
@@ -43,11 +44,17 @@ environment:
     - AUDIO_DRIVER: Asio
       CONFIGURATION: Release
       GENERATOR: Visual Studio 15 2017 Win64
+    # Visual Studio 2019, 64-bit Release, Asio driver
+    - AUDIO_DRIVER: Asio
+      CONFIGURATION: Release
+      GENERATOR: Visual Studio 16 2019
 
 matrix:
   exclude:
     - image: Visual Studio 2015
       GENERATOR: Visual Studio 15 2017 Win64
+    - image: Visual Studio 2015
+      GENERATOR: Visual Studio 16 2019
     - image: Visual Studio 2017
       GENERATOR: Visual Studio 12 2013
     - image: Visual Studio 2017
@@ -56,6 +63,20 @@ matrix:
       GENERATOR: Visual Studio 14 2015
     - image: Visual Studio 2017
       GENERATOR: Visual Studio 14 2015 Win64
+    - image: Visual Studio 2017
+      GENERATOR: Visual Studio 16 2019
+    - image: Visual Studio 2019
+      GENERATOR: Visual Studio 12 2013
+    - image: Visual Studio 2019
+      GENERATOR: Visual Studio 12 2013 Win64
+    - image: Visual Studio 2019
+      GENERATOR: Visual Studio 14 2015
+    - image: Visual Studio 2019
+      GENERATOR: Visual Studio 14 2015 Win64
+    - image: Visual Studio 2019
+      GENERATOR: Visual Studio 15 2017
+    - image: Visual Studio 2019
+      GENERATOR: Visual Studio 15 2017 Win64
 
 install:
   - git submodule update --init --recursive
