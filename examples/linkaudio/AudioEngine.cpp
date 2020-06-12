@@ -24,6 +24,7 @@
 #define _USE_MATH_DEFINES
 #endif
 #include <cmath>
+#include <iostream>
 
 namespace ableton
 {
@@ -33,12 +34,16 @@ namespace linkaudio
 AudioEngine::AudioEngine(Link& link)
   : mLink(link)
   , mSampleRate(44100.)
-  , mOutputLatency(0)
+  , mOutputLatency(std::chrono::microseconds{0})
   , mSharedEngineData({0., false, false, 4., false})
   , mLockfreeEngineData(mSharedEngineData)
   , mTimeAtLastClick{}
   , mIsPlaying(false)
 {
+  if (!mOutputLatency.is_lock_free())
+  {
+    std::cout << "WARNING: AudioEngine::mOutputLatency is not lock free!" << std::endl;
+  }
 }
 
 void AudioEngine::startPlaying()

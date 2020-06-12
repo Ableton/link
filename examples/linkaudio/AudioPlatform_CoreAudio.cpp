@@ -50,7 +50,7 @@ OSStatus AudioPlatform::audioCallback(void* inRefCon,
   AudioEngine* engine = static_cast<AudioEngine*>(inRefCon);
 
   const auto bufferBeginAtOutput =
-    engine->mLink.clock().ticksToMicros(inTimeStamp->mHostTime) + engine->mOutputLatency;
+    engine->mLink.clock().ticksToMicros(inTimeStamp->mHostTime) + engine->mOutputLatency.load();
 
   engine->audioCallback(bufferBeginAtOutput, inNumberFrames);
 
@@ -161,7 +161,7 @@ void AudioPlatform::initialize()
 
   using namespace std::chrono;
   const double latency = static_cast<double>(deviceLatency) / mEngine.mSampleRate;
-  mEngine.mOutputLatency = duration_cast<microseconds>(duration<double>{latency});
+  mEngine.mOutputLatency.store(duration_cast<microseconds>(duration<double>{latency}));
 
   AURenderCallbackStruct ioRemoteInput;
   ioRemoteInput.inputProc = audioCallback;

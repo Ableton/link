@@ -278,7 +278,7 @@ DWORD AudioPlatform::audioRunloop()
 
     mSampleTime += numSamples;
 
-    const auto bufferBeginAtOutput = hostTime + mEngine.mOutputLatency;
+    const auto bufferBeginAtOutput = hostTime + mEngine.mOutputLatency.load();
 
     mEngine.audioCallback(bufferBeginAtOutput, numSamples);
 

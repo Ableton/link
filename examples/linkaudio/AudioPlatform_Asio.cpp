@@ -112,7 +112,7 @@ void AudioPlatform::audioCallback(ASIOTime* timeInfo, long index)
       asioSamplesToDouble(timeInfo->timeInfo.samplePosition));
   }
 
-  const auto bufferBeginAtOutput = hostTime + mEngine.mOutputLatency;
+  const auto bufferBeginAtOutput = hostTime + mEngine.mOutputLatency.load();
 
   ASIOBufferInfo* bufferInfos = mDriverInfo.bufferInfos;
   const long numSamples = mDriverInfo.preferredSize;
@@ -220,12 +220,13 @@ void AudioPlatform::createAsioBuffers()
             << ", output latency: " << outputLatency << "usec" << std::endl;
 
   const double bufferSize = driverInfo.preferredSize / driverInfo.sampleRate;
-  mEngine.mOutputLatency =
+  auto outputLatencyMicros =  
     std::chrono::microseconds(llround(outputLatency / driverInfo.sampleRate));
-  mEngine.mOutputLatency += std::chrono::microseconds(llround(1.0e6 * bufferSize));
+  outputLatencyMicros += std::chrono::microseconds(llround(1.0e6 * bufferSize));
+  
+  mEngine.mOutputLatency.store(outputLatencyMicros);
 
-  const auto totalLatency = mEngine.mOutputLatency.count();
-  std::clog << "Total latency: " << totalLatency << "usec" << std::endl;
+  std::clog << "Total latency: " << outputLatencyMicros.count() << "usec" << std::endl;
 }
 
 void AudioPlatform::initializeDriverInfo()

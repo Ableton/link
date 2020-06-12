@@ -58,7 +58,7 @@ int AudioPlatform::audioCallback(jack_nframes_t nframes)
 
   mSampleTime += nframes;
 
-  const auto bufferBeginAtOutput = hostTime + engine.mOutputLatency;
+  const auto bufferBeginAtOutput = hostTime + engine.mOutputLatency.load();
 
   engine.audioCallback(bufferBeginAtOutput, nframes);
 

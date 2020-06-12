@@ -22,6 +22,7 @@
 // Make sure to define this before <cmath> is included for Windows
 #define _USE_MATH_DEFINES
 #include <ableton/Link.hpp>
+#include <atomic>
 #include <mutex>
 
 namespace ableton
@@ -64,7 +65,7 @@ private:
 
   Link& mLink;
   double mSampleRate;
-  std::chrono::microseconds mOutputLatency;
+  std::atomic<std::chrono::microseconds> mOutputLatency;
   std::vector<double> mBuffer;
   EngineData mSharedEngineData;
   EngineData mLockfreeEngineData;
