@@ -238,7 +238,12 @@ public:
   public:
     SessionState(const link::ApiState state, const bool bRespectQuantum);
 
-    /*! @brief: The tempo of the timeline, in bpm */
+    /*! @brief: The tempo of the timeline, in Beats Per Minute.
+     *
+     *  @discussion This is a stable value that is appropriate for display
+     *  to the user. Beat time progress will not necessarily match this tempo
+     *  exactly because of clock drift compensation.
+     */
     double tempo() const;
 
     /*! @brief: Set the timeline tempo to the given bpm value, taking
