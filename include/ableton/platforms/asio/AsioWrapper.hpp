@@ -63,6 +63,7 @@
 #pragma warning(push, 0)
 #pragma warning(disable : 4242)
 #pragma warning(disable : 4702)
+#pragma warning(disable : 5204)
 #endif
 
 #include <asio.hpp>
