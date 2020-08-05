@@ -30,8 +30,8 @@ namespace linkaudio
 AudioPlatform::AudioPlatform(Link& link)
   : mEngine(link)
   , mSampleTime(0.)
-  , mpJackClient(NULL)
-  , mpJackPorts(NULL)
+  , mpJackClient(nullptr)
+  , mpJackPorts(nullptr)
 {
   initialize();
   start();
@@ -90,7 +90,7 @@ void AudioPlatform::initialize()
 {
   jack_status_t status = JackFailure;
   mpJackClient = jack_client_open("LinkHut", JackNullOption, &status);
-  if (mpJackClient == NULL)
+  if (mpJackClient == nullptr)
   {
     std::cerr << "Could not initialize Audio Engine. ";
     std::cerr << "JACK: " << std::endl;
@@ -118,7 +118,7 @@ void AudioPlatform::initialize()
       std::cerr << "Client protocol version mismatch." << std::endl;
     std::cerr << std::endl;
     std::terminate();
-  };
+  }
 
   const double bufferSize = jack_get_buffer_size(mpJackClient);
   const double sampleRate = jack_get_sample_rate(mpJackClient);
@@ -134,7 +134,7 @@ void AudioPlatform::initialize()
     const std::string port_name = "out_" + std::to_string(k + 1);
     mpJackPorts[k] = jack_port_register(
       mpJackClient, port_name.c_str(), JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0);
-    if (mpJackPorts[k] == NULL)
+    if (mpJackPorts[k] == nullptr)
     {
       std::cerr << "Could not get Audio Device. " << std::endl;
       jack_client_close(mpJackClient);
@@ -150,13 +150,13 @@ void AudioPlatform::uninitialize()
   for (int k = 0; k < 2; ++k)
   {
     jack_port_unregister(mpJackClient, mpJackPorts[k]);
-    mpJackPorts[k] = NULL;
+    mpJackPorts[k] = nullptr;
   }
   delete[] mpJackPorts;
-  mpJackPorts = NULL;
+  mpJackPorts = nullptr;
 
   jack_client_close(mpJackClient);
-  mpJackClient = NULL;
+  mpJackClient = nullptr;
 }
 
 void AudioPlatform::start()
@@ -164,7 +164,7 @@ void AudioPlatform::start()
   jack_activate(mpJackClient);
 
   const char** playback_ports = jack_get_ports(
-    mpJackClient, 0, JACK_DEFAULT_AUDIO_TYPE, JackPortIsInput | JackPortIsPhysical);
+    mpJackClient, nullptr, JACK_DEFAULT_AUDIO_TYPE, JackPortIsInput | JackPortIsPhysical);
 
   if (playback_ports)
   {
