@@ -19,10 +19,12 @@
 
 #pragma once
 
-#include <ableton/link/Optional.hpp>
 #include <array>
 #include <atomic>
 #include <cassert>
+#include <cstddef>
+
+#include <ableton/link/Optional.hpp>
 
 namespace ableton
 {
