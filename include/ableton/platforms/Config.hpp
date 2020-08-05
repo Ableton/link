@@ -76,9 +76,6 @@ using IoContext =
 using Random = platforms::esp32::Random;
 #endif
 
-using Controller =
-  Controller<PeerCountCallback, TempoCallback, StartStopStateCallback, Clock, Random, IoContext>;
-
 } // namespace platform
 } // namespace link
 } // namespace ableton
