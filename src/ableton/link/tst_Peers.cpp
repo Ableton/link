@@ -116,10 +116,10 @@ TEST_CASE("Peers | EmptySessionPeersAfterInit", "[Peers]")
 
 TEST_CASE("Peers | AddAndFindPeer", "[Peers]")
 {
-  test::serial_io::Fixture io;
   auto membership = SessionMembershipCallback{};
   auto sessions = SessionTimelineCallback{};
   auto startStops = SessionStartStopStateCallback{};
+  test::serial_io::Fixture io;
   auto peers = makePeers(util::injectVal(io.makeIoContext()), std::ref(membership),
     std::ref(sessions), std::ref(startStops));
   auto observer = makeGatewayObserver(peers, gateway1);
@@ -136,8 +136,8 @@ TEST_CASE("Peers | AddAndFindPeer", "[Peers]")
 
 TEST_CASE("Peers | AddAndRemovePeer", "[Peers]")
 {
-  test::serial_io::Fixture io;
   auto membership = SessionMembershipCallback{};
+  test::serial_io::Fixture io;
   auto peers = makePeers(util::injectVal(io.makeIoContext()), std::ref(membership),
     SessionTimelineCallback{}, SessionStartStopStateCallback{});
   auto observer = makeGatewayObserver(peers, gateway1);
@@ -152,10 +152,10 @@ TEST_CASE("Peers | AddAndRemovePeer", "[Peers]")
 
 TEST_CASE("Peers | AddTwoPeersRemoveOne", "[Peers]")
 {
-  test::serial_io::Fixture io;
   auto membership = SessionMembershipCallback{};
   auto sessions = SessionTimelineCallback{};
   auto startStops = SessionStartStopStateCallback{};
+  test::serial_io::Fixture io;
   auto peers = makePeers(util::injectVal(io.makeIoContext()), std::ref(membership),
     std::ref(sessions), std::ref(startStops));
   auto observer = makeGatewayObserver(peers, gateway1);
@@ -172,10 +172,10 @@ TEST_CASE("Peers | AddTwoPeersRemoveOne", "[Peers]")
 
 TEST_CASE("Peers | AddThreePeersTwoOnSameGateway", "[Peers]")
 {
-  test::serial_io::Fixture io;
   auto membership = SessionMembershipCallback{};
   auto sessions = SessionTimelineCallback{};
   auto startStops = SessionStartStopStateCallback{};
+  test::serial_io::Fixture io;
   auto peers = makePeers(util::injectVal(io.makeIoContext()), std::ref(membership),
     std::ref(sessions), std::ref(startStops));
   auto observer1 = makeGatewayObserver(peers, gateway1);
@@ -194,10 +194,10 @@ TEST_CASE("Peers | AddThreePeersTwoOnSameGateway", "[Peers]")
 
 TEST_CASE("Peers | CloseGateway", "[Peers]")
 {
-  test::serial_io::Fixture io;
   auto membership = SessionMembershipCallback{};
   auto sessions = SessionTimelineCallback{};
   auto startStops = SessionStartStopStateCallback{};
+  test::serial_io::Fixture io;
   auto peers = makePeers(util::injectVal(io.makeIoContext()), std::ref(membership),
     std::ref(sessions), std::ref(startStops));
   auto observer1 = makeGatewayObserver(peers, gateway1);
