@@ -27,29 +27,29 @@ namespace ableton
 namespace link
 {
 
-struct Tempo : std::tuple<double>
+struct Tempo
 {
   Tempo() = default;
 
   // Beats per minute
   explicit Tempo(const double bpm)
-    : std::tuple<double>(bpm)
+    : mValue(bpm)
   {
   }
 
   Tempo(const std::chrono::microseconds microsPerBeat)
-    : std::tuple<double>(60. * 1e6 / microsPerBeat.count())
+    : mValue(60. * 1e6 / microsPerBeat.count())
   {
   }
 
   double bpm() const
   {
-    return std::get<0>(*this);
+    return mValue;
   }
 
   std::chrono::microseconds microsPerBeat() const
   {
-    return std::chrono::microseconds{llround(60. * 1e6 / bpm())};
+    return std::chrono::microseconds{std::llround(60. * 1e6 / bpm())};
   }
 
   // Given the tempo, convert a time to a beat value
@@ -61,7 +61,7 @@ struct Tempo : std::tuple<double>
   // Given the tempo, convert a beat to a time value
   std::chrono::microseconds beatsToMicros(const Beats beats) const
   {
-    return std::chrono::microseconds{llround(beats.floating() * microsPerBeat().count())};
+    return std::chrono::microseconds{std::llround(beats.floating() * microsPerBeat().count())};
   }
 
   // Model the NetworkByteStreamSerializable concept
@@ -84,6 +84,39 @@ struct Tempo : std::tuple<double>
         std::move(begin), std::move(end));
     return std::make_pair(Tempo{std::move(result.first)}, std::move(result.second));
   }
+
+  friend bool operator==(const Tempo lhs, const Tempo rhs)
+  {
+    return lhs.mValue == rhs.mValue;
+  }
+
+  friend bool operator!=(const Tempo lhs, const Tempo rhs)
+  {
+      return lhs.mValue != rhs.mValue;
+  }
+
+  friend bool operator<(const Tempo lhs, const Tempo rhs)
+  {
+      return lhs.mValue < rhs.mValue;
+  }
+
+  friend bool operator>(const Tempo lhs, const Tempo rhs)
+  {
+      return lhs.mValue > rhs.mValue;
+  }
+
+  friend bool operator<=(const Tempo lhs, const Tempo rhs)
+  {
+      return lhs.mValue <= rhs.mValue;
+  }
+
+  friend bool operator>=(const Tempo lhs, const Tempo rhs)
+  {
+      return lhs.mValue >= rhs.mValue;
+  }
+
+private:
+    double mValue = 0;
 };
 
 } // namespace link
