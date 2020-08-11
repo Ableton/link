@@ -22,60 +22,79 @@
 #include <ableton/discovery/NetworkByteStreamSerializable.hpp>
 #include <cmath>
 #include <cstdint>
-#include <tuple>
 
 namespace ableton
 {
 namespace link
 {
 
-struct Beats : std::tuple<std::int64_t>
+struct Beats
 {
   Beats() = default;
 
   explicit Beats(const double beats)
-    : std::tuple<std::int64_t>(llround(beats * 1e6))
+    : mValue(std::llround(beats * 1e6))
   {
   }
 
   explicit Beats(const std::int64_t microBeats)
-    : std::tuple<std::int64_t>(microBeats)
+    : mValue(microBeats)
   {
   }
 
   double floating() const
   {
-    return microBeats() / 1e6;
+    return mValue / 1e6;
   }
 
   std::int64_t microBeats() const
   {
-    return std::get<0>(*this);
+    return mValue;
   }
 
   Beats operator-() const
   {
-    return Beats{-microBeats()};
+    return Beats{-mValue};
   }
 
   friend Beats abs(const Beats b)
   {
-    return Beats{std::abs(b.microBeats())};
+    return Beats{std::abs(b.mValue)};
   }
 
   friend Beats operator+(const Beats lhs, const Beats rhs)
   {
-    return Beats{lhs.microBeats() + rhs.microBeats()};
+    return Beats{lhs.mValue + rhs.mValue};
   }
 
   friend Beats operator-(const Beats lhs, const Beats rhs)
   {
-    return Beats{lhs.microBeats() - rhs.microBeats()};
+    return Beats{lhs.mValue - rhs.mValue};
   }
 
   friend Beats operator%(const Beats lhs, const Beats rhs)
   {
-    return rhs == Beats{0.} ? Beats{0.} : Beats{lhs.microBeats() % rhs.microBeats()};
+    return Beats{rhs.mValue == 0 ? 0 : (lhs.mValue % rhs.mValue)};
+  }
+
+  friend bool operator<(const Beats lhs, const Beats rhs)
+  {
+    return lhs.mValue < rhs.mValue;
+  }
+
+  friend bool operator>(const Beats lhs, const Beats rhs)
+  {
+    return lhs.mValue > rhs.mValue;
+  }
+
+  friend bool operator==(const Beats lhs, const Beats rhs)
+  {
+    return lhs.mValue == rhs.mValue;
+  }
+
+  friend bool operator!=(const Beats lhs, const Beats rhs)
+  {
+    return lhs.mValue != rhs.mValue;
   }
 
   // Model the NetworkByteStreamSerializable concept
@@ -97,6 +116,9 @@ struct Beats : std::tuple<std::int64_t>
       std::move(begin), std::move(end));
     return std::make_pair(Beats{result.first}, std::move(result.second));
   }
+
+private:
+    std::int64_t mValue = 0;
 };
 
 } // namespace link
