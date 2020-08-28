@@ -38,7 +38,7 @@ struct Tempo
   }
 
   Tempo(const std::chrono::microseconds microsPerBeat)
-    : mValue(60. * 1e6 / microsPerBeat.count())
+    : mValue(60. * 1e6 / static_cast<double>(microsPerBeat.count()))
   {
   }
 
@@ -55,13 +55,15 @@ struct Tempo
   // Given the tempo, convert a time to a beat value
   Beats microsToBeats(const std::chrono::microseconds micros) const
   {
-    return Beats{micros.count() / static_cast<double>(microsPerBeat().count())};
+    return Beats{
+      static_cast<double>(micros.count()) / static_cast<double>(microsPerBeat().count())};
   }
 
   // Given the tempo, convert a beat to a time value
   std::chrono::microseconds beatsToMicros(const Beats beats) const
   {
-    return std::chrono::microseconds{std::llround(beats.floating() * microsPerBeat().count())};
+    return std::chrono::microseconds{
+      std::llround(beats.floating() * static_cast<double>(microsPerBeat().count()))};
   }
 
   // Model the NetworkByteStreamSerializable concept

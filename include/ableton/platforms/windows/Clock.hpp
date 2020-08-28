@@ -38,17 +38,17 @@ struct Clock
   {
     LARGE_INTEGER frequency;
     QueryPerformanceFrequency(&frequency);
-    mTicksToMicros = 1.0e6 / frequency.QuadPart;
+    mTicksToMicros = 1.0e6 / static_cast<double>(frequency.QuadPart);
   }
 
   Micros ticksToMicros(const Ticks ticks) const
   {
-    return Micros{llround(mTicksToMicros * ticks)};
+    return Micros{llround(mTicksToMicros * static_cast<double>(ticks))};
   }
 
   Ticks microsToTicks(const Micros micros) const
   {
-    return static_cast<Ticks>(micros.count() / mTicksToMicros);
+    return static_cast<Ticks>(static_cast<double>(micros.count()) / mTicksToMicros);
   }
 
   Ticks ticks() const

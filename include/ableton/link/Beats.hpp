@@ -44,7 +44,7 @@ struct Beats
 
   double floating() const
   {
-    return mValue / 1e6;
+    return static_cast<double>(mValue) / 1e6;
   }
 
   std::int64_t microBeats() const

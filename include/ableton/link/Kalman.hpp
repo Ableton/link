@@ -55,14 +55,14 @@ struct Kalman
       meanOfDiffs += (mMeasuredValues[k] - mFilterValues[k]);
     }
 
-    meanOfDiffs /= (mVarianceLength);
+    meanOfDiffs /= static_cast<double>(mVarianceLength);
 
     for (size_t i = 0; i < (mVarianceLength); i++)
     {
       vVar += (pow(mMeasuredValues[i] - mFilterValues[i] - meanOfDiffs, 2.0));
     }
 
-    vVar /= (mVarianceLength - 1);
+    vVar /= static_cast<double>(mVarianceLength - 1);
 
     return vVar;
   }
@@ -78,7 +78,7 @@ struct Kalman
                       - mFilterValues[(mCounter - k - 2) % mVarianceLength]);
     }
 
-    meanOfDiffs /= (mVarianceLength);
+    meanOfDiffs /= static_cast<double>(mVarianceLength);
 
     for (size_t i = 0; i < (mVarianceLength); i++)
     {
@@ -87,7 +87,7 @@ struct Kalman
         2.0));
     }
 
-    wVar /= (mVarianceLength - 1);
+    wVar /= static_cast<double>(mVarianceLength - 1);
 
     return wVar;
   }
