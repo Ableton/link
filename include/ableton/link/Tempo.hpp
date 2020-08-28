@@ -92,31 +92,31 @@ struct Tempo
 
   friend bool operator!=(const Tempo lhs, const Tempo rhs)
   {
-      return lhs.mValue != rhs.mValue;
+    return lhs.mValue != rhs.mValue;
   }
 
   friend bool operator<(const Tempo lhs, const Tempo rhs)
   {
-      return lhs.mValue < rhs.mValue;
+    return lhs.mValue < rhs.mValue;
   }
 
   friend bool operator>(const Tempo lhs, const Tempo rhs)
   {
-      return lhs.mValue > rhs.mValue;
+    return lhs.mValue > rhs.mValue;
   }
 
   friend bool operator<=(const Tempo lhs, const Tempo rhs)
   {
-      return lhs.mValue <= rhs.mValue;
+    return lhs.mValue <= rhs.mValue;
   }
 
   friend bool operator>=(const Tempo lhs, const Tempo rhs)
   {
-      return lhs.mValue >= rhs.mValue;
+    return lhs.mValue >= rhs.mValue;
   }
 
 private:
-    double mValue = 0;
+  double mValue = 0;
 };
 
 } // namespace link
