@@ -69,8 +69,8 @@ struct NodeId : NodeIdArray
   {
     using namespace std;
     auto result =
-      discovery::Deserialize<NodeIdArray>::fromNetworkByteStream(move(begin), move(end));
-    return make_pair(NodeId(move(result.first)), move(result.second));
+      discovery::Deserialize<NodeIdArray>::fromNetworkByteStream(std::move(begin), std::move(end));
+    return make_pair(NodeId(std::move(result.first)), std::move(result.second));
   }
 };
 

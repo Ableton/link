@@ -82,7 +82,7 @@ struct MessageHeader
     tie(header.ident, begin) =
       Deserialize<decltype(header.ident)>::fromNetworkByteStream(begin, end);
 
-    return make_pair(move(header), move(begin));
+    return make_pair(std::move(header), std::move(begin));
   }
 };
 
@@ -111,7 +111,7 @@ It encodeMessage(NodeId from,
   {
     return toNetworkByteStream(
       payload, toNetworkByteStream(
-                 header, copy(begin(kProtocolHeader), end(kProtocolHeader), move(out))));
+                 header, copy(begin(kProtocolHeader), end(kProtocolHeader), std::move(out))));
   }
   else
   {
@@ -160,7 +160,7 @@ std::pair<MessageHeader<NodeId>, It> parseMessageHeader(It bytesBegin, const It 
     tie(header, bytesBegin) = MessageHeader<NodeId>::fromNetworkByteStream(
       bytesBegin + protocolHeaderSize, bytesEnd);
   }
-  return make_pair(move(header), move(bytesBegin));
+  return make_pair(std::move(header), std::move(bytesBegin));
 }
 
 } // namespace v1

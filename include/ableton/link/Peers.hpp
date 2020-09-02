@@ -225,14 +225,14 @@ private:
         isNewSessionStartStopState =
           !sessionStartStopStateExists(peerSession, peerStartStopState);
 
-        auto peer = make_pair(move(peerState), move(gatewayAddr));
+        auto peer = make_pair(std::move(peerState), std::move(gatewayAddr));
         const auto idRange = equal_range(begin(mPeers), end(mPeers), peer, PeerIdComp{});
 
         if (idRange.first == idRange.second)
         {
           // This peer is not currently known on any gateway
           didSessionMembershipChange = true;
-          mPeers.insert(move(idRange.first), move(peer));
+          mPeers.insert(std::move(idRange.first), std::move(peer));
         }
         else
         {
@@ -249,12 +249,12 @@ private:
           if (addrRange.first == addrRange.second)
           {
             // First time on this gateway, add it
-            mPeers.insert(move(addrRange.first), move(peer));
+            mPeers.insert(std::move(addrRange.first), std::move(peer));
           }
           else
           {
             // We have an entry for this peer on this gateway, update it
-            *addrRange.first = move(peer);
+            *addrRange.first = std::move(peer);
           }
         }
       } // end lock
@@ -292,7 +292,7 @@ private:
 
         if (it != end(mPeers))
         {
-          mPeers.erase(move(it));
+          mPeers.erase(std::move(it));
           didSessionMembershipChange = true;
         }
       } // end lock

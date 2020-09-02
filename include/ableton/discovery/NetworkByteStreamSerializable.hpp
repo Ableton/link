@@ -285,7 +285,7 @@ struct Deserialize<std::chrono::microseconds>
   static std::pair<std::chrono::microseconds, It> fromNetworkByteStream(It begin, It end)
   {
     using namespace std;
-    auto result = Deserialize<int64_t>::fromNetworkByteStream(move(begin), move(end));
+    auto result = Deserialize<int64_t>::fromNetworkByteStream(std::move(begin), std::move(end));
     return make_pair(chrono::microseconds{result.first}, result.second);
   }
 };
@@ -361,8 +361,8 @@ struct Deserialize<std::array<T, Size>>
     using namespace std;
     array<T, Size> result{};
     auto resultIt =
-      detail::deserializeContainer<T>(move(begin), move(end), move(result.begin()), Size);
-    return make_pair(move(result), move(resultIt));
+      detail::deserializeContainer<T>(std::move(begin), std::move(end), std::move(result.begin()), Size);
+    return make_pair(std::move(result), std::move(resultIt));
   }
 };
 
@@ -389,11 +389,11 @@ struct Deserialize<std::vector<T, Alloc>>
   {
     using namespace std;
     auto result_size =
-      Deserialize<uint32_t>::fromNetworkByteStream(move(bytesBegin), bytesEnd);
+      Deserialize<uint32_t>::fromNetworkByteStream(std::move(bytesBegin), bytesEnd);
     vector<T, Alloc> result;
     auto resultIt = detail::deserializeContainer<T>(
-      move(result_size.second), move(bytesEnd), back_inserter(result), result_size.first);
-    return make_pair(move(result), move(resultIt));
+      std::move(result_size.second), std::move(bytesEnd), back_inserter(result), result_size.first);
+    return make_pair(std::move(result), std::move(resultIt));
   }
 };
 
@@ -420,7 +420,7 @@ struct Deserialize<std::tuple<X, Y>>
     using namespace std;
     auto xres = Deserialize<X>::fromNetworkByteStream(begin, end);
     auto yres = Deserialize<Y>::fromNetworkByteStream(xres.second, end);
-    return make_pair(make_tuple(move(xres.first), move(yres.first)), move(yres.second));
+    return make_pair(make_tuple(std::move(xres.first), std::move(yres.first)), std::move(yres.second));
   }
 };
 
@@ -450,8 +450,8 @@ struct Deserialize<std::tuple<X, Y, Z>>
     auto xres = Deserialize<X>::fromNetworkByteStream(begin, end);
     auto yres = Deserialize<Y>::fromNetworkByteStream(xres.second, end);
     auto zres = Deserialize<Z>::fromNetworkByteStream(yres.second, end);
-    return make_pair(make_tuple(move(xres.first), move(yres.first), move(zres.first)),
-      move(zres.second));
+    return make_pair(make_tuple(std::move(xres.first), std::move(yres.first), std::move(zres.first)),
+      std::move(zres.second));
   }
 };
 

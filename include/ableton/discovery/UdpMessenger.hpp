@@ -59,7 +59,7 @@ void sendUdpMessage(Interface& iface,
   v1::MessageBuffer buffer;
   const auto messageBegin = begin(buffer);
   const auto messageEnd =
-    v1::detail::encodeMessage(move(from), ttl, messageType, payload, messageBegin);
+    v1::detail::encodeMessage(std::move(from), ttl, messageType, payload, messageBegin);
   const auto numBytes = static_cast<size_t>(distance(messageBegin, messageEnd));
   try
   {

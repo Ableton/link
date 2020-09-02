@@ -95,7 +95,7 @@ public:
 
         mMeasurementMap[nodeId] =
           std::unique_ptr<MeasurementInstance>(new MeasurementInstance{
-            state, move(callback), move(addr), mClock, mIo->clone()});
+            state, std::move(callback), std::move(addr), mClock, mIo->clone()});
       }
       catch (const runtime_error& err)
       {

@@ -95,8 +95,7 @@ InterfaceScanner<Callback, IoContext> makeInterfaceScanner(
   util::Injected<Callback> callback,
   util::Injected<IoContext> io)
 {
-  using namespace std;
-  return {period, move(callback), move(io)};
+  return {period, std::move(callback), std::move(io)};
 }
 
 } // namespace discovery

@@ -56,13 +56,13 @@ struct NodeState
   static NodeState fromPayload(NodeId nodeId, It begin, It end)
   {
     using namespace std;
-    auto nodeState = NodeState{move(nodeId), {}, {}, {}};
-    discovery::parsePayload<Timeline, SessionMembership, StartStopState>(move(begin),
-      move(end), [&nodeState](Timeline tl) { nodeState.timeline = move(tl); },
+    auto nodeState = NodeState{std::move(nodeId), {}, {}, {}};
+    discovery::parsePayload<Timeline, SessionMembership, StartStopState>(std::move(begin),
+      std::move(end), [&nodeState](Timeline tl) { nodeState.timeline = std::move(tl); },
       [&nodeState](SessionMembership membership) {
-        nodeState.sessionId = move(membership.sessionId);
+        nodeState.sessionId = std::move(membership.sessionId);
       },
-      [&nodeState](StartStopState ststst) { nodeState.startStopState = move(ststst); });
+      [&nodeState](StartStopState ststst) { nodeState.startStopState = std::move(ststst); });
     return nodeState;
   }
 

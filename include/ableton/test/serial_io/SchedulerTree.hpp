@@ -53,7 +53,7 @@ public:
   void setTimer(const TimerId timerId, const TimePoint expiration, Handler handler)
   {
     using namespace std;
-    mTimers[make_pair(move(expiration), timerId)] = move(handler);
+    mTimers[make_pair(std::move(expiration), timerId)] = std::move(handler);
   }
 
   void cancelTimer(const TimerId timerId);

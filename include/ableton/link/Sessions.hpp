@@ -86,11 +86,11 @@ public:
     if (sid == mCurrent.sessionId)
     {
       // matches our current session, update the timeline if necessary
-      updateTimeline(mCurrent, move(timeline));
+      updateTimeline(mCurrent, std::move(timeline));
     }
     else
     {
-      auto session = Session{move(sid), move(timeline), {}};
+      auto session = Session{std::move(sid), std::move(timeline), {}};
       const auto range =
         equal_range(begin(mOtherSessions), end(mOtherSessions), session, SessionIdComp{});
       if (range.first == range.second)
@@ -98,12 +98,12 @@ public:
         // brand new session, insert it into our list of known
         // sessions and launch a measurement
         launchSessionMeasurement(session);
-        mOtherSessions.insert(range.first, move(session));
+        mOtherSessions.insert(range.first, std::move(session));
       }
       else
       {
         // we've seen this session before, update its timeline if necessary
-        updateTimeline(*range.first, move(timeline));
+        updateTimeline(*range.first, std::move(timeline));
       }
     }
     return mCurrent.timeline;
@@ -125,7 +125,7 @@ private:
       // mark that a session is in progress by clearing out the
       // session's timestamp
       session.measurement.timestamp = {};
-      mMeasure(move(peer), MeasurementResultsHandler{*this, session.sessionId});
+      mMeasure(std::move(peer), MeasurementResultsHandler{*this, session.sessionId});
     }
   }
 
@@ -136,11 +136,11 @@ private:
     debug(mIo->log()) << "Session " << id << " measurement completed with result "
                       << "(" << xform.slope << ", " << xform.intercept.count() << ")";
 
-    auto measurement = SessionMeasurement{move(xform), mClock.micros()};
+    auto measurement = SessionMeasurement{std::move(xform), mClock.micros()};
 
     if (mCurrent.sessionId == id)
     {
-      mCurrent.measurement = move(measurement);
+      mCurrent.measurement = std::move(measurement);
       mCallback(mCurrent);
     }
     else
@@ -156,7 +156,7 @@ private:
         const auto curGhost = mCurrent.measurement.xform.hostToGhost(hostTime);
         const auto newGhost = measurement.xform.hostToGhost(hostTime);
         // update the measurement for the session entry
-        range.first->measurement = move(measurement);
+        range.first->measurement = std::move(measurement);
         // If session times too close - fall back to session id order
         const auto ghostDiff = newGhost - curGhost;
         if (ghostDiff > SESSION_EPS
@@ -165,13 +165,13 @@ private:
         {
           // The new session wins, switch over to it
           auto current = mCurrent;
-          mCurrent = move(*range.first);
+          mCurrent = std::move(*range.first);
           mOtherSessions.erase(range.first);
           // Put the old current session back into our list of known
           // sessions so that we won't re-measure it
           const auto it = upper_bound(
             begin(mOtherSessions), end(mOtherSessions), current, SessionIdComp{});
-          mOtherSessions.insert(it, move(current));
+          mOtherSessions.insert(it, std::move(current));
           // And notify that we have a new session and make sure that
           // we remeasure it periodically.
           mCallback(mCurrent);
@@ -297,7 +297,7 @@ Sessions<Peers, MeasurePeer, JoinSessionCallback, IoContext, Clock> makeSessions
   Clock clock)
 {
   using namespace std;
-  return {move(init), move(peers), move(measure), move(join), move(io), move(clock)};
+  return {std::move(init), std::move(peers), std::move(measure), std::move(join), std::move(io), std::move(clock)};
 }
 
 } // namespace link

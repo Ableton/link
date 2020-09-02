@@ -124,7 +124,7 @@ private:
       auto newTo = make_pair(mPruneTimer.now() + std::chrono::seconds(ttl), peerId);
       mPeerTimeouts.insert(
         upper_bound(begin(mPeerTimeouts), end(mPeerTimeouts), newTo, TimeoutCompare{}),
-        move(newTo));
+        std::move(newTo));
 
       sawPeer(*mObserver, nodeState);
       scheduleNextPruning();
@@ -243,8 +243,8 @@ IpV4Gateway<PeerObserver, NodeState, IoContext> makeIpV4Gateway(
   auto iface = makeIpV4Interface<v1::kMaxMessageSize>(injectRef(*io), addr);
 
   auto messenger =
-    makeUdpMessenger(injectVal(move(iface)), move(state), injectRef(*io), ttl, ttlRatio);
-  return {injectVal(move(messenger)), move(observer), move(io)};
+    makeUdpMessenger(injectVal(std::move(iface)), std::move(state), injectRef(*io), ttl, ttlRatio);
+  return {injectVal(std::move(messenger)), std::move(observer), std::move(io)};
 }
 
 } // namespace discovery

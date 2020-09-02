@@ -83,9 +83,9 @@ struct Timeline
     Timeline timeline;
     auto result =
       Deserialize<tuple<Tempo, Beats, chrono::microseconds>>::fromNetworkByteStream(
-        move(begin), move(end));
-    tie(timeline.tempo, timeline.beatOrigin, timeline.timeOrigin) = move(result.first);
-    return make_pair(move(timeline), move(result.second));
+        std::move(begin), std::move(end));
+    tie(timeline.tempo, timeline.beatOrigin, timeline.timeOrigin) = std::move(result.first);
+    return make_pair(std::move(timeline), std::move(result.second));
   }
 
   Tempo tempo;

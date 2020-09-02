@@ -88,7 +88,7 @@ It encodeMessage(const MessageType messageType, const Payload& payload, It out)
   {
     return toNetworkByteStream(
       payload, toNetworkByteStream(
-                 header, copy(begin(kProtocolHeader), end(kProtocolHeader), move(out))));
+                 header, copy(begin(kProtocolHeader), end(kProtocolHeader), std::move(out))));
   }
   else
   {

@@ -222,7 +222,7 @@ std::unique_ptr<PeerGateways<NodeState, GatewayFactory, IoContext>> makePeerGate
   using namespace std;
   using Gateways = PeerGateways<NodeState, GatewayFactory, IoContext>;
   return unique_ptr<Gateways>{
-    new Gateways{rescanPeriod, move(state), move(factory), move(io)}};
+    new Gateways{rescanPeriod, std::move(state), std::move(factory), std::move(io)}};
 }
 
 } // namespace discovery

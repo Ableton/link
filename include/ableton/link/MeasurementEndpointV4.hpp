@@ -53,12 +53,12 @@ struct MeasurementEndpointV4
   {
     using namespace std;
     auto addrRes =
-      discovery::Deserialize<std::uint32_t>::fromNetworkByteStream(move(begin), end);
+      discovery::Deserialize<std::uint32_t>::fromNetworkByteStream(std::move(begin), end);
     auto portRes = discovery::Deserialize<std::uint16_t>::fromNetworkByteStream(
-      move(addrRes.second), end);
-    return make_pair(MeasurementEndpointV4{{asio::ip::address_v4{move(addrRes.first)},
-                       move(portRes.first)}},
-      move(portRes.second));
+      std::move(addrRes.second), end);
+    return make_pair(MeasurementEndpointV4{{asio::ip::address_v4{std::move(addrRes.first)},
+                       std::move(portRes.first)}},
+      std::move(portRes.second));
   }
 
   asio::ip::udp::endpoint ep;

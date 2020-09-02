@@ -52,8 +52,8 @@ struct SessionMembership
   static std::pair<SessionMembership, It> fromNetworkByteStream(It begin, It end)
   {
     using namespace std;
-    auto idRes = SessionId::fromNetworkByteStream(move(begin), move(end));
-    return make_pair(SessionMembership{move(idRes.first)}, move(idRes.second));
+    auto idRes = SessionId::fromNetworkByteStream(std::move(begin), std::move(end));
+    return make_pair(SessionMembership{std::move(idRes.first)}, std::move(idRes.second));
   }
 
   SessionId sessionId;

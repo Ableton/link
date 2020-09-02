@@ -57,8 +57,8 @@ struct HostTime
   {
     using namespace std;
     auto result = discovery::Deserialize<chrono::microseconds>::fromNetworkByteStream(
-      move(begin), move(end));
-    return make_pair(HostTime{move(result.first)}, move(result.second));
+      std::move(begin), std::move(end));
+    return make_pair(HostTime{std::move(result.first)}, std::move(result.second));
   }
 
   std::chrono::microseconds time;
@@ -93,8 +93,8 @@ struct GHostTime
   {
     using namespace std;
     auto result = discovery::Deserialize<chrono::microseconds>::fromNetworkByteStream(
-      move(begin), move(end));
-    return make_pair(GHostTime{move(result.first)}, move(result.second));
+      std::move(begin), std::move(end));
+    return make_pair(GHostTime{std::move(result.first)}, std::move(result.second));
   }
 
   std::chrono::microseconds time;
@@ -129,8 +129,8 @@ struct PrevGHostTime
   {
     using namespace std;
     auto result = discovery::Deserialize<chrono::microseconds>::fromNetworkByteStream(
-      move(begin), move(end));
-    return make_pair(PrevGHostTime{move(result.first)}, move(result.second));
+      std::move(begin), std::move(end));
+    return make_pair(PrevGHostTime{std::move(result.first)}, std::move(result.second));
   }
 
   std::chrono::microseconds time;
