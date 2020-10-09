@@ -356,8 +356,11 @@ private:
         mSessionState.ghostXForm));
   }
 
-  void updateSessionTiming(const Timeline newTimeline, const GhostXForm newXForm)
+  void updateSessionTiming(Timeline newTimeline, const GhostXForm newXForm)
   {
+    // Clamp the session tempo because it may slightly overshoot (999 bpm is
+    // transferred as 60606 us/beat and received as 999.000999... bpm).
+    newTimeline = clampTempo(newTimeline);
     const auto oldTimeline = mSessionState.timeline;
     const auto oldXForm = mSessionState.ghostXForm;
 
