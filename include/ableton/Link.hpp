@@ -29,8 +29,12 @@
 namespace ableton
 {
 
-/*! @class Link
- *  @brief Class that represents a participant in a Link session.
+/*! @class Link and BasicLink
+ *  @brief Classes representing a participant in a Link session.
+ *  The BasicLink type allows to customize the clock. The Link type
+ *  uses the recommended platform-dependent representation of the
+ *  system clock as defined in platforms/Config.hpp.
+ *  It's preferred to use Link instead of BasicLink.
  *
  *  @discussion Each Link instance has its own session state which
  *  represents a beat timeline and a transport start/stop state. The
@@ -64,6 +68,11 @@ namespace ableton
  *  state from both the audio thread and an application thread
  *  concurrently is not advised and will potentially lead to unexpected
  *  behavior.
+ *
+ *  Only use the BasicLink class if the default platform clock does not
+ *  fulfill other requirements of the client application. Please note this
+ *  will require providing a custom Clock implementation. See the clock()
+ *  documentation for details.
  */
 template <typename Clock>
 class BasicLink
