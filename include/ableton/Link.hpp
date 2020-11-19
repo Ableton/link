@@ -161,13 +161,10 @@ public:
    *  Thread-safe: yes
    *  Realtime-safe: yes
    *
-   *  @discussion The Clock type is a platform-dependent
-   *  representation of the system clock. It exposes a ticks() method
-   *  that returns the current ticks of the system clock as well as
-   *  micros(), which is a normalized representation of the current system
-   *  time in std::chrono::microseconds. It also provides conversion
-   *  functions ticksToMicros() and microsToTicks() to faciliate
-   *  converting between these units.
+   *  @discussion The Clock type is a platform-dependent representation
+   *  of the system clock. It exposes a micros() method, which is a
+   *  normalized representation of the current system time in
+   *  std::chrono::microseconds.
    */
   Clock clock() const;
 
