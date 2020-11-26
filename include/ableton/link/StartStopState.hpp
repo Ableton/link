@@ -96,6 +96,35 @@ private:
   }
 };
 
+struct ClientStartStopState
+{
+  ClientStartStopState() = default;
+
+  ClientStartStopState(const bool aIsPlaying,
+    const std::chrono::microseconds aTime,
+    const std::chrono::microseconds aTimestamp)
+    : isPlaying(aIsPlaying)
+    , time(aTime)
+    , timestamp(aTimestamp)
+  {
+  }
+
+  friend bool operator==(const ClientStartStopState& lhs, const ClientStartStopState& rhs)
+  {
+    return std::tie(lhs.isPlaying, lhs.time, lhs.timestamp)
+           == std::tie(rhs.isPlaying, rhs.time, rhs.timestamp);
+  }
+
+  friend bool operator!=(const ClientStartStopState& lhs, const ClientStartStopState& rhs)
+  {
+    return !(lhs == rhs);
+  }
+
+  bool isPlaying{false};
+  std::chrono::microseconds time{0};
+  std::chrono::microseconds timestamp{0};
+};
+
 struct ApiStartStopState
 {
   ApiStartStopState() = default;

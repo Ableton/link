@@ -30,10 +30,8 @@ template <typename Clock>
 inline typename BasicLink<Clock>::SessionState toSessionState(
   const link::ClientState& state, const bool isConnected)
 {
-  const auto time = state.timeline.fromBeats(state.startStopState.beats);
-  const auto startStopState =
-    link::ApiStartStopState{state.startStopState.isPlaying, time};
-  return {{state.timeline, startStopState}, isConnected};
+  return {{state.timeline, {state.startStopState.isPlaying, state.startStopState.time}},
+    isConnected};
 }
 
 inline link::IncomingClientState toIncomingClientState(const link::ApiState& state,
@@ -45,9 +43,9 @@ inline link::IncomingClientState toIncomingClientState(const link::ApiState& sta
                           : link::OptionalTimeline{};
   const auto startStopState =
     originalState.startStopState != state.startStopState
-      ? link::OptionalStartStopState{{state.startStopState.isPlaying,
-          state.timeline.toBeats(state.startStopState.time), timestamp}}
-      : link::OptionalStartStopState{};
+      ? link::OptionalClientStartStopState{{state.startStopState.isPlaying,
+        state.startStopState.time, timestamp}}
+      : link::OptionalClientStartStopState{};
   return {timeline, startStopState, timestamp};
 }
 
@@ -55,7 +53,8 @@ inline link::IncomingClientState toIncomingClientState(const link::ApiState& sta
 
 template <typename Clock>
 inline BasicLink<Clock>::BasicLink(const double bpm)
-  : mController(link::Tempo(bpm),
+  : mController(
+      link::Tempo(bpm),
       [this](const std::size_t peers) {
         std::lock_guard<std::mutex> lock(mCallbackMutex);
         mPeerCountCallback(peers);

@@ -194,7 +194,7 @@ void testSetAndGetClientState(
   const auto initialTimeline =
     Optional<Timeline>{Timeline{Tempo{60.}, Beats{0.}, kAnyTime}};
   const auto initialStartStopState =
-    Optional<StartStopState>{StartStopState{true, kAnyBeatTime, clock.micros()}};
+    Optional<ClientStartStopState>{ClientStartStopState{false, kAnyTime, clock.micros()}};
   const auto initialClientState =
     IncomingClientState{initialTimeline, initialStartStopState, clock.micros()};
 
@@ -209,8 +209,8 @@ void testSetAndGetClientState(
   {
     // Set client state with a StartStopState having the same timestamp as the current
     // StartStopState - don't advance clock
-    const auto outdatedStartStopState =
-      Optional<StartStopState>{StartStopState{false, kAnyBeatTime, clock.micros()}};
+    const auto outdatedStartStopState = Optional<ClientStartStopState>{
+      ClientStartStopState{false, kAnyTime, clock.micros()}};
     setClientState(controller,
       IncomingClientState{Optional<Timeline>{}, outdatedStartStopState, clock.micros()});
     CHECK(initialClientState == getClientState(controller));
@@ -220,9 +220,8 @@ void testSetAndGetClientState(
 
   SECTION("Set outdated start stop state (timestamp in past)")
   {
-    const auto outdatedStartStopState =
-      Optional<StartStopState>{StartStopState{false, kAnyBeatTime, microseconds{0}}};
-
+    const auto outdatedStartStopState = Optional<ClientStartStopState>{
+      ClientStartStopState{false, kAnyTime, microseconds{0}}};
     setClientState(controller,
       IncomingClientState{Optional<Timeline>{}, outdatedStartStopState, clock.micros()});
     CHECK(initialClientState == getClientState(controller));
@@ -231,7 +230,7 @@ void testSetAndGetClientState(
   SECTION("Set empty client state")
   {
     setClientState(controller, IncomingClientState{Optional<Timeline>{},
-                                 Optional<StartStopState>{}, clock.micros()});
+                                 Optional<ClientStartStopState>{}, clock.micros()});
     CHECK(initialClientState == getClientState(controller));
   }
 
@@ -239,8 +238,8 @@ void testSetAndGetClientState(
   {
     const auto expectedTimeline =
       Optional<Timeline>{Timeline{Tempo{80.}, Beats{1.}, kAnyTime}};
-    const auto expectedStartStopState =
-      Optional<StartStopState>{StartStopState{false, kAnyBeatTime, clock.micros()}};
+    const auto expectedStartStopState = Optional<ClientStartStopState>{
+      ClientStartStopState{false, kAnyTime, clock.micros()}};
     const auto expectedClientState =
       IncomingClientState{expectedTimeline, expectedStartStopState, clock.micros()};
     setClientState(controller, expectedClientState);
@@ -267,8 +266,8 @@ void testCallbackInvocation(SetClientStateFunctionT setClientState)
 
   const auto initialTimeline =
     Optional<Timeline>{Timeline{initialTempo, Beats{0.}, kAnyTime}};
-  const auto initialStartStopState = Optional<StartStopState>{
-    StartStopState{initialIsPlaying, kAnyBeatTime, clock.micros()}};
+  const auto initialStartStopState = Optional<ClientStartStopState>{
+    ClientStartStopState{initialIsPlaying, kAnyTime, clock.micros()}};
   setClientState(controller, {initialTimeline, initialStartStopState, clock.micros()});
 
   SECTION("Callbacks are called when setting new client state")
@@ -284,8 +283,8 @@ void testCallbackInvocation(SetClientStateFunctionT setClientState)
     {
       const auto timeline =
         Optional<Timeline>{Timeline{initialTempo, Beats{1.}, kAnyTime}};
-      const auto startStopState = Optional<StartStopState>{
-        StartStopState{initialIsPlaying, kAnyBeatTime, clock.micros()}};
+      const auto startStopState = Optional<ClientStartStopState>{
+        ClientStartStopState{initialIsPlaying, kAnyTime, clock.micros()}};
       setClientState(controller, {timeline, startStopState, clock.micros()});
       CHECK(tempoCallback.tempos.empty());
       CHECK(startStopStateCallback.startStopStates.empty());
@@ -411,7 +410,7 @@ TEST_CASE("Controller | GetClientStateRtSafeGracePeriod", "[Controller]")
   const auto initialTimeline =
     Optional<Timeline>{Timeline{Tempo{50.}, Beats{0.}, clock.micros()}};
   const auto initialStartStopState =
-    Optional<StartStopState>{StartStopState{true, kAnyBeatTime, clock.micros()}};
+    Optional<ClientStartStopState>{ClientStartStopState{true, kAnyTime, clock.micros()}};
   const auto initialState =
     IncomingClientState{initialTimeline, initialStartStopState, clock.micros()};
 
@@ -424,7 +423,7 @@ TEST_CASE("Controller | GetClientStateRtSafeGracePeriod", "[Controller]")
   const auto newTimeline =
     Optional<Timeline>{Timeline{Tempo{70.}, Beats{1.}, clock.micros()}};
   const auto newStartStopState =
-    Optional<StartStopState>{StartStopState{false, kAnyBeatTime, clock.micros()}};
+    Optional<ClientStartStopState>{ClientStartStopState{false, kAnyTime, clock.micros()}};
   const auto newState =
     IncomingClientState{newTimeline, newStartStopState, clock.micros()};
 

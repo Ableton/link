@@ -30,6 +30,7 @@ namespace link
 
 using OptionalTimeline = Optional<Timeline>;
 using OptionalStartStopState = Optional<StartStopState>;
+using OptionalClientStartStopState = Optional<ClientStartStopState>;
 
 struct SessionState
 {
@@ -52,13 +53,13 @@ struct ClientState
   }
 
   Timeline timeline;
-  StartStopState startStopState;
+  ClientStartStopState startStopState;
 };
 
 struct RtClientState
 {
   Timeline timeline;
-  StartStopState startStopState;
+  ClientStartStopState startStopState;
   std::chrono::microseconds timelineTimestamp;
   std::chrono::microseconds startStopStateTimestamp;
 };
@@ -66,7 +67,7 @@ struct RtClientState
 struct IncomingClientState
 {
   OptionalTimeline timeline;
-  OptionalStartStopState startStopState;
+  OptionalClientStartStopState startStopState;
   std::chrono::microseconds timelineTimestamp;
 };
 
