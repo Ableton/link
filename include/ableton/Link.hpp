@@ -391,6 +391,8 @@ private:
 class Link : public BasicLink<link::platform::Clock>
 {
 public:
+  using Clock = link::platform::Clock;
+
   Link(double bpm)
     : BasicLink(bpm)
   {
