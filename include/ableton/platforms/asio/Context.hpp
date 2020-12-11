@@ -87,12 +87,23 @@ public:
 
   ~Context()
   {
-    if (mpService)
+    if (mpService && mpWork)
     {
       mpWork.reset();
       mThread.join();
     }
   }
+
+  void stop()
+  {
+    if (mpService && mpWork)
+    {
+      mpWork.reset();
+      mpService->stop();
+      mThread.join();
+    }
+  }
+
 
   template <std::size_t BufferSize>
   Socket<BufferSize> openUnicastSocket(const ::asio::ip::address_v4& addr)

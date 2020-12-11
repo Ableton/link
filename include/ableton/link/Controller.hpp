@@ -169,6 +169,11 @@ public:
   Controller& operator=(const Controller&) = delete;
   Controller& operator=(Controller&&) = delete;
 
+  ~Controller()
+  {
+    mIo->stop();
+  }
+
   void enable(const bool bEnable)
   {
     const bool bWasEnabled = mEnabled.exchange(bEnable);

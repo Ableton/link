@@ -114,6 +114,10 @@ public:
   {
   }
 
+  void stop()
+  {
+  }
+
   template <std::size_t BufferSize>
   Socket<BufferSize> openUnicastSocket(const ::asio::ip::address_v4& addr)
   {

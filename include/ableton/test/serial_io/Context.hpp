@@ -67,6 +67,10 @@ public:
   {
   }
 
+  void stop()
+  {
+  }
+
   template <typename Handler>
   void async(Handler handler)
   {
