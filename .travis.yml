@@ -93,7 +93,7 @@ matrix:
         apt:
           sources: ['llvm-toolchain-trusty-5.0', 'ubuntu-toolchain-r-test']
           packages: ['wget', 'flex', 'bison', 'gperf', 'python-pip', 'ninja-build', 'ccache']
-      env: IDF_RELEASE=v4.0-rc IDF_PATH=${HOME}/esp-idf-${IDF_RELEASE} COMPILER=clang
+      env: IDF_RELEASE=v4.1 IDF_PATH=${HOME}/esp-idf-${IDF_RELEASE} COMPILER=clang
 
     # Code formatting verification
     - os: linux
