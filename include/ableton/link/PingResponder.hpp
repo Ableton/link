@@ -60,11 +60,8 @@ public:
 
   void updateNodeState(const SessionId& sessionId, const GhostXForm& xform)
   {
-    auto pImpl = mpImpl;
-    mIo->async([pImpl, sessionId, xform] {
-      pImpl->mSessionId = std::move(sessionId);
-      pImpl->mGhostXForm = std::move(xform);
-    });
+    mpImpl->mSessionId = std::move(sessionId);
+    mpImpl->mGhostXForm = std::move(xform);
   }
 
   asio::ip::udp::endpoint endpoint() const

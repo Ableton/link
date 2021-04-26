@@ -49,7 +49,7 @@ struct Factory
 
 
 template <typename Gateways>
-void expectGatewaysAsync(
+void expectGateways(
   Gateways& gateways, test::serial_io::Fixture& io, std::vector<asio::ip::address> addrs)
 
 {
@@ -57,7 +57,7 @@ void expectGatewaysAsync(
   using GatewayIt = typename Gateways::GatewayMap::iterator;
   bool bTested = false;
 
-  gateways.withGatewaysAsync([addrs, &bTested](GatewayIt begin, const GatewayIt end) {
+  gateways.withGateways([addrs, &bTested](GatewayIt begin, const GatewayIt end) {
     bTested = true;
     REQUIRE(static_cast<size_t>(distance(begin, end)) == addrs.size());
     std::size_t i = 0;
@@ -84,47 +84,47 @@ TEST_CASE("PeerGateways")
   SECTION("EmptyIfNoInterfaces")
   {
     pGateways->enable(true);
-    expectGatewaysAsync(*pGateways, io, {});
+    expectGateways(*pGateways, io, {});
   }
 
   SECTION("MatchesAfterInitialScan")
   {
     io.setNetworkInterfaces({addr1, addr2});
     pGateways->enable(true);
-    expectGatewaysAsync(*pGateways, io, {addr1, addr2});
+    expectGateways(*pGateways, io, {addr1, addr2});
   }
 
   SECTION("GatewayAppears")
   {
     io.setNetworkInterfaces({addr1});
     pGateways->enable(true);
-    expectGatewaysAsync(*pGateways, io, {addr1});
+    expectGateways(*pGateways, io, {addr1});
 
     io.setNetworkInterfaces({addr1, addr2});
     io.advanceTime(std::chrono::seconds(3));
-    expectGatewaysAsync(*pGateways, io, {addr1, addr2});
+    expectGateways(*pGateways, io, {addr1, addr2});
   }
 
   SECTION("GatewayDisappears")
   {
     io.setNetworkInterfaces({addr1, addr2});
     pGateways->enable(true);
-    expectGatewaysAsync(*pGateways, io, {addr1, addr2});
+    expectGateways(*pGateways, io, {addr1, addr2});
 
     io.setNetworkInterfaces({addr1});
     io.advanceTime(std::chrono::seconds(3));
-    expectGatewaysAsync(*pGateways, io, {addr1});
+    expectGateways(*pGateways, io, {addr1});
   }
 
   SECTION("GatewayChangesAddress")
   {
     io.setNetworkInterfaces({addr1});
     pGateways->enable(true);
-    expectGatewaysAsync(*pGateways, io, {addr1});
+    expectGateways(*pGateways, io, {addr1});
 
     io.setNetworkInterfaces({addr2});
     io.advanceTime(std::chrono::seconds(3));
-    expectGatewaysAsync(*pGateways, io, {addr2});
+    expectGateways(*pGateways, io, {addr2});
   }
 }
 

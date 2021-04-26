@@ -663,7 +663,7 @@ private:
         {
           // When the count goes down to zero, completely reset the
           // state, effectively founding a new session
-          mController.resetState();
+          mController.mIo->async([this] { mController.resetState(); });
         }
         mCallback(count);
       }
@@ -681,7 +681,7 @@ private:
     {
       using It = typename Discovery::ServicePeerGateways::GatewayMap::iterator;
       using ValueType = typename Discovery::ServicePeerGateways::GatewayMap::value_type;
-      mController.mDiscovery.withGatewaysAsync([peer, handler](It begin, const It end) {
+      mController.mDiscovery.withGateways([peer, handler](It begin, const It end) {
         const auto addr = peer.second;
         const auto it = std::find_if(
           begin, end, [&addr](const ValueType& vt) { return vt.first == addr; });
@@ -747,9 +747,11 @@ private:
   {
     using Exception = discovery::UdpSendException;
 
-    void operator()(const Exception& exception)
+    void operator()(const Exception exception)
     {
-      mpController->mDiscovery.repairGateway(exception.interfaceAddr);
+      mpController->mIo->async([this, exception] {
+        mpController->mDiscovery.repairGateway(exception.interfaceAddr);
+      });
     }
 
     Controller* mpController;

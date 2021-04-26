@@ -77,24 +77,22 @@ public:
   {
     using namespace std;
 
-    mIo->async([this, state, handler] {
-      const auto nodeId = state.nodeState.nodeId;
-      auto addr = mPingResponder.endpoint().address().to_v4();
-      auto callback = CompletionCallback<Handler>{*this, nodeId, handler};
+    const auto nodeId = state.nodeState.nodeId;
+    auto addr = mPingResponder.endpoint().address().to_v4();
+    auto callback = CompletionCallback<Handler>{*this, nodeId, handler};
 
-      try
-      {
-        mMeasurementMap[nodeId] =
-          std::unique_ptr<MeasurementInstance>(new MeasurementInstance{
-            state, std::move(callback), std::move(addr), mClock, mIo});
-      }
-      catch (const runtime_error& err)
-      {
-        info(mIo->log()) << "gateway@" + addr.to_string()
-                         << " Failed to measure. Reason: " << err.what();
-        handler(GhostXForm{});
-      }
-    });
+    try
+    {
+      mMeasurementMap[nodeId] =
+        std::unique_ptr<MeasurementInstance>(new MeasurementInstance{
+          state, std::move(callback), std::move(addr), mClock, mIo});
+    }
+    catch (const runtime_error& err)
+    {
+      info(mIo->log()) << "gateway@" + addr.to_string()
+                       << " Failed to measure. Reason: " << err.what();
+      handler(GhostXForm{});
+    }
   }
 
   static GhostXForm filter(
@@ -128,21 +126,19 @@ private:
       auto nodeId = mNodeId;
       auto handler = mHandler;
       auto& measurementMap = mMeasurementService.mMeasurementMap;
-      mMeasurementService.mIo->async([nodeId, handler, &measurementMap, data] {
-        const auto it = measurementMap.find(nodeId);
-        if (it != measurementMap.end())
+      const auto it = measurementMap.find(nodeId);
+      if (it != measurementMap.end())
+      {
+        if (data.empty())
         {
-          if (data.empty())
-          {
-            handler(GhostXForm{});
-          }
-          else
-          {
-            handler(MeasurementService::filter(begin(data), end(data)));
-          }
-          measurementMap.erase(it);
+          handler(GhostXForm{});
         }
-      });
+        else
+        {
+          handler(MeasurementService::filter(begin(data), end(data)));
+        }
+        measurementMap.erase(it);
+      }
     }
 
     MeasurementService& mMeasurementService;

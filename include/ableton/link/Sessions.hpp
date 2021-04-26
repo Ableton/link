@@ -248,15 +248,11 @@ private:
       const SessionId& sessionId = mSessionId;
       if (xform == GhostXForm{})
       {
-        mSessions.mIo->async([&sessions, sessionId] {
-          sessions.handleFailedMeasurement(std::move(sessionId));
-        });
+        sessions.handleFailedMeasurement(std::move(sessionId));
       }
       else
       {
-        mSessions.mIo->async([&sessions, sessionId, xform] {
-          sessions.handleSuccessfulMeasurement(std::move(sessionId), std::move(xform));
-        });
+        sessions.handleSuccessfulMeasurement(std::move(sessionId), std::move(xform));
       }
     }
 
