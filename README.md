@@ -32,6 +32,21 @@ $ cmake ..
 $ cmake --build .
 ```
 
+If you are building on Windows and need both 32- and 64-bit builds, use the following instead:
+
+```
+mkdir build64
+cd build64
+cmake -A x64 ..
+cmake --build .
+cd ..
+mkdir build32
+cd build32
+cmake -A Win32 ..
+cmake --build .
+```
+
+
 The output binaries for the example applications and the unit-tests will be placed in a
 `bin` subdirectory of the CMake binary directory.
 

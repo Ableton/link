@@ -1,5 +1,7 @@
 # IDE generated files and build outputs
 /build/
+/build32/
+/build64/
 /ide/
 /output/
 /logs/
