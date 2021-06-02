@@ -221,3 +221,46 @@ target_compile_definitions(LinkHutSilent PRIVATE
 
 configure_linkhut_executable(LinkHutSilent)
 source_group("LinkHutSilent" FILES ${linkhutsilent_HEADERS} ${linkhutsilent_SOURCES})
+
+#  _     _       _     ____
+# | |   (_)_ __ | | _ / ___|
+# | |   | | '_ \| |/ / |
+# | |___| | | | |   <| |___
+# |_____|_|_| |_|_|\_\\____|
+#
+
+set(linkc_HEADERS
+  linkc/LinkC.h
+  linkaudio/AudioEngine.hpp
+  linkaudio/AudioPlatform.hpp
+  ${link_HEADERS}
+)
+
+set(linkc_SOURCES
+  linkaudio/AudioEngine.cpp
+  linkc/main.cpp
+)
+
+if(WIN32)
+  set(linkc_DEFS
+    linkc/LinkC.def
+  )
+else()
+  set(linkc_DEFS
+  )
+endif()
+
+add_library(LinkC SHARED
+  ${linkc_HEADERS}
+  ${linkc_SOURCES}
+  ${linkc_DEFS}
+  ${linkc_audio_SOURCES}
+)
+
+# doesn't seem to work:
+set_property(TARGET LinkC PROPERTY
+  MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+  
+configure_linkhut_audio_sources(LinkC)
+configure_linkhut_executable(LinkC)
+source_group("LinkC" FILES ${linkc_HEADERS} ${linkc_SOURCES} ${linkc_DEFS})

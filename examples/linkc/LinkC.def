@@ -1,0 +1,30 @@
+
+EXPORTS
+	AbLinkCreate                                            @1
+	AbLinkDestroy                                           @2
+	AbLinkIsEnabled                                         @3
+	AbLinkEnable                                            @4
+	AbLinkIsStartStopSyncEnabled                            @5
+	AbLinkEnableStartStopSync                               @6
+	AbLinkNumPeers                                          @7
+	AbLinkSetNumPeersCallback                               @8
+	AbLinkSetTempoCallback                                  @9
+	AbLinkSetStartStopCallback                              @10
+	AbLinkClockMicros                                       @11
+	AbLinkCaptureAudioSessionState                          @12
+	AbLinkCommitAudioSessionState                           @13
+	AbLinkCaptureAppSessionState                            @14
+	AbLinkCommitAppSessionState                             @15
+	AbLinkDestroySessionState                               @16
+	AbLinkSessionStateTempo                                 @17
+	AbLinkSessionStateSetTempo                              @18
+	AbLinkSessionStateBeatAtTime                            @19
+	AbLinkSessionStatePhaseAtTime                           @20
+	AbLinkSessionStateTimeAtBeat                            @21
+	AbLinkSessionStateRequestBeatAtTime                     @22
+	AbLinkSessionStateForceBeatAtTime                       @23
+	AbLinkSessionStateSetIsPlaying                          @24
+	AbLinkSessionStateIsPlaying                             @25
+	AbLinkSessionStateTimeForIsPlaying                      @26
+	AbLinkSessionStateRequestBeatAtStartPlayingTime         @27
+	AbLinkSessionStateSetIsPlayingAndRequestBeatAtTime      @28
