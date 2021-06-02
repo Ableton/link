@@ -133,6 +133,8 @@ elseif(${CMAKE_CXX_COMPILER_ID} STREQUAL MSVC)
       "/wd4987" # nonstandard extension used: 'throw (...)'
       "/wd4774" # 'printf_s' : format string expected in argument 1 is not a string literal
       "/wd5039" # "pointer or reference to potentially throwing function passed to extern C function under -EHc. Undefined behavior may occur if this function throws an exception."
+	  "/wd5220" # A non-static data member with the qualified type "volatile" doesn't imply any longer that compiler-generated copy/move constructors and copy/move assignment operators are non-trivial."
+	  "/wd4668" # "..." is not defined as a preprocessor macro, it is replaced by "0" "0" for "#if/#elif"
     )
   endif()
 
