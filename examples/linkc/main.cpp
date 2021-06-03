@@ -83,8 +83,13 @@ extern "C"
   {
     return static_cast<ableton::Link*>(inst)->clock().micros().count();
   }
-  PABLETONLINKSESSIONSTATE CALLBACK AbLinkCaptureAudioSessionState(PABLETONLINK inst)
+  PABLETONLINKSESSIONSTATE CALLBACK AbLinkCaptureAudioSessionState(PABLETONLINK inst, PABLETONLINKSESSIONSTATE state)
   {
+    if (state)
+    {
+      *(static_cast<ableton::Link::SessionState*>(state)) = static_cast<ableton::Link*>(inst)->captureAudioSessionState();
+      return state;
+    }
     return new ableton::Link::SessionState(static_cast<ableton::Link*>(inst)->captureAudioSessionState());
   }
   void CALLBACK AbLinkCommitAudioSessionState(PABLETONLINK inst, PABLETONLINKSESSIONSTATE state)
@@ -92,8 +97,13 @@ extern "C"
     ableton::Link::SessionState* pState = static_cast<ableton::Link::SessionState*>(state);
     static_cast<ableton::Link*>(inst)->commitAudioSessionState(*pState);
   }
-  PABLETONLINKSESSIONSTATE CALLBACK AbLinkCaptureAppSessionState(PABLETONLINK inst)
+  PABLETONLINKSESSIONSTATE CALLBACK AbLinkCaptureAppSessionState(PABLETONLINK inst, PABLETONLINKSESSIONSTATE state)
   {
+    if (state)
+    {
+      *(static_cast<ableton::Link::SessionState*>(state)) = static_cast<ableton::Link*>(inst)->captureAppSessionState();
+      return state;
+    }
     return new ableton::Link::SessionState(static_cast<ableton::Link*>(inst)->captureAppSessionState());
   }
   void CALLBACK AbLinkCommitAppSessionState(PABLETONLINK inst, PABLETONLINKSESSIONSTATE state)
