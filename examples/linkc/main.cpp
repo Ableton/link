@@ -134,9 +134,9 @@ extern "C"
   {
     static_cast<ableton::Link::SessionState*>(state)->forceBeatAtTime(beat, std::chrono::microseconds(time), quantum);
   }
-  void CALLBACK AbLinkSessionStateSetIsPlaying(PABLETONLINKSESSIONSTATE state, bool isPlaying, long long time)
+  void CALLBACK AbLinkSessionStateSetIsPlaying(PABLETONLINKSESSIONSTATE state, int isPlaying, long long time)
   {
-    static_cast<ableton::Link::SessionState*>(state)->setIsPlaying(isPlaying, std::chrono::microseconds(time));
+    static_cast<ableton::Link::SessionState*>(state)->setIsPlaying(!!isPlaying, std::chrono::microseconds(time));
   }
   int CALLBACK AbLinkSessionStateIsPlaying(PABLETONLINKSESSIONSTATE state)
   {

@@ -58,7 +58,7 @@ double CALLBACK AbLinkSessionStatePhaseAtTime(PABLETONLINKSESSIONSTATE state, lo
 long long CALLBACK AbLinkSessionStateTimeAtBeat(PABLETONLINKSESSIONSTATE state, double beat, double quantum);
 void CALLBACK AbLinkSessionStateRequestBeatAtTime(PABLETONLINKSESSIONSTATE state, double beat, long long time, double quantum);
 void CALLBACK AbLinkSessionStateForceBeatAtTime(PABLETONLINKSESSIONSTATE state, double beat, long long time, double quantum);
-void CALLBACK AbLinkSessionStateSetIsPlaying(PABLETONLINKSESSIONSTATE state, bool isPlaying, long long time);
+void CALLBACK AbLinkSessionStateSetIsPlaying(PABLETONLINKSESSIONSTATE state, int isPlaying, long long time);
 int CALLBACK AbLinkSessionStateIsPlaying(PABLETONLINKSESSIONSTATE state);
 long long CALLBACK AbLinkSessionStateTimeForIsPlaying(PABLETONLINKSESSIONSTATE state);
 void CALLBACK AbLinkSessionStateRequestBeatAtStartPlayingTime(PABLETONLINKSESSIONSTATE state, double beat, double quantum);
