@@ -30,6 +30,7 @@
 #pragma warning(push, 0)
 #pragma warning(disable : 4242)
 #pragma warning(disable : 4244)
+#pragma warning(disable : 4668)
 #pragma warning(disable : 4702)
 #endif
 
