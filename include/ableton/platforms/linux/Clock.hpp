@@ -39,12 +39,30 @@ template <clockid_t CLOCK>
 class Clock
 {
 public:
-  std::chrono::microseconds micros() const
+  using Ticks = std::uint64_t;
+  using Micros = std::chrono::microseconds;
+  
+  Micros ticksToMicros(const Ticks ticks) const
+  {
+    return Micros{llround(ticks / 1000ULL)};
+  }
+
+  Ticks microsToTicks(const Micros micros) const
+  {
+    return static_cast<Ticks>(micros.count() * 1000ULL);
+  }
+
+  Ticks ticks() const
   {
     ::timespec ts;
     ::clock_gettime(CLOCK, &ts);
     std::uint64_t ns = ts.tv_sec * 1000000000ULL + ts.tv_nsec;
-    return std::chrono::microseconds(ns / 1000ULL);
+    return ns;
+  }
+  
+  std::chrono::microseconds micros() const
+  {
+  	return ticksToMicros(ticks());
   }
 };
 
