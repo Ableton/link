@@ -11,9 +11,9 @@ project(LinkExamples)
 if(WIN32)
   function(configure_asio asio_sdk_path_OUT)
     # ASIO-related path/file variables
-    set(asio_download_root "https://www.steinberg.net/sdk_downloads")
-    set(asio_file_name "asiosdk2.3.zip")
-    set(asio_dir_name "ASIOSDK2.3")
+    set(asio_download_root "https:/download.steinberg.net/sdk_downloads")
+    set(asio_file_name "asiosdk_2.3.3_2019-06-14.zip")
+    set(asio_dir_name "asiosdk_2.3.3_2019-06-14")
     set(asio_working_dir "${CMAKE_BINARY_DIR}/modules")
     set(asio_output_path "${asio_working_dir}/${asio_file_name}")
 
