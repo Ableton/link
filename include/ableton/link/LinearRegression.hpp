@@ -19,7 +19,6 @@
 
 #pragma once
 
-#include <cmath>
 #include <numeric>
 #include <utility>
 
@@ -27,6 +26,17 @@ namespace ableton
 {
 namespace link
 {
+
+namespace detail
+{
+
+template <typename T>
+T pow2(T x)
+{
+  return x * x;
+}
+
+} // namespace detail
 
 template <typename It>
 std::pair<double, double> linearRegression(It begin, It end)
@@ -41,7 +51,7 @@ std::pair<double, double> linearRegression(It begin, It end)
   }) / numPoints;
 
   const double productXX = accumulate(begin, end, 0.0,
-    [&meanX](double a, Point b) { return a + pow(b.first - meanX, 2.0); });
+    [&meanX](double a, Point b) { return a + detail::pow2(b.first - meanX); });
 
   const double meanY = accumulate(begin, end, 0.0, [](double a, Point b) {
     return a + b.second;
