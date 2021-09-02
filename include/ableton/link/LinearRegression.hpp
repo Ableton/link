@@ -19,7 +19,6 @@
 
 #pragma once
 
-#include <cfloat>
 #include <cmath>
 #include <numeric>
 #include <utility>
