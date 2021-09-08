@@ -66,8 +66,7 @@ inline BasicLink<Clock>::BasicLink(const double bpm)
         std::lock_guard<std::mutex> lock(mCallbackMutex);
         mStartStopCallback(isPlaying);
       },
-      mClock,
-      util::injectVal(link::platform::IoContext{}))
+      mClock)
 {
 }
 

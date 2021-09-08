@@ -189,8 +189,8 @@ void testSetAndGetClientState(
   using namespace std::chrono;
 
   auto clock = MockClock{};
-  MockController controller(Tempo{100.0}, [](std::size_t) {}, [](Tempo) {}, [](bool) {},
-    clock, util::injectVal(MockIoContext{}));
+  MockController controller(
+    Tempo{100.0}, [](std::size_t) {}, [](Tempo) {}, [](bool) {}, clock);
 
   clock.advance(microseconds{1});
   const auto initialTimeline =
@@ -259,7 +259,7 @@ void testCallbackInvocation(SetClientStateFunctionT setClientState)
   auto tempoCallback = TempoClientCallback{};
   auto startStopStateCallback = StartStopStateClientCallback{};
   MockController controller(Tempo{100.0}, [](std::size_t) {}, std::ref(tempoCallback),
-    std::ref(startStopStateCallback), clock, util::injectVal(MockIoContext{}));
+    std::ref(startStopStateCallback), clock);
 
   clock.advance(microseconds{1});
 
@@ -300,8 +300,8 @@ TEST_CASE("Controller")
 {
   SECTION("ConstructOptimistically")
   {
-    MockController controller(Tempo{100.0}, [](std::size_t) {}, [](Tempo) {}, [](bool) {},
-      MockClock{}, util::injectVal(MockIoContext{}));
+    MockController controller(
+      Tempo{100.0}, [](std::size_t) {}, [](Tempo) {}, [](bool) {}, MockClock{});
 
     CHECK(!controller.isEnabled());
     CHECK(!controller.isStartStopSyncEnabled());
@@ -312,21 +312,21 @@ TEST_CASE("Controller")
 
   SECTION("ConstructWithInvalidTempo")
   {
-    MockController controllerLowTempo(Tempo{1.0}, [](std::size_t) {}, [](Tempo) {},
-      [](bool) {}, MockClock{}, util::injectVal(MockIoContext{}));
+    MockController controllerLowTempo(
+      Tempo{1.0}, [](std::size_t) {}, [](Tempo) {}, [](bool) {}, MockClock{});
     const auto tlLow = controllerLowTempo.clientState().timeline;
     CHECK(Tempo{20.0} == tlLow.tempo);
 
-    MockController controllerHighTempo(Tempo{100000.0}, [](std::size_t) {}, [](Tempo) {},
-      [](bool) {}, MockClock{}, util::injectVal(MockIoContext{}));
+    MockController controllerHighTempo(
+      Tempo{100000.0}, [](std::size_t) {}, [](Tempo) {}, [](bool) {}, MockClock{});
     const auto tlHigh = controllerHighTempo.clientState().timeline;
     CHECK(Tempo{999.0} == tlHigh.tempo);
   }
 
   SECTION("EnableDisable")
   {
-    MockController controller(Tempo{100.0}, [](std::size_t) {}, [](Tempo) {}, [](bool) {},
-      MockClock{}, util::injectVal(MockIoContext{}));
+    MockController controller(
+      Tempo{100.0}, [](std::size_t) {}, [](Tempo) {}, [](bool) {}, MockClock{});
 
     controller.enable(true);
     CHECK(controller.isEnabled());
@@ -336,8 +336,8 @@ TEST_CASE("Controller")
 
   SECTION("EnableDisableStartStopSync")
   {
-    MockController controller(Tempo{100.0}, [](std::size_t) {}, [](Tempo) {}, [](bool) {},
-      MockClock{}, util::injectVal(MockIoContext{}));
+    MockController controller(
+      Tempo{100.0}, [](std::size_t) {}, [](Tempo) {}, [](bool) {}, MockClock{});
 
     controller.enableStartStopSync(true);
     CHECK(controller.isStartStopSyncEnabled());
@@ -408,7 +408,7 @@ TEST_CASE("Controller")
     auto tempoCallback = TempoClientCallback{};
     auto startStopStateCallback = StartStopStateClientCallback{};
     MockController controller(Tempo{100.0}, [](std::size_t) {}, std::ref(tempoCallback),
-      std::ref(startStopStateCallback), clock, util::injectVal(MockIoContext{}));
+      std::ref(startStopStateCallback), clock);
     controller.enable(true);
 
     clock.advance(microseconds{1});

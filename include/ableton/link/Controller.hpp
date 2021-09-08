@@ -127,8 +127,7 @@ public:
     PeerCountCallback peerCallback,
     TempoCallback tempoCallback,
     StartStopStateCallback startStopStateCallback,
-    Clock clock,
-    util::Injected<IoContext> io)
+    Clock clock)
     : mTempoCallback(std::move(tempoCallback))
     , mStartStopStateCallback(std::move(startStopStateCallback))
     , mClock(std::move(clock))
@@ -142,7 +141,7 @@ public:
     , mSessionPeerCounter(*this, std::move(peerCallback))
     , mEnabled(false)
     , mStartStopSyncEnabled(false)
-    , mIo(std::move(io))
+    , mIo(IoContext{})
     , mRtClientStateSetter(*this)
     , mPeers(util::injectRef(*mIo),
         std::ref(mSessionPeerCounter),
