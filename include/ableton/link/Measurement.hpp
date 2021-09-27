@@ -212,17 +212,16 @@ struct Measurement
     void finish()
     {
       mTimer.cancel();
-      mCallback(std::move(mData));
-      mData = {};
       mSuccess = true;
       debug(mLog) << "Measuring " << mEndpoint << " done.";
+      mCallback(mData);
     }
 
     void fail()
     {
-      mCallback(std::vector<Point>{});
-      mData = {};
+      mData.clear();
       debug(mLog) << "Measuring " << mEndpoint << " failed.";
+      mCallback(mData);
     }
 
     Socket mSocket;

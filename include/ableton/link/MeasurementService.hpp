@@ -125,7 +125,7 @@ private:
   template <typename Handler>
   struct CompletionCallback
   {
-    void operator()(const std::vector<Point> data)
+    void operator()(const std::vector<Point>& data)
     {
       using namespace std;
       using std::chrono::microseconds;
