@@ -48,7 +48,7 @@ struct Measurement
     Callback callback,
     asio::ip::address_v4 address,
     Clock clock,
-    IoContext io)
+    util::Injected<IoContext> io)
     : mIo(std::move(io))
     , mpImpl(std::make_shared<Impl>(
         std::move(state), std::move(callback), std::move(address), std::move(clock), mIo))
@@ -63,23 +63,24 @@ struct Measurement
 
   struct Impl : std::enable_shared_from_this<Impl>
   {
-    using Socket = typename IoContext::template Socket<v1::kMaxMessageSize>;
-    using Timer = typename IoContext::Timer;
-    using Log = typename IoContext::Log;
+    using Socket =
+      typename util::Injected<IoContext>::type::template Socket<v1::kMaxMessageSize>;
+    using Timer = typename util::Injected<IoContext>::type::Timer;
+    using Log = typename util::Injected<IoContext>::type::Log;
 
     Impl(const PeerState& state,
       Callback callback,
       asio::ip::address_v4 address,
       Clock clock,
-      IoContext& io)
-      : mSocket(io.template openUnicastSocket<v1::kMaxMessageSize>(address))
+      util::Injected<IoContext> io)
+      : mSocket(io->template openUnicastSocket<v1::kMaxMessageSize>(address))
       , mSessionId(state.nodeState.sessionId)
       , mEndpoint(state.endpoint)
       , mCallback(std::move(callback))
       , mClock(std::move(clock))
-      , mTimer(io.makeTimer())
+      , mTimer(io->makeTimer())
       , mMeasurementsStarted(0)
-      , mLog(channel(io.log(), "Measurement on gateway@" + address.to_string()))
+      , mLog(channel(io->log(), "Measurement on gateway@" + address.to_string()))
       , mSuccess(false)
     {
       const auto ht = HostTime{mClock.micros()};
@@ -257,7 +258,7 @@ struct Measurement
     std::shared_ptr<Impl> mpImpl;
   };
 
-  IoContext mIo;
+  util::Injected<IoContext> mIo;
   std::shared_ptr<Impl> mpImpl;
 };
 

@@ -167,17 +167,6 @@ public:
     serviceRunner().service().post(std::move(handler));
   }
 
-  Context clone() const
-  {
-    return {};
-  }
-
-  template <typename ExceptionHandler>
-  Context clone(ExceptionHandler handler) const
-  {
-    return Context{std::move(handler)};
-  }
-
 private:
   // Default handler is hidden and defines a hidden exception type
   // that will never be thrown by other code, so it effectively does

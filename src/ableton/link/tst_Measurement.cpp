@@ -77,7 +77,7 @@ struct TFixture
         [](std::vector<std::pair<double, double>>) {},
         {},
         MockClock{},
-        MockIoContext{})
+        util::Injected<MockIoContext>(MockIoContext{}))
   {
   }
 

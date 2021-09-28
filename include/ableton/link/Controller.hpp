@@ -29,6 +29,7 @@
 #include <ableton/link/SessionState.hpp>
 #include <ableton/link/Sessions.hpp>
 #include <ableton/link/StartStopState.hpp>
+#include <condition_variable>
 #include <mutex>
 
 namespace ableton
@@ -141,7 +142,7 @@ public:
     , mSessionPeerCounter(*this, std::move(peerCallback))
     , mEnabled(false)
     , mStartStopSyncEnabled(false)
-    , mIo(IoContext{})
+    , mIo(IoContext{UdpSendExceptionHandler{this}})
     , mRtClientStateSetter(*this)
     , mPeers(util::injectRef(*mIo),
         std::ref(mSessionPeerCounter),
@@ -158,7 +159,7 @@ public:
                                   mSessionState.startStopState},
                    mSessionState.ghostXForm),
         GatewayFactory{*this},
-        util::injectVal(mIo->clone(UdpSendExceptionHandler{*this})))
+        util::injectRef(*mIo))
   {
   }
 
@@ -170,6 +171,20 @@ public:
 
   ~Controller()
   {
+    std::mutex mutex;
+    std::condition_variable condition;
+    auto stopped = false;
+
+    mIo->async([this, &mutex, &condition, &stopped]() {
+      enable(false);
+      std::unique_lock<std::mutex> lock(mutex);
+      stopped = true;
+      condition.notify_one();
+    });
+
+    std::unique_lock<std::mutex> lock(mutex);
+    condition.wait(lock, [&stopped] { return stopped; });
+
     mIo->stop();
   }
 
@@ -734,10 +749,10 @@ private:
 
     void operator()(const Exception& exception)
     {
-      mController.mDiscovery.repairGateway(exception.interfaceAddr);
+      mpController->mDiscovery.repairGateway(exception.interfaceAddr);
     }
 
-    Controller& mController;
+    Controller* mpController;
   };
 
   TempoCallback mTempoCallback;
@@ -775,8 +790,9 @@ private:
     Clock>;
   ControllerSessions mSessions;
 
-  using Discovery =
-    discovery::Service<std::pair<NodeState, GhostXForm>, GatewayFactory, IoContext>;
+  using Discovery = discovery::Service<std::pair<NodeState, GhostXForm>,
+    GatewayFactory,
+    typename util::Injected<IoContext>::type&>;
   Discovery mDiscovery;
 };
 

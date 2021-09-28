@@ -64,6 +64,15 @@ private:
 
 struct MockIoContext
 {
+  MockIoContext()
+  {
+  }
+
+  template <typename ExceptionHandler>
+  MockIoContext(ExceptionHandler)
+  {
+  }
+
   template <std::size_t BufferSize>
   struct Socket
   {
@@ -139,17 +148,6 @@ struct MockIoContext
   void async(Handler handler) const
   {
     handler();
-  }
-
-  MockIoContext clone() const
-  {
-    return {};
-  }
-
-  template <typename ExceptionHandler>
-  MockIoContext clone(ExceptionHandler) const
-  {
-    return {};
   }
 };
 
