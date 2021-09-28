@@ -72,7 +72,7 @@ install:
   - git submodule update --init --recursive
 
 build_script:
-  - python ci/configure.py -a %AUDIO_DRIVER% -g "%GENERATOR%"
+  - python ci/configure.py --audio-driver %AUDIO_DRIVER% --generator "%GENERATOR%"
   - python ci/build.py --configuration %CONFIGURATION%
 
 test_script:
