@@ -237,27 +237,6 @@ struct Measurement
     bool mSuccess;
   };
 
-  struct ImplDeleter
-  {
-    ImplDeleter(Measurement& measurement)
-      : mpImpl(std::move(measurement.mpImpl))
-    {
-    }
-
-    void operator()()
-    {
-      // Notify callback that the measurement has failed if it did
-      // not succeed before destruction
-      if (!mpImpl->mSuccess)
-      {
-        mpImpl->fail();
-      }
-      mpImpl.reset();
-    }
-
-    std::shared_ptr<Impl> mpImpl;
-  };
-
   util::Injected<IoContext> mIo;
   std::shared_ptr<Impl> mpImpl;
 };

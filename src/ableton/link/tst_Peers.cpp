@@ -190,8 +190,8 @@ TEST_CASE("Peers")
       sawPeer(observer2, barPeer);
       sawPeer(observer1, fooPeer);
       sawPeer(observer2, bazPeer);
+      io.flush();
     }
-    io.flush();
 
     expectPeers({{fooPeer, gateway1}}, peers.sessionPeers(fooPeer.sessionId()));
     CHECK(4 == membership.calls);

@@ -53,9 +53,8 @@ public:
 
   ~PeerGateways()
   {
-    // Release the callback in the io thread so that gateway cleanup
-    // doesn't happen in the client thread
-    mIo->async(Deleter{*this});
+    mpScanner.reset();
+    mpScannerCallback.reset();
   }
 
   PeerGateways(const PeerGateways&) = delete;
@@ -187,25 +186,6 @@ private:
   };
 
   using Scanner = InterfaceScanner<std::shared_ptr<Callback>, IoType&>;
-
-  struct Deleter
-  {
-    Deleter(PeerGateways& gateways)
-      : mpScannerCallback(std::move(gateways.mpScannerCallback))
-      , mpScanner(std::move(gateways.mpScanner))
-    {
-    }
-
-    void operator()()
-    {
-      mpScanner.reset();
-      mpScannerCallback.reset();
-    }
-
-    std::shared_ptr<Callback> mpScannerCallback;
-    std::shared_ptr<Scanner> mpScanner;
-  };
-
   std::shared_ptr<Callback> mpScannerCallback;
   std::shared_ptr<Scanner> mpScanner;
   util::Injected<IoContext> mIo;

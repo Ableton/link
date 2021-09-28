@@ -137,8 +137,7 @@ public:
       // Check to handle the moved from case
       if (mpImpl)
       {
-        auto& io = *mpImpl->mIo;
-        io.async(Deleter{*this});
+        mpImpl->gatewayClosed(mAddr);
       }
     }
 
@@ -168,23 +167,6 @@ public:
       pImpl->mIo->async(
         [pImpl, addr, id] { pImpl->peerLeftGateway(std::move(id), std::move(addr)); });
     }
-
-    struct Deleter
-    {
-      Deleter(GatewayObserver& observer)
-        : mpImpl(std::move(observer.mpImpl))
-        , mAddr(std::move(observer.mAddr))
-      {
-      }
-
-      void operator()()
-      {
-        mpImpl->gatewayClosed(mAddr);
-      }
-
-      std::shared_ptr<Impl> mpImpl;
-      asio::ip::address mAddr;
-    };
 
     std::shared_ptr<Impl> mpImpl;
     asio::ip::address mAddr;

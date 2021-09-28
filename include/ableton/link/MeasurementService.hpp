@@ -61,14 +61,6 @@ public:
   MeasurementService(const MeasurementService&) = delete;
   MeasurementService(MeasurementService&&) = delete;
 
-  ~MeasurementService()
-  {
-    // Clear the measurement map in the IoContext so that whatever
-    // cleanup code executes in response to the destruction of the
-    // measurement objects still have access to the IoContext.
-    mIo->async([this] { mMeasurementMap.clear(); });
-  }
-
   void updateNodeState(const SessionId& sessionId, const GhostXForm& xform)
   {
     mPingResponder.updateNodeState(sessionId, xform);

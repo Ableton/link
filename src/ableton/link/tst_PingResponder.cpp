@@ -64,12 +64,6 @@ struct MockIoContext
     return {};
   }
 
-  template <typename Handler>
-  void async(Handler handler) const
-  {
-    handler();
-  }
-
   ableton::util::test::IoService mIo;
 };
 

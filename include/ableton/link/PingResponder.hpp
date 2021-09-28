@@ -58,14 +58,6 @@ public:
   PingResponder(const PingResponder&) = delete;
   PingResponder(PingResponder&&) = delete;
 
-  ~PingResponder()
-  {
-    // post the release of the impl object into the IoContext so that
-    // it happens in the same thread as its handlers
-    auto pImpl = mpImpl;
-    mIo->async([pImpl]() mutable { pImpl.reset(); });
-  }
-
   void updateNodeState(const SessionId& sessionId, const GhostXForm& xform)
   {
     auto pImpl = mpImpl;
