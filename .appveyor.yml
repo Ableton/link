@@ -106,6 +106,9 @@ for:
       - sudo xcode-select -s /Applications/Xcode-$XCODE_VERSION.app
       - python ci/configure.py --generator Xcode
       - python ci/build.py --configuration $CONFIGURATION
+    test_script:
+      - python ci/run-tests.py --target LinkCoreTest
+      - python ci/run-tests.py --target LinkDiscoveryTest
   - matrix:
       only:
         # Ubuntu2004 but not ESP_IDF or FORMATTING
@@ -113,10 +116,13 @@ for:
     install:
       - git submodule update --init --recursive
       - sudo apt-get update
-      - sudo apt-get install -y libjack-dev portaudio19-dev
+      - sudo apt-get install -y libjack-dev portaudio19-dev valgrind
     build_script:
       - python ci/configure.py --audio-driver $AUDIO_DRIVER --generator "$GENERATOR" --configuration $CONFIGURATION
       - python ci/build.py
+    test_script:
+      - python ci/run-tests.py --target LinkCoreTest --valgrind
+      - python ci/run-tests.py --target LinkDiscoveryTest --valgrind
   - matrix:
       only:
         - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
@@ -125,6 +131,9 @@ for:
     build_script:
       - python ci/configure.py --audio-driver %AUDIO_DRIVER% --generator "%GENERATOR%"
       - python ci/build.py --configuration %CONFIGURATION%
+    test_script:
+      - python ci/run-tests.py --target LinkCoreTest
+      - python ci/run-tests.py --target LinkDiscoveryTest
   - matrix:
       only:
         - ESP_IDF: true
@@ -135,15 +144,3 @@ for:
         - FORMATTING: true
     build_script:
       - docker run -v $APPVEYOR_BUILD_FOLDER:/link dalg24/clang-format:18.04.0 python /link/ci/check-formatting.py -c /usr/bin/clang-format-6.0
-  - matrix:
-      only:
-        - APPVEYOR_BUILD_WORKER_IMAGE: macos-mojave
-        - APPVEYOR_BUILD_WORKER_IMAGE: macos
-        - APPVEYOR_BUILD_WORKER_IMAGE: macos-bigsur
-        - GENERATOR: Ninja
-        - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
-        - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
-        - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
-    test_script:
-      - python ci/run-tests.py --target LinkCoreTest
-      - python ci/run-tests.py --target LinkDiscoveryTest
