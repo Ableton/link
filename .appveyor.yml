@@ -87,6 +87,9 @@ environment:
       AUDIO_DRIVER: Asio
       CONFIGURATION: Release
       GENERATOR: Visual Studio 16 2019
+    - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2004
+      ESP_IDF: true
+      IDF_RELEASE: v4.3.1
 
 install:
   - git submodule update --init --recursive
@@ -103,7 +106,8 @@ for:
       - python ci/build.py --configuration $CONFIGURATION
   - matrix:
       only:
-        - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2004
+        # Ubuntu2004 but not ESP_IDF
+        - GENERATOR: Ninja
     install:
       - git submodule update --init --recursive
       - sudo apt-get update
@@ -119,7 +123,20 @@ for:
     build_script:
       - python ci/configure.py --audio-driver %AUDIO_DRIVER% --generator "%GENERATOR%"
       - python ci/build.py --configuration %CONFIGURATION%
-
-test_script:
-  - python ci/run-tests.py --target LinkCoreTest
-  - python ci/run-tests.py --target LinkDiscoveryTest
+  - matrix:
+      only:
+        - ESP_IDF: true
+    build_script:
+      - docker run --rm -v $APPVEYOR_BUILD_FOLDER:/link -w /link/examples/esp32 -e LC_ALL=C.UTF-8 espressif/idf:$IDF_RELEASE idf.py build
+  - matrix:
+      only:
+        - APPVEYOR_BUILD_WORKER_IMAGE: macos-mojave
+        - APPVEYOR_BUILD_WORKER_IMAGE: macos
+        - APPVEYOR_BUILD_WORKER_IMAGE: macos-bigsur
+        - GENERATOR: Ninja
+        - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
+        - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+        - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+    test_script:
+      - python ci/run-tests.py --target LinkCoreTest
+      - python ci/run-tests.py --target LinkDiscoveryTest
