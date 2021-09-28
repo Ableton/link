@@ -21,6 +21,36 @@ environment:
     - APPVEYOR_BUILD_WORKER_IMAGE: macos-bigsur
       CONFIGURATION: Release
       XCODE_VERSION: 12.5.1
+    - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2004
+      AUDIO_DRIVER: Jack
+      CONFIGURATION: Debug
+      GENERATOR: Ninja
+      CXX: clang++-11
+    - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2004
+      AUDIO_DRIVER: Alsa
+      CONFIGURATION: Release
+      GENERATOR: Ninja
+      CXX: clang++-10
+    - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2004
+      AUDIO_DRIVER: Jack
+      CONFIGURATION: Debug
+      GENERATOR: Ninja
+      CXX: clang++-9
+    - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2004
+      AUDIO_DRIVER: Alsa
+      CONFIGURATION: Release
+      GENERATOR: Ninja
+      CXX: g++-9
+    - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2004
+      AUDIO_DRIVER: Jack
+      CONFIGURATION: Debug
+      GENERATOR: Ninja
+      CXX: g++-8
+    - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2004
+      AUDIO_DRIVER: Alsa
+      CONFIGURATION: Release
+      GENERATOR: Ninja
+      CXX: g++-7
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
       AUDIO_DRIVER: Asio
       CONFIGURATION: Release
@@ -71,6 +101,16 @@ for:
       - sudo xcode-select -s /Applications/Xcode-$XCODE_VERSION.app
       - python ci/configure.py --generator Xcode
       - python ci/build.py --configuration $CONFIGURATION
+  - matrix:
+      only:
+        - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2004
+    install:
+      - git submodule update --init --recursive
+      - sudo apt-get update
+      - sudo apt-get install -y libjack-dev portaudio19-dev
+    build_script:
+      - python ci/configure.py --audio-driver $AUDIO_DRIVER --generator "$GENERATOR" --configuration $CONFIGURATION
+      - python ci/build.py
   - matrix:
       only:
         - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
