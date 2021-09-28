@@ -297,7 +297,8 @@ Sessions<Peers, MeasurePeer, JoinSessionCallback, IoContext, Clock> makeSessions
   Clock clock)
 {
   using namespace std;
-  return {std::move(init), std::move(peers), std::move(measure), std::move(join), std::move(io), std::move(clock)};
+  return {std::move(init), std::move(peers), std::move(measure), std::move(join),
+    std::move(io), std::move(clock)};
 }
 
 } // namespace link

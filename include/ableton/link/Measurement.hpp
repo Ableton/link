@@ -50,11 +50,8 @@ struct Measurement
     Clock clock,
     IoContext io)
     : mIo(std::move(io))
-    , mpImpl(std::make_shared<Impl>(std::move(state),
-        std::move(callback),
-        std::move(address),
-        std::move(clock),
-        mIo))
+    , mpImpl(std::make_shared<Impl>(
+        std::move(state), std::move(callback), std::move(address), std::move(clock), mIo))
   {
     mpImpl->listen();
   }

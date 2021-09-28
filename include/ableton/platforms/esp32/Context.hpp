@@ -60,8 +60,8 @@ class Context
       : mpService(new ::asio::io_service())
       , mpWork(new ::asio::io_service::work(*mpService))
     {
-      xTaskCreatePinnedToCore(
-        run, "link", 8192, this, 2 | portPRIVILEGE_BIT, &mTaskHandle, LINK_ESP_TASK_CORE_ID);
+      xTaskCreatePinnedToCore(run, "link", 8192, this, 2 | portPRIVILEGE_BIT,
+        &mTaskHandle, LINK_ESP_TASK_CORE_ID);
     }
 
     ~ServiceRunner()
