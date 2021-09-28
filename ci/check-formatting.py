@@ -73,8 +73,8 @@ def check_files_in_path(args, path):
 def check_formatting(args):
     errors_found = False
     script_dir = os.path.dirname(os.path.realpath(__file__))
-    for path in ['examples', 'include', 'src']:
-        subdir_abs_path = os.path.join(script_dir, path)
+    for path in ['../examples', '../include', '../src']:
+        subdir_abs_path = os.path.abspath(os.path.join(script_dir, path))
         if check_files_in_path(args, subdir_abs_path):
             errors_found = True
 
