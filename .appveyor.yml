@@ -6,6 +6,21 @@ branches:
 
 environment:
   matrix:
+    - APPVEYOR_BUILD_WORKER_IMAGE: macos-mojave
+      CONFIGURATION: Release
+      XCODE_VERSION: 9.4.1
+    - APPVEYOR_BUILD_WORKER_IMAGE: macos
+      CONFIGURATION: Debug
+      XCODE_VERSION: 10.3
+    - APPVEYOR_BUILD_WORKER_IMAGE: macos
+      CONFIGURATION: Release
+      XCODE_VERSION: 11.7
+    - APPVEYOR_BUILD_WORKER_IMAGE: macos
+      CONFIGURATION: Debug
+      XCODE_VERSION: 12.3
+    - APPVEYOR_BUILD_WORKER_IMAGE: macos-bigsur
+      CONFIGURATION: Release
+      XCODE_VERSION: 12.5.1
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
       AUDIO_DRIVER: Asio
       CONFIGURATION: Release
@@ -46,9 +61,24 @@ environment:
 install:
   - git submodule update --init --recursive
 
-build_script:
-  - python ci/configure.py --audio-driver %AUDIO_DRIVER% --generator "%GENERATOR%"
-  - python ci/build.py --configuration %CONFIGURATION%
+for:
+  - matrix:
+      only:
+        - APPVEYOR_BUILD_WORKER_IMAGE: macos-mojave
+        - APPVEYOR_BUILD_WORKER_IMAGE: macos
+        - APPVEYOR_BUILD_WORKER_IMAGE: macos-bigsur
+    build_script:
+      - sudo xcode-select -s /Applications/Xcode-$XCODE_VERSION.app
+      - python ci/configure.py --generator Xcode
+      - python ci/build.py --configuration $CONFIGURATION
+  - matrix:
+      only:
+        - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
+        - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+        - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+    build_script:
+      - python ci/configure.py --audio-driver %AUDIO_DRIVER% --generator "%GENERATOR%"
+      - python ci/build.py --configuration %CONFIGURATION%
 
 test_script:
   - python ci/run-tests.py --target LinkCoreTest
