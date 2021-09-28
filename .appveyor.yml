@@ -90,6 +90,8 @@ environment:
     - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2004
       ESP_IDF: true
       IDF_RELEASE: v4.3.1
+    - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2004
+      FORMATTING: true
 
 install:
   - git submodule update --init --recursive
@@ -106,7 +108,7 @@ for:
       - python ci/build.py --configuration $CONFIGURATION
   - matrix:
       only:
-        # Ubuntu2004 but not ESP_IDF
+        # Ubuntu2004 but not ESP_IDF or FORMATTING
         - GENERATOR: Ninja
     install:
       - git submodule update --init --recursive
@@ -128,6 +130,11 @@ for:
         - ESP_IDF: true
     build_script:
       - docker run --rm -v $APPVEYOR_BUILD_FOLDER:/link -w /link/examples/esp32 -e LC_ALL=C.UTF-8 espressif/idf:$IDF_RELEASE idf.py build
+  - matrix:
+      only:
+        - FORMATTING: true
+    build_script:
+      - docker run -v $APPVEYOR_BUILD_FOLDER:/link dalg24/clang-format:18.04.0 python /link/ci/check-formatting.py -c /usr/bin/clang-format-6.0
   - matrix:
       only:
         - APPVEYOR_BUILD_WORKER_IMAGE: macos-mojave
