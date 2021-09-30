@@ -27,41 +27,44 @@ namespace ableton
 namespace link
 {
 
-TEST_CASE("Kalman | Check1", "[Kalman]")
+TEST_CASE("Kalman")
 {
-  int peerTimeDiff = 0;
-  Kalman<16> filter;
-
-  for (int i = 0; i < 5; ++i)
+  SECTION("Check1")
   {
-    filter.iterate(peerTimeDiff);
+    int peerTimeDiff = 0;
+    Kalman<16> filter;
+
+    for (int i = 0; i < 5; ++i)
+    {
+      filter.iterate(peerTimeDiff);
+    }
+
+    CHECK(peerTimeDiff == Approx(filter.getValue()));
+
+    filter.iterate(100);
+
+    CHECK(peerTimeDiff != Approx(filter.getValue()));
   }
 
-  CHECK(peerTimeDiff == Approx(filter.getValue()));
-
-  filter.iterate(100);
-
-  CHECK(peerTimeDiff != Approx(filter.getValue()));
-}
-
-TEST_CASE("Kalman | Check2", "[Kalman]")
-{
-  double peerTimeDiff = 3e11;
-  Kalman<5> filter;
-
-  for (int i = 0; i < 15; ++i)
+  SECTION("Check2")
   {
-    filter.iterate(peerTimeDiff);
+    double peerTimeDiff = 3e11;
+    Kalman<5> filter;
+
+    for (int i = 0; i < 15; ++i)
+    {
+      filter.iterate(peerTimeDiff);
+    }
+
+    CHECK(peerTimeDiff == Approx(filter.getValue()));
+
+    for (int i = 0; i < 15; ++i)
+    {
+      filter.iterate(11);
+    }
+
+    CHECK(peerTimeDiff != Approx(filter.getValue()));
   }
-
-  CHECK(peerTimeDiff == Approx(filter.getValue()));
-
-  for (int i = 0; i < 15; ++i)
-  {
-    filter.iterate(11);
-  }
-
-  CHECK(peerTimeDiff != Approx(filter.getValue()));
 }
 
 } // namespace link

@@ -25,58 +25,57 @@ namespace ableton
 namespace link
 {
 
-TEST_CASE("CircularFifo | PushNPop", "[CircularFifo]")
+TEST_CASE("CircularFifo")
 {
   CircularFifo<int, 2> cf;
 
-  for (int i = 0; i < 2; ++i)
+  SECTION("PushNPop")
   {
-    CHECK(cf.push(i));
+    for (int i = 0; i < 2; ++i)
+    {
+      CHECK(cf.push(i));
+    }
+
+    CHECK(!cf.push(0));
+
+    for (int i = 0; i < 2; ++i)
+    {
+      auto result = cf.pop();
+      CHECK(result);
+      CHECK(*result == i);
+    }
+
+    CHECK(!cf.pop());
   }
 
-  CHECK(!cf.push(0));
-
-  for (int i = 0; i < 2; ++i)
+  SECTION("Wrap")
   {
-    auto result = cf.pop();
-    CHECK(result);
-    CHECK(*result == i);
+    for (int i = 0; i < 5; ++i)
+    {
+      CHECK(cf.push(i));
+      auto result = cf.pop();
+      CHECK(result);
+      CHECK(*result == i);
+    }
   }
 
-  CHECK(!cf.pop());
-}
-
-TEST_CASE("CircularFifo | Wrap", "[CircularFifo]")
-{
-  CircularFifo<int, 2> cf;
-
-  for (int i = 0; i < 5; ++i)
+  SECTION("IsEmpty")
   {
-    CHECK(cf.push(i));
-    auto result = cf.pop();
-    CHECK(result);
-    CHECK(*result == i);
+    CHECK(cf.isEmpty());
+    CHECK(cf.push(1));
+    CHECK(!cf.isEmpty());
+    CHECK(cf.push(2));
+    CHECK(!cf.isEmpty());
+    CHECK(!cf.push(3));
+    CHECK(!cf.isEmpty());
+
+    CHECK(cf.pop());
+    CHECK(!cf.isEmpty());
+    CHECK(cf.pop());
+    CHECK(cf.isEmpty());
+    CHECK(!cf.pop());
+    CHECK(cf.isEmpty());
   }
-}
-
-TEST_CASE("CircularFifo | IsEmpty", "[CircularFifo]")
-{
-  CircularFifo<int, 2> cf;
-  CHECK(cf.isEmpty());
-
-  CHECK(cf.push(1));
-  CHECK(!cf.isEmpty());
-  CHECK(cf.push(2));
-  CHECK(!cf.isEmpty());
-  CHECK(!cf.push(3));
-  CHECK(!cf.isEmpty());
-
-  CHECK(cf.pop());
-  CHECK(!cf.isEmpty());
-  CHECK(cf.pop());
-  CHECK(cf.isEmpty());
-  CHECK(!cf.pop());
-  CHECK(cf.isEmpty());
 }
 
 } // namespace link
