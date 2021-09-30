@@ -79,6 +79,7 @@ function(configure_link_test_executable target)
     target_link_libraries(${target} atomic pthread)
   endif()
   target_link_libraries(${target} Catch::Catch Ableton::Link)
+  target_compile_definitions(${target} PRIVATE -DCATCH_CONFIG_ENABLE_BENCHMARKING=1)
 endfunction()
 
 # For the LinkCore test suite, we add header dependencies individually so that
