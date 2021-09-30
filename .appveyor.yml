@@ -54,18 +54,6 @@ environment:
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
       AUDIO_DRIVER: Asio
       CONFIGURATION: Release
-      GENERATOR: Visual Studio 12 2013
-    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
-      AUDIO_DRIVER: Asio
-      CONFIGURATION: Release
-      GENERATOR: Visual Studio 12 2013 Win64
-    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
-      AUDIO_DRIVER: Wasapi
-      CONFIGURATION: Debug
-      GENERATOR: Visual Studio 12 2013 Win64
-    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
-      AUDIO_DRIVER: Asio
-      CONFIGURATION: Release
       GENERATOR: Visual Studio 14 2015
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
       AUDIO_DRIVER: Asio
