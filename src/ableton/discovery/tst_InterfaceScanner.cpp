@@ -45,7 +45,7 @@ const asio::ip::address addr2 = asio::ip::address::from_string("123.123.123.2");
 
 } // anonymous namespace
 
-TEST_CASE("InterfaceScanner | NoInterfacesThenOne", "[InterfaceScanner]")
+TEST_CASE("InterfaceScanner | NoInterfacesThenOneThenTwo", "[InterfaceScanner]")
 {
   test::serial_io::Fixture io;
   auto callback = TestCallback{};
@@ -56,11 +56,16 @@ TEST_CASE("InterfaceScanner | NoInterfacesThenOne", "[InterfaceScanner]")
     CHECK(1 == callback.addrRanges.size());
     io.setNetworkInterfaces({addr1});
     io.advanceTime(std::chrono::seconds(3));
+    io.setNetworkInterfaces({addr1, addr2});
+    io.advanceTime(std::chrono::seconds(2));
   }
-  REQUIRE(2 == callback.addrRanges.size());
+  REQUIRE(3 == callback.addrRanges.size());
   CHECK(0 == callback.addrRanges[0].size());
   REQUIRE(1 == callback.addrRanges[1].size());
   CHECK(addr1 == callback.addrRanges[1].front());
+  REQUIRE(2 == callback.addrRanges[2].size());
+  CHECK(addr1 == callback.addrRanges[2].front());
+  CHECK(addr2 == callback.addrRanges[2].back());
 }
 
 TEST_CASE("InterfaceScanner | InterfaceGoesAway", "[InterfaceScanner]")
