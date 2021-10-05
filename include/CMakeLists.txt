@@ -22,6 +22,7 @@ set(link_core_HEADERS
   ${link_core_DIR}/Measurement.hpp
   ${link_core_DIR}/MeasurementEndpointV4.hpp
   ${link_core_DIR}/MeasurementService.hpp
+  ${link_core_DIR}/Median.hpp
   ${link_core_DIR}/NodeId.hpp
   ${link_core_DIR}/NodeState.hpp
   ${link_core_DIR}/PayloadEntries.hpp

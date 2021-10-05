@@ -26,6 +26,7 @@ set(link_core_test_SOURCES
   ableton/link/tst_Kalman.cpp
   ableton/link/tst_LinearRegression.cpp
   ableton/link/tst_Measurement.cpp
+  ableton/link/tst_Median.cpp
   ableton/link/tst_Peers.cpp
   ableton/link/tst_Phase.cpp
   ableton/link/tst_PingResponder.cpp
