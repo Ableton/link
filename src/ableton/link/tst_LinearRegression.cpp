@@ -32,17 +32,10 @@ TEST_CASE("LinearRegression")
   using Vector = std::vector<std::pair<double, double>>;
   using Array = std::array<std::pair<double, double>, 1>;
 
-  SECTION("EmptyVector")
-  {
-    Vector data;
-    const auto result = linearRegression(data.begin(), data.end());
-    CHECK(0 == Approx(result.first));
-  }
-
   SECTION("OnePoint")
   {
     Array data;
-    data[0] = {{}, {}};
+    data[0] = {0., 0.};
     const auto result = linearRegression(data.begin(), data.end());
     CHECK(0 == Approx(result.first));
     CHECK(0 == Approx(result.second));

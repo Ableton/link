@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include <cassert>
 #include <utility>
 
 namespace ableton
@@ -42,6 +43,7 @@ std::pair<double, double> linearRegression(It begin, It end)
   }
 
   const double numPoints = static_cast<double>(distance(begin, end));
+  assert(numPoints > 0);
   const double denominator = numPoints * sumXX - sumX * sumX;
   const double slope =
     denominator == 0.0 ? 0.0 : (numPoints * sumXY - sumX * sumY) / denominator;
