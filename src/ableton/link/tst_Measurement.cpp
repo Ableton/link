@@ -74,7 +74,7 @@ struct TFixture
 {
   TFixture()
     : mMeasurement(mStateQuery(),
-        [](std::vector<std::pair<double, double>>) {},
+        [](std::vector<double>) {},
         {},
         MockClock{},
         util::Injected<MockIoContext>(MockIoContext{}))

@@ -20,9 +20,9 @@
 #pragma once
 
 #include <ableton/link/GhostXForm.hpp>
-#include <ableton/link/Kalman.hpp>
 #include <ableton/link/LinearRegression.hpp>
 #include <ableton/link/Measurement.hpp>
+#include <ableton/link/Median.hpp>
 #include <ableton/link/PeerState.hpp>
 #include <ableton/link/PingResponder.hpp>
 #include <ableton/link/SessionId.hpp>
@@ -40,7 +40,6 @@ class MeasurementService
 {
 public:
   using IoType = util::Injected<IoContext>;
-  using Point = std::pair<double, double>;
   using MeasurementInstance = Measurement<Clock, IoContext>;
 
   MeasurementService(asio::ip::address_v4 address,
@@ -95,26 +94,11 @@ public:
     }
   }
 
-  static GhostXForm filter(
-    std::vector<Point>::const_iterator begin, std::vector<Point>::const_iterator end)
-  {
-    using namespace std;
-    using std::chrono::microseconds;
-
-    Kalman<5> kalman;
-    for (auto it = begin; it != end; ++it)
-    {
-      kalman.iterate(it->second - it->first);
-    }
-
-    return GhostXForm{1, microseconds(llround(kalman.getValue()))};
-  }
-
 private:
   template <typename Handler>
   struct CompletionCallback
   {
-    void operator()(const std::vector<Point>& data)
+    void operator()(std::vector<double>& data)
     {
       using namespace std;
       using std::chrono::microseconds;
@@ -135,7 +119,7 @@ private:
         }
         else
         {
-          handler(MeasurementService::filter(begin(data), end(data)));
+          handler(GhostXForm{1, microseconds(llround(median(data.begin(), data.end())))});
         }
         measurementMap.erase(it);
       }

@@ -37,8 +37,7 @@ namespace link
 template <typename Clock, typename IoContext>
 struct Measurement
 {
-  using Point = std::pair<double, double>;
-  using Callback = std::function<void(std::vector<Point>)>;
+  using Callback = std::function<void(std::vector<double>&)>;
   using Micros = std::chrono::microseconds;
 
   static const std::size_t kNumberDataPoints = 100;
@@ -164,10 +163,11 @@ struct Measurement
           if (prevGHostTime != Micros{0})
           {
             mData.push_back(
-              std::make_pair(static_cast<double>((hostTime + prevHostTime).count()) * 0.5,
-                static_cast<double>(ghostTime.count())));
-            mData.push_back(std::make_pair(static_cast<double>(prevHostTime.count()),
-              static_cast<double>((ghostTime + prevGHostTime).count()) * 0.5));
+              static_cast<double>(ghostTime.count())
+              - (static_cast<double>((hostTime + prevHostTime).count()) * 0.5));
+            mData.push_back(
+              (static_cast<double>((ghostTime + prevGHostTime).count()) * 0.5)
+              - static_cast<double>(prevHostTime.count()));
           }
 
           if (mData.size() > kNumberDataPoints)
@@ -228,7 +228,7 @@ struct Measurement
     Socket mSocket;
     SessionId mSessionId;
     asio::ip::udp::endpoint mEndpoint;
-    std::vector<std::pair<double, double>> mData;
+    std::vector<double> mData;
     Callback mCallback;
     Clock mClock;
     Timer mTimer;
