@@ -17,7 +17,6 @@ set(link_core_HEADERS
   ${link_core_DIR}/Gateway.hpp
   ${link_core_DIR}/GhostXForm.hpp
   ${link_core_DIR}/HostTimeFilter.hpp
-  ${link_core_DIR}/Kalman.hpp
   ${link_core_DIR}/LinearRegression.hpp
   ${link_core_DIR}/Measurement.hpp
   ${link_core_DIR}/MeasurementEndpointV4.hpp

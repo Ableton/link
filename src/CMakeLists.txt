@@ -23,7 +23,6 @@ set(link_core_test_SOURCES
   ableton/link/tst_ClientSessionTimelines.cpp
   ableton/link/tst_Controller.cpp
   ableton/link/tst_HostTimeFilter.cpp
-  ableton/link/tst_Kalman.cpp
   ableton/link/tst_LinearRegression.cpp
   ableton/link/tst_Measurement.cpp
   ableton/link/tst_Median.cpp
