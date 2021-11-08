@@ -11,22 +11,12 @@
 #define LED GPIO_NUM_2
 #define PRINT_LINK_STATE false
 
-unsigned int if_nametoindex(const char* ifName)
-{
-  return 0;
-}
-
-char* if_indextoname(unsigned int ifIndex, char* ifName)
-{
-  return nullptr;
-}
-
 void IRAM_ATTR timer_group0_isr(void* userParam)
 {
   static BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 
-  TIMERG0.int_clr_timers.t0 = 1;
-  TIMERG0.hw_timer[0].config.alarm_en = 1;
+  timer_group_clr_intr_status_in_isr(TIMER_GROUP_0, TIMER_0);
+  timer_group_enable_alarm_in_isr(TIMER_GROUP_0, TIMER_0);
 
   xSemaphoreGiveFromISR(userParam, &xHigherPriorityTaskWoken);
   if (xHigherPriorityTaskWoken)
