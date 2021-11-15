@@ -160,14 +160,19 @@ struct Measurement
           sendPing(from, payload);
           listen();
 
-          if (prevGHostTime != Micros{0})
+
+          if (ghostTime != Micros{0} && prevHostTime != Micros{0})
           {
             mData.push_back(
               static_cast<double>(ghostTime.count())
               - (static_cast<double>((hostTime + prevHostTime).count()) * 0.5));
-            mData.push_back(
-              (static_cast<double>((ghostTime + prevGHostTime).count()) * 0.5)
-              - static_cast<double>(prevHostTime.count()));
+
+            if (prevGHostTime != Micros{0})
+            {
+              mData.push_back(
+                (static_cast<double>((ghostTime + prevGHostTime).count()) * 0.5)
+                - static_cast<double>(prevHostTime.count()));
+            }
           }
 
           if (mData.size() > kNumberDataPoints)
