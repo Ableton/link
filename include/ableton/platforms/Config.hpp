@@ -30,6 +30,7 @@
 #elif defined(LINK_PLATFORM_MACOSX)
 #include <ableton/platforms/asio/Context.hpp>
 #include <ableton/platforms/darwin/Clock.hpp>
+#include <ableton/platforms/darwin/ThreadFactory.hpp>
 #include <ableton/platforms/posix/ScanIpIfAddrs.hpp>
 #include <ableton/platforms/stl/Random.hpp>
 #elif defined(LINK_PLATFORM_LINUX)
@@ -59,8 +60,9 @@ using Random = platforms::stl::Random;
 
 #elif defined(LINK_PLATFORM_MACOSX)
 using Clock = platforms::darwin::Clock;
-using IoContext =
-  platforms::asio::Context<platforms::posix::ScanIpIfAddrs, util::NullLog>;
+using IoContext = platforms::asio::Context<platforms::posix::ScanIpIfAddrs,
+  util::NullLog,
+  platforms::darwin::ThreadFactory>;
 using Random = platforms::stl::Random;
 
 #elif defined(LINK_PLATFORM_LINUX)

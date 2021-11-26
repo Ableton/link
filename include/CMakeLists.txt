@@ -100,6 +100,7 @@ elseif(UNIX)
       ${link_platform_HEADERS}
       ${link_platform_DIR}/darwin/Clock.hpp
       ${link_platform_DIR}/darwin/Darwin.hpp
+      ${link_platform_DIR}/darwin/ThreadFactory.hpp
       ${link_platform_DIR}/stl/Random.hpp
     )
   elseif(${CMAKE_SYSTEM_NAME} MATCHES "Linux" OR ${CMAKE_SYSTEM_NAME} MATCHES "kFreeBSD" OR ${CMAKE_SYSTEM_NAME} MATCHES "GNU")
