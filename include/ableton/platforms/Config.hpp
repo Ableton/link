@@ -27,6 +27,9 @@
 #include <ableton/platforms/stl/Random.hpp>
 #include <ableton/platforms/windows/Clock.hpp>
 #include <ableton/platforms/windows/ScanIpIfAddrs.hpp>
+#if _MSC_VER >= 1920
+#include <ableton/platforms/windows/ThreadFactory.hpp>
+#endif
 #elif defined(LINK_PLATFORM_MACOSX)
 #include <ableton/platforms/asio/Context.hpp>
 #include <ableton/platforms/darwin/Clock.hpp>
@@ -57,9 +60,15 @@ namespace platform
 
 #if defined(LINK_PLATFORM_WINDOWS)
 using Clock = platforms::windows::Clock;
+using Random = platforms::stl::Random;
+#if _MSC_VER >= 1920
+using IoContext = platforms::asio::Context<platforms::windows::ScanIpIfAddrs,
+  util::NullLog,
+  platforms::windows::ThreadFactory>;
+#else
 using IoContext =
   platforms::asio::Context<platforms::windows::ScanIpIfAddrs, util::NullLog>;
-using Random = platforms::stl::Random;
+#endif
 
 #elif defined(LINK_PLATFORM_MACOSX)
 using Clock = platforms::darwin::Clock;

@@ -124,6 +124,7 @@ elseif(WIN32)
     ${link_platform_DIR}/stl/Random.hpp
     ${link_platform_DIR}/windows/Clock.hpp
     ${link_platform_DIR}/windows/ScanIpIfAddrs.hpp
+    ${link_platform_DIR}/windows/ThreadFactory.hpp
     ${link_platform_DIR}/windows/Windows.hpp
   )
 endif()
