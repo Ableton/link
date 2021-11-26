@@ -38,6 +38,9 @@
 #include <ableton/platforms/linux/Clock.hpp>
 #include <ableton/platforms/posix/ScanIpIfAddrs.hpp>
 #include <ableton/platforms/stl/Random.hpp>
+#ifdef __linux__
+#include <ableton/platforms/linux/ThreadFactory.hpp>
+#endif
 #elif defined(ESP_PLATFORM)
 #include <ableton/platforms/esp32/Clock.hpp>
 #include <ableton/platforms/esp32/Context.hpp>
@@ -67,9 +70,15 @@ using Random = platforms::stl::Random;
 
 #elif defined(LINK_PLATFORM_LINUX)
 using Clock = platforms::linux::ClockMonotonicRaw;
+using Random = platforms::stl::Random;
+#ifdef __linux__
+using IoContext = platforms::asio::Context<platforms::posix::ScanIpIfAddrs,
+  util::NullLog,
+  platforms::linux::ThreadFactory>;
+#else
 using IoContext =
   platforms::asio::Context<platforms::posix::ScanIpIfAddrs, util::NullLog>;
-using Random = platforms::stl::Random;
+#endif
 
 #elif defined(ESP_PLATFORM)
 using Clock = platforms::esp32::Clock;

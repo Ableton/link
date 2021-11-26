@@ -110,7 +110,13 @@ elseif(UNIX)
       ${link_platform_DIR}/linux/Linux.hpp
       ${link_platform_DIR}/stl/Clock.hpp
       ${link_platform_DIR}/stl/Random.hpp
-    )
+      )
+      if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+        set(link_platform_HEADERS
+          ${link_platform_HEADERS}
+          ${link_platform_DIR}/linux/ThreadFactory.hpp
+          )
+      endif()
   endif()
 elseif(WIN32)
   set(link_platform_HEADERS
