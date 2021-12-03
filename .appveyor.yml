@@ -75,6 +75,10 @@ environment:
       AUDIO_DRIVER: Asio
       CONFIGURATION: Release
       GENERATOR: Visual Studio 16 2019
+    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
+      AUDIO_DRIVER: Wasapi
+      CONFIGURATION: Debug
+      GENERATOR: Visual Studio 17 2022
     - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2004
       ESP_IDF: true
       IDF_RELEASE: v4.3.1
@@ -116,6 +120,7 @@ for:
         - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
         - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
         - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+        - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
     build_script:
       - python ci/configure.py --audio-driver %AUDIO_DRIVER% --generator "%GENERATOR%"
       - python ci/build.py --configuration %CONFIGURATION%
