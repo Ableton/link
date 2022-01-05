@@ -45,7 +45,7 @@ def check_files_in_path(args, path):
 
     for (path, dirs, files) in os.walk(path):
         for file in files:
-            if file.endswith('cpp') or file.endswith('hpp') or file.endswith('.ipp'):
+            if file.endswith(('.c', '.cpp', '.h', '.hpp', '.ipp')):
                 file_absolute_path = path + os.path.sep + file
                 clang_format_args = [
                     args.clang_format, '-style=file',
@@ -73,7 +73,7 @@ def check_files_in_path(args, path):
 def check_formatting(args):
     errors_found = False
     script_dir = os.path.dirname(os.path.realpath(__file__))
-    for path in ['../examples', '../include', '../src']:
+    for path in ['../examples', '../include', '../src', '../extensions/abl_link']:
         subdir_abs_path = os.path.abspath(os.path.join(script_dir, path))
         if check_files_in_path(args, subdir_abs_path):
             errors_found = True
