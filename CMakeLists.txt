@@ -33,6 +33,7 @@ endif()
 include(cmake_include/ConfigureCompileFlags.cmake)
 include(cmake_include/CatchConfig.cmake)
 include(AbletonLinkConfig.cmake)
+include(extensions/abl_link/abl_link.cmake)
 
 add_subdirectory(include)
 add_subdirectory(src)
