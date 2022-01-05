@@ -122,7 +122,7 @@ for:
         - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
         - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
     build_script:
-      - python ci/configure.py --audio-driver %AUDIO_DRIVER% --generator "%GENERATOR%"
+      - python ci/configure.py --audio-driver %AUDIO_DRIVER% --generator "%GENERATOR%" --flags="-DCMAKE_SYSTEM_VERSION=10.0.18362.0"
       - python ci/build.py --configuration %CONFIGURATION%
     test_script:
       - python ci/run-tests.py --target LinkCoreTest
