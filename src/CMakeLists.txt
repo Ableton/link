@@ -75,7 +75,7 @@ source_group("Test Utils" FILES
 #                |___/
 
 function(configure_link_test_executable target)
-  if(${CMAKE_SYSTEM_NAME} MATCHES "Linux" OR ${CMAKE_SYSTEM_NAME} MATCHES "kFreeBSD" OR ${CMAKE_SYSTEM_NAME} MATCHES "GNU")
+  if(CMAKE_SYSTEM_NAME MATCHES "Linux|kFreeBSD|GNU")
     target_link_libraries(${target} atomic pthread)
   endif()
   target_link_libraries(${target} Catch::Catch Ableton::Link)

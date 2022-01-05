@@ -71,7 +71,7 @@ elseif(WIN32)
       linkaudio/AudioPlatform_Wasapi.cpp
     )
   endif()
-elseif(${CMAKE_SYSTEM_NAME} MATCHES "Linux" OR ${CMAKE_SYSTEM_NAME} MATCHES "kFreeBSD" OR ${CMAKE_SYSTEM_NAME} MATCHES "GNU")
+elseif(CMAKE_SYSTEM_NAME MATCHES "Linux|kFreeBSD|GNU")
   if(LINK_BUILD_JACK)
     set(linkhut_audio_SOURCES
       linkaudio/AudioPlatform_Jack.hpp
@@ -96,7 +96,7 @@ source_group("Audio Sources" FILES ${linkhut_audio_SOURCES})
 #
 
 function(configure_linkhut_executable target)
-  if(${CMAKE_SYSTEM_NAME} MATCHES "Linux" OR ${CMAKE_SYSTEM_NAME} MATCHES "kFreeBSD" OR ${CMAKE_SYSTEM_NAME} MATCHES "GNU")
+  if(CMAKE_SYSTEM_NAME MATCHES "Linux|kFreeBSD|GNU")
     target_link_libraries(${target} atomic pthread)
   endif()
 
@@ -109,7 +109,7 @@ function(configure_linkhut_audio_sources target)
     target_compile_definitions(${target} PRIVATE
       -DLINKHUT_AUDIO_PLATFORM_COREAUDIO=1
     )
-  elseif(${CMAKE_SYSTEM_NAME} MATCHES "Linux" OR ${CMAKE_SYSTEM_NAME} MATCHES "kFreeBSD" OR ${CMAKE_SYSTEM_NAME} MATCHES "GNU")
+  elseif(CMAKE_SYSTEM_NAME MATCHES "Linux|kFreeBSD|GNU")
     if(LINK_BUILD_JACK)
       target_link_libraries(${target} jack)
       target_compile_definitions(${target} PRIVATE
