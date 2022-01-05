@@ -23,6 +23,12 @@
 #include <ableton/platforms/asio/AsioWrapper.hpp>
 #include <map>
 
+#ifdef __has_include
+#if __has_include(<version>)
+#include <version>
+#endif
+#endif
+
 namespace ableton
 {
 namespace discovery
@@ -35,8 +41,15 @@ class PeerGateways
 {
 public:
   using IoType = typename util::Injected<IoContext>::type;
+#if __cpp_lib_is_invocable >= 201703L
+  using Gateway = std::invoke_result_t<GatewayFactory,
+    NodeState,
+    util::Injected<IoType&>,
+    asio::ip::address>;
+#else
   using Gateway = typename std::result_of<GatewayFactory(
     NodeState, util::Injected<IoType&>, asio::ip::address)>::type;
+#endif
   using GatewayMap = std::map<asio::ip::address, Gateway>;
 
   PeerGateways(const std::chrono::seconds rescanPeriod,
