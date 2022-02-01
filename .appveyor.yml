@@ -96,11 +96,11 @@ for:
         - APPVEYOR_BUILD_WORKER_IMAGE: macos-bigsur
     build_script:
       - sudo xcode-select -s /Applications/Xcode-$XCODE_VERSION.app
-      - python ci/configure.py --generator Xcode
-      - python ci/build.py --configuration $CONFIGURATION
+      - python3 ci/configure.py --generator Xcode
+      - python3 ci/build.py --configuration $CONFIGURATION
     test_script:
-      - python ci/run-tests.py --target LinkCoreTest
-      - python ci/run-tests.py --target LinkDiscoveryTest
+      - python3 ci/run-tests.py --target LinkCoreTest
+      - python3 ci/run-tests.py --target LinkDiscoveryTest
   - matrix:
       only:
         # Ubuntu2004 but not ESP_IDF or FORMATTING
@@ -110,11 +110,11 @@ for:
       - sudo apt-get update
       - sudo apt-get install -y libjack-dev portaudio19-dev valgrind
     build_script:
-      - python ci/configure.py --audio-driver $AUDIO_DRIVER --generator "$GENERATOR" --configuration $CONFIGURATION
-      - python ci/build.py
+      - python3 ci/configure.py --audio-driver $AUDIO_DRIVER --generator "$GENERATOR" --configuration $CONFIGURATION
+      - python3 ci/build.py
     test_script:
-      - python ci/run-tests.py --target LinkCoreTest --valgrind
-      - python ci/run-tests.py --target LinkDiscoveryTest --valgrind
+      - python3 ci/run-tests.py --target LinkCoreTest --valgrind
+      - python3 ci/run-tests.py --target LinkDiscoveryTest --valgrind
   - matrix:
       only:
         - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
@@ -122,11 +122,11 @@ for:
         - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
         - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
     build_script:
-      - python ci/configure.py --audio-driver %AUDIO_DRIVER% --generator "%GENERATOR%" --flags="-DCMAKE_SYSTEM_VERSION=10.0.18362.0"
-      - python ci/build.py --configuration %CONFIGURATION%
+      - py -3 ci/configure.py --audio-driver %AUDIO_DRIVER% --generator "%GENERATOR%" --flags="-DCMAKE_SYSTEM_VERSION=10.0.18362.0"
+      - py -3 ci/build.py --configuration %CONFIGURATION%
     test_script:
-      - python ci/run-tests.py --target LinkCoreTest
-      - python ci/run-tests.py --target LinkDiscoveryTest
+      - py -3 ci/run-tests.py --target LinkCoreTest
+      - py -3 ci/run-tests.py --target LinkDiscoveryTest
   - matrix:
       only:
         - ESP_IDF: true
