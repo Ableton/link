@@ -24,7 +24,7 @@ def parse_args():
 
 def parse_clang_xml(xml):
     for line in xml.splitlines():
-        if line.startswith('<replacement '):
+        if line.startswith(b'<replacement '):
             return False
     return True
 
