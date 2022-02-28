@@ -32,6 +32,7 @@ if(UNIX)
       "-Wno-disabled-macro-expansion"
       "-Wno-exit-time-destructors"
       "-Wno-padded"
+      "-Wno-poison-system-directories"
       "-Wno-reserved-id-macro"
       "-Wno-unknown-warning-option"
       "-Wno-unused-member-function"
