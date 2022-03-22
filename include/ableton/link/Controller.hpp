@@ -20,7 +20,6 @@
 #pragma once
 
 #include <ableton/discovery/Service.hpp>
-#include <ableton/link/CircularFifo.hpp>
 #include <ableton/link/ClientSessionTimelines.hpp>
 #include <ableton/link/Gateway.hpp>
 #include <ableton/link/GhostXForm.hpp>
@@ -317,24 +316,19 @@ public:
     // This flag ensures that mRtClientState is only updated after all incoming
     // client states were processed
     mHasPendingRtClientStates = true;
-    // This will fail in case the Fifo in the RtClientStateSetter is full. This indicates
-    // a very high rate of calls to the setter. In this case we ignore one value because
-    // we expect the setter to be called again soon.
-    if (mRtClientStateSetter.tryPush(newClientState))
+    mRtClientStateSetter.push(newClientState);
+    const auto now = mClock.micros();
+    // Cache the new timeline and StartStopState for serving back to the client
+    if (newClientState.timeline)
     {
-      const auto now = mClock.micros();
       // Cache the new timeline and StartStopState for serving back to the client
-      if (newClientState.timeline)
-      {
-        // Cache the new timeline and StartStopState for serving back to the client
-        mRtClientState.timeline = *newClientState.timeline;
-        mRtClientState.timelineTimestamp = makeRtTimestamp(now);
-      }
-      if (newClientState.startStopState)
-      {
-        mRtClientState.startStopState = *newClientState.startStopState;
-        mRtClientState.startStopStateTimestamp = makeRtTimestamp(now);
-      }
+      mRtClientState.timeline = *newClientState.timeline;
+      mRtClientState.timelineTimestamp = makeRtTimestamp(now);
+    }
+    if (newClientState.startStopState)
+    {
+      mRtClientState.startStopState = *newClientState.startStopState;
+      mRtClientState.startStopStateTimestamp = makeRtTimestamp(now);
     }
   }
 
@@ -581,14 +575,23 @@ private:
     {
     }
 
-    bool tryPush(const IncomingClientState clientState)
+    void push(const IncomingClientState clientState)
     {
-      const auto success = mClientStateFifo.push(clientState);
-      if (success)
+      if (clientState.timeline)
+      {
+        mTimelineBuffer.write(
+          std::make_pair(clientState.timelineTimestamp, *clientState.timeline));
+      }
+
+      if (clientState.startStopState)
+      {
+        mStartStopStateBuffer.write(*clientState.startStopState);
+      }
+
+      if (clientState.timeline || clientState.startStopState)
       {
         mCallbackDispatcher.invoke();
       }
-      return success;
     }
 
     void processPendingClientStates()
@@ -601,27 +604,23 @@ private:
     IncomingClientState buildMergedPendingClientState()
     {
       auto clientState = IncomingClientState{};
-      while (const auto result = mClientStateFifo.pop())
+      if (auto tl = mTimelineBuffer.readNew())
       {
-        if (result->timeline)
-        {
-          clientState.timeline = result->timeline;
-          clientState.timelineTimestamp = result->timelineTimestamp;
-        }
-        if (result->startStopState)
-        {
-          clientState.startStopState = result->startStopState;
-        }
+        clientState.timelineTimestamp = (*tl).first;
+        clientState.timeline = OptionalTimeline{(*tl).second};
+      }
+      if (auto sss = mStartStopStateBuffer.readNew())
+      {
+        clientState.startStopState = sss;
       }
       return clientState;
     }
 
     Controller& mController;
-    // Assuming a wake up time of one ms for the threads owned by the CallbackDispatcher
-    // and the ioService, buffering 16 client states allows to set eight client states
-    // per ms.
-    static const std::size_t kBufferSize = 16;
-    CircularFifo<IncomingClientState, kBufferSize> mClientStateFifo;
+    // Use separate TripleBuffers for the Timeline and the StartStopState so we read the
+    // latest set value from either optional.
+    TripleBuffer<std::pair<std::chrono::microseconds, Timeline>> mTimelineBuffer;
+    TripleBuffer<ClientStartStopState> mStartStopStateBuffer;
     CallbackDispatcher mCallbackDispatcher;
   };
 
