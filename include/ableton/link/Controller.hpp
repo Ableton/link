@@ -29,6 +29,7 @@
 #include <ableton/link/SessionState.hpp>
 #include <ableton/link/Sessions.hpp>
 #include <ableton/link/StartStopState.hpp>
+#include <ableton/link/TripleBuffer.hpp>
 #include <condition_variable>
 #include <mutex>
 
@@ -137,7 +138,7 @@ public:
     , mSessionState(detail::initSessionState(tempo, mClock))
     , mClientState(detail::initClientState(mSessionState))
     , mLastIsPlayingForStartStopStateCallback(false)
-    , mRtClientState(detail::initRtClientState(mClientState))
+    , mRtClientState(detail::initRtClientState(mClientState.get()))
     , mHasPendingRtClientStates(false)
     , mSessionPeerCounter(*this, std::move(peerCallback))
     , mEnabled(false)
@@ -232,30 +233,27 @@ public:
   // it cannot be used from audio thread.
   ClientState clientState() const
   {
-    std::lock_guard<std::mutex> lock(mClientStateGuard);
-    return mClientState;
+    return mClientState.get();
   }
 
   // Set the client state to be used, starting at the given time.
   // Thread-safe but may block, so it cannot be used from audio thread.
   void setClientState(IncomingClientState newClientState)
   {
-    {
-      std::lock_guard<std::mutex> lock(mClientStateGuard);
+    mClientState.update([&](ClientState& clientState) {
       if (newClientState.timeline)
       {
         *newClientState.timeline = clampTempo(*newClientState.timeline);
-        mClientState.timeline = *newClientState.timeline;
+        clientState.timeline = *newClientState.timeline;
       }
       if (newClientState.startStopState)
       {
         // Prevent updating client start stop state with an outdated start stop state
         *newClientState.startStopState = detail::selectPreferredStartStopState(
-          mClientState.startStopState, *newClientState.startStopState);
-        mClientState.startStopState = *newClientState.startStopState;
+          clientState.startStopState, *newClientState.startStopState);
+        clientState.startStopState = *newClientState.startStopState;
       }
-    }
-
+    });
     mIo->async([this, newClientState] { handleClientState(newClientState); });
   }
 
@@ -276,11 +274,9 @@ public:
       const auto startStopStateGracePeriodOver =
         now - mRtClientState.startStopStateTimestamp > detail::kLocalModGracePeriod;
 
-      if ((timelineGracePeriodOver || startStopStateGracePeriodOver)
-          && mClientStateGuard.try_lock())
+      if (timelineGracePeriodOver || startStopStateGracePeriodOver)
       {
-        const auto clientState = mClientState;
-        mClientStateGuard.unlock();
+        const auto clientState = mClientState.getRt();
 
         if (timelineGracePeriodOver && clientState.timeline != mRtClientState.timeline)
         {
@@ -351,12 +347,12 @@ private:
   void invokeStartStopStateCallbackIfChanged()
   {
     bool shouldInvokeCallback = false;
-    {
-      std::lock_guard<std::mutex> lock(mClientStateGuard);
+
+    mClientState.update([&](ClientState& clientState) {
       shouldInvokeCallback =
-        mLastIsPlayingForStartStopStateCallback != mClientState.startStopState.isPlaying;
-      mLastIsPlayingForStartStopStateCallback = mClientState.startStopState.isPlaying;
-    }
+        mLastIsPlayingForStartStopStateCallback != clientState.startStopState.isPlaying;
+      mLastIsPlayingForStartStopStateCallback = clientState.startStopState.isPlaying;
+    });
 
     if (shouldInvokeCallback)
     {
@@ -390,20 +386,19 @@ private:
       }
 
       // Update the client timeline and start stop state based on the new session timing
-      {
-        std::lock_guard<std::mutex> timelineLock(mClientStateGuard);
-        mClientState.timeline = updateClientTimelineFromSession(mClientState.timeline,
+      mClientState.update([&](ClientState& clientState) {
+        clientState.timeline = updateClientTimelineFromSession(clientState.timeline,
           mSessionState.timeline, mClock.micros(), mSessionState.ghostXForm);
         // Don't pass the start stop state to the client when start stop sync is disabled
         // or when we have a default constructed start stop state
         if (mStartStopSyncEnabled && mSessionState.startStopState != StartStopState{})
         {
           std::lock_guard<std::mutex> startStopStateLock(mSessionStateGuard);
-          mClientState.startStopState =
+          clientState.startStopState =
             detail::mapStartStopStateFromSessionToClient(mSessionState.startStopState,
               mSessionState.timeline, mSessionState.ghostXForm);
         }
-      }
+      });
 
       if (oldTimeline.tempo != newTimeline.tempo)
       {
@@ -444,11 +439,10 @@ private:
 
       if (mStartStopSyncEnabled)
       {
-        {
-          std::lock_guard<std::mutex> lock(mClientStateGuard);
-          mClientState.startStopState = detail::mapStartStopStateFromSessionToClient(
+        mClientState.update([&](ClientState& clientState) {
+          clientState.startStopState = detail::mapStartStopStateFromSessionToClient(
             startStopState, mSessionState.timeline, mSessionState.ghostXForm);
-        }
+        });
         invokeStartStopStateCallbackIfChanged();
       }
     }
@@ -477,13 +471,12 @@ private:
         mSessionState.ghostXForm.hostToGhost(clientState.startStopState->timestamp);
       if (newGhostTime > mSessionState.startStopState.timestamp)
       {
-        {
-          std::lock_guard<std::mutex> lock(mClientStateGuard);
+        mClientState.update([&](ClientState& currentClientState) {
           mSessionState.startStopState =
             detail::mapStartStopStateFromClientToSession(*clientState.startStopState,
               mSessionState.timeline, mSessionState.ghostXForm);
-          mClientState.startStopState = *clientState.startStopState;
-        }
+          currentClientState.startStopState = *clientState.startStopState;
+        });
 
         mustUpdateDiscovery = true;
       }
@@ -499,20 +492,19 @@ private:
 
   void handleRtClientState(IncomingClientState clientState)
   {
-    {
-      std::lock_guard<std::mutex> lock(mClientStateGuard);
+    mClientState.update([&](ClientState& currentClientState) {
       if (clientState.timeline)
       {
-        mClientState.timeline = *clientState.timeline;
+        currentClientState.timeline = *clientState.timeline;
       }
       if (clientState.startStopState)
       {
         // Prevent updating client start stop state with an outdated start stop state
         *clientState.startStopState = detail::selectPreferredStartStopState(
-          mClientState.startStopState, *clientState.startStopState);
-        mClientState.startStopState = *clientState.startStopState;
+          currentClientState.startStopState, *clientState.startStopState);
+        currentClientState.startStopState = *clientState.startStopState;
       }
-    }
+    });
 
     handleClientState(clientState);
     mHasPendingRtClientStates = false;
@@ -766,8 +758,7 @@ private:
   mutable std::mutex mSessionStateGuard;
   SessionState mSessionState;
 
-  mutable std::mutex mClientStateGuard;
-  ClientState mClientState;
+  ControllerClientState mClientState;
   bool mLastIsPlayingForStartStopStateCallback;
 
   mutable RtClientState mRtClientState;
