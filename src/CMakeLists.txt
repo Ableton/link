@@ -19,7 +19,6 @@ set(link_discovery_test_SOURCES
 
 set(link_core_test_SOURCES
   ableton/link/tst_Beats.cpp
-  ableton/link/tst_CircularFifo.cpp
   ableton/link/tst_ClientSessionTimelines.cpp
   ableton/link/tst_Controller.cpp
   ableton/link/tst_HostTimeFilter.cpp
