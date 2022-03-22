@@ -36,6 +36,7 @@ set(link_core_HEADERS
   ${link_core_DIR}/StartStopState.hpp
   ${link_core_DIR}/Tempo.hpp
   ${link_core_DIR}/Timeline.hpp
+  ${link_core_DIR}/TripleBuffer.hpp
   ${link_core_DIR}/v1/Messages.hpp
   PARENT_SCOPE
 )
