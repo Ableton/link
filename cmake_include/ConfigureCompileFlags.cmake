@@ -72,6 +72,9 @@ elseif(${CMAKE_CXX_COMPILER_ID} STREQUAL MSVC)
   else()
     add_definitions("/DLINK_BUILD_VLD=0")
   endif()
+  if(LINK_WINDOWS_SETTHREADDESCRIPTION)
+    add_definitions("/DLINK_WINDOWS_SETTHREADDESCRIPTION")
+  endif()
 
   set(build_flags_DEBUG_LIST
     "/DDEBUG=1"
