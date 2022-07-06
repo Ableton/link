@@ -35,8 +35,9 @@ class PeerGateways
 {
 public:
   using IoType = typename util::Injected<IoContext>::type;
-  using Gateway = typename std::result_of<GatewayFactory(
-    NodeState, util::Injected<IoType&>, asio::ip::address)>::type;
+  using Gateway = decltype(std::declval<GatewayFactory>()(std::declval<NodeState>(),
+    std::declval<util::Injected<IoType&>>(),
+    std::declval<asio::ip::address>()));
   using GatewayMap = std::map<asio::ip::address, Gateway>;
 
   PeerGateways(const std::chrono::seconds rescanPeriod,
