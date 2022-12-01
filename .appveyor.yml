@@ -52,19 +52,9 @@ environment:
       GENERATOR: Ninja
       CXX: g++-7
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
-      AUDIO_DRIVER: Asio
-      THREAD_DESCRIPTION: OFF
-      CONFIGURATION: Release
-      GENERATOR: Visual Studio 14 2015
-    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
-      AUDIO_DRIVER: Asio
+      AUDIO_DRIVER: Wasapi
       THREAD_DESCRIPTION: OFF
       CONFIGURATION: Debug
-      GENERATOR: Visual Studio 14 2015 Win64
-    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
-      AUDIO_DRIVER: Asio
-      THREAD_DESCRIPTION: OFF
-      CONFIGURATION: Release
       GENERATOR: Visual Studio 14 2015 Win64
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
       AUDIO_DRIVER: Wasapi
