@@ -12,15 +12,15 @@ environment:
     - APPVEYOR_BUILD_WORKER_IMAGE: macos-catalina
       CONFIGURATION: Release
       XCODE_VERSION: 11.7
-    - APPVEYOR_BUILD_WORKER_IMAGE: macos-catalina
+    - APPVEYOR_BUILD_WORKER_IMAGE: macos-bigsur
       CONFIGURATION: Debug
-      XCODE_VERSION: 12.3
-    - APPVEYOR_BUILD_WORKER_IMAGE: macos-monterey
-      CONFIGURATION: Release
       XCODE_VERSION: 12.5.1
     - APPVEYOR_BUILD_WORKER_IMAGE: macos-monterey
       CONFIGURATION: Release
-      XCODE_VERSION: 13.2.1
+      XCODE_VERSION: 13.4.1
+    - APPVEYOR_BUILD_WORKER_IMAGE: macos-monterey
+      CONFIGURATION: Release
+      XCODE_VERSION: 14.1
     - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2004
       AUDIO_DRIVER: Jack
       CONFIGURATION: Debug
@@ -90,6 +90,7 @@ for:
       only:
         - APPVEYOR_BUILD_WORKER_IMAGE: macos-mojave
         - APPVEYOR_BUILD_WORKER_IMAGE: macos-catalina
+        - APPVEYOR_BUILD_WORKER_IMAGE: macos-bigsur
         - APPVEYOR_BUILD_WORKER_IMAGE: macos-monterey
     build_script:
       - sudo xcode-select -s /Applications/Xcode-$XCODE_VERSION.app
