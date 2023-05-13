@@ -31,7 +31,7 @@ namespace darwin
 
 struct Clock
 {
-  using Ticks = std::uint64_t;
+  using Ticks = std::int64_t;
   using Micros = std::chrono::microseconds;
 
   Clock()
