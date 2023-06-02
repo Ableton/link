@@ -65,8 +65,8 @@ TEST_CASE("LinearRegression")
     }
 
     const auto result = linearRegression(data.begin(), data.end());
-    CHECK(slope == Approx(result.first));
-    CHECK(intercept == Approx(result.second));
+    CHECK_THAT(slope, Catch::Matchers::WithinAbs(result.first, 1e-7));
+    CHECK_THAT(intercept, Catch::Matchers::WithinAbs(result.second, 1e-7));
   }
 
   SECTION("TwoPoints Float")
@@ -92,8 +92,10 @@ TEST_CASE("LinearRegression")
     }
 
     const auto result = linearRegression(data.begin(), data.end());
-    CHECK(slope == Approx(result.first));
-    CHECK(intercept == Approx(result.second));
+    CHECK_THAT(
+      slope, Catch::Matchers::WithinAbs(static_cast<double>(result.first), 1e-3));
+    CHECK_THAT(
+      intercept, Catch::Matchers::WithinAbs(static_cast<double>(result.second), 1e-3));
   }
 }
 
