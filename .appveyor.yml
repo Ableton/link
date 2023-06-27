@@ -105,7 +105,6 @@ for:
         - GENERATOR: Ninja
     install:
       - git submodule update --init --recursive
-      - sudo apt-get update
       - sudo apt-get install -y libjack-dev portaudio19-dev valgrind
     build_script:
       - python3 ci/configure.py --audio-driver $AUDIO_DRIVER --generator "$GENERATOR" --configuration $CONFIGURATION
