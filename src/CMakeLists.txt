@@ -32,6 +32,7 @@ set(link_core_test_SOURCES
   ableton/link/tst_Tempo.cpp
   ableton/link/tst_Timeline.cpp
   ableton/link/tst_TripleBuffer.cpp
+  ableton/tst_Link.cpp
 )
 
 set(link_test_SOURCES
