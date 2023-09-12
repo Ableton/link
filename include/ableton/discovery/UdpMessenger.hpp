@@ -19,10 +19,10 @@
 
 #pragma once
 
+#include <ableton/discovery/AsioTypes.hpp>
 #include <ableton/discovery/IpV4Interface.hpp>
 #include <ableton/discovery/MessageTypes.hpp>
 #include <ableton/discovery/v1/Messages.hpp>
-#include <ableton/platforms/asio/AsioWrapper.hpp>
 #include <ableton/util/Injected.hpp>
 #include <ableton/util/SafeAsyncHandler.hpp>
 #include <algorithm>
@@ -37,13 +37,13 @@ namespace discovery
 // interface through which the sending failed.
 struct UdpSendException : std::runtime_error
 {
-  UdpSendException(const std::runtime_error& e, asio::ip::address ifAddr)
+  UdpSendException(const std::runtime_error& e, IpAddress ifAddr)
     : std::runtime_error(e.what())
     , interfaceAddr(std::move(ifAddr))
   {
   }
 
-  asio::ip::address interfaceAddr;
+  IpAddress interfaceAddr;
 };
 
 // Throws UdpSendException
@@ -53,7 +53,7 @@ void sendUdpMessage(Interface& iface,
   const uint8_t ttl,
   const v1::MessageType messageType,
   const Payload& payload,
-  const asio::ip::udp::endpoint& to)
+  const UdpEndpoint& to)
 {
   using namespace std;
   v1::MessageBuffer buffer;
@@ -217,15 +217,14 @@ private:
       }
     }
 
-    void sendPeerState(
-      const v1::MessageType messageType, const asio::ip::udp::endpoint& to)
+    void sendPeerState(const v1::MessageType messageType, const UdpEndpoint& to)
     {
       sendUdpMessage(
         *mInterface, mState.ident(), mTtl, messageType, toPayload(mState), to);
       mLastBroadcastTime = mTimer.now();
     }
 
-    void sendResponse(const asio::ip::udp::endpoint& to)
+    void sendResponse(const UdpEndpoint& to)
     {
       sendPeerState(v1::kResponse, to);
     }
@@ -237,10 +236,8 @@ private:
     }
 
     template <typename Tag, typename It>
-    void operator()(Tag tag,
-      const asio::ip::udp::endpoint& from,
-      const It messageBegin,
-      const It messageEnd)
+    void operator()(
+      Tag tag, const UdpEndpoint& from, const It messageBegin, const It messageEnd)
     {
       auto result = v1::parseMessageHeader<NodeId>(messageBegin, messageEnd);
 

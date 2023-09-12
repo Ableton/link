@@ -97,8 +97,7 @@ TEST_CASE("UdpMessenger")
 {
   const TestNodeState state1 = {5, 15};
   const auto state2 = TestNodeState{3, 10};
-  const auto peerEndpoint =
-    asio::ip::udp::endpoint{asio::ip::address::from_string("123.123.234.234"), 1900};
+  const auto peerEndpoint = UdpEndpoint{IpAddress::from_string("123.123.234.234"), 1900};
   ::ableton::test::serial_io::Fixture io;
   auto iface = test::Interface{};
 

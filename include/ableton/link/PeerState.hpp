@@ -83,7 +83,7 @@ struct PeerState
   }
 
   NodeState nodeState;
-  asio::ip::udp::endpoint endpoint;
+  discovery::UdpEndpoint endpoint;
 };
 
 } // namespace link

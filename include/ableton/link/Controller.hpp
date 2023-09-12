@@ -717,7 +717,7 @@ private:
   {
     GatewayPtr operator()(std::pair<NodeState, GhostXForm> state,
       util::Injected<IoType&> io,
-      const asio::ip::address& addr)
+      const discovery::IpAddress& addr)
     {
       if (addr.is_v4())
       {

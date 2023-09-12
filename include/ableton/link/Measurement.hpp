@@ -45,7 +45,7 @@ struct Measurement
 
   Measurement(const PeerState& state,
     Callback callback,
-    asio::ip::address_v4 address,
+    discovery::IpAddressV4 address,
     Clock clock,
     util::Injected<IoContext> io)
     : mIo(std::move(io))
@@ -69,7 +69,7 @@ struct Measurement
 
     Impl(const PeerState& state,
       Callback callback,
-      asio::ip::address_v4 address,
+      discovery::IpAddressV4 address,
       Clock clock,
       util::Injected<IoContext> io)
       : mSocket(io->template openUnicastSocket<v1::kMaxMessageSize>(address))
@@ -117,7 +117,7 @@ struct Measurement
     // Operator to handle incoming messages on the interface
     template <typename It>
     void operator()(
-      const asio::ip::udp::endpoint& from, const It messageBegin, const It messageEnd)
+      const discovery::UdpEndpoint& from, const It messageBegin, const It messageEnd)
     {
       using namespace std;
       const auto result = v1::parseMessageHeader(messageBegin, messageEnd);
@@ -197,7 +197,7 @@ struct Measurement
     }
 
     template <typename Payload>
-    void sendPing(asio::ip::udp::endpoint to, const Payload& payload)
+    void sendPing(discovery::UdpEndpoint to, const Payload& payload)
     {
       v1::MessageBuffer buffer;
       const auto msgBegin = std::begin(buffer);
@@ -232,7 +232,7 @@ struct Measurement
 
     Socket mSocket;
     SessionId mSessionId;
-    asio::ip::udp::endpoint mEndpoint;
+    discovery::UdpEndpoint mEndpoint;
     std::vector<double> mData;
     Callback mCallback;
     Clock mClock;

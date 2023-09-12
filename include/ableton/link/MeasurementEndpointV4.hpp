@@ -19,8 +19,8 @@
 
 #pragma once
 
+#include <ableton/discovery/AsioTypes.hpp>
 #include <ableton/discovery/NetworkByteStreamSerializable.hpp>
-#include <ableton/platforms/asio/AsioWrapper.hpp>
 
 namespace ableton
 {
@@ -58,11 +58,11 @@ struct MeasurementEndpointV4
       std::move(addrRes.second), end);
     return make_pair(
       MeasurementEndpointV4{
-        {asio::ip::address_v4{std::move(addrRes.first)}, std::move(portRes.first)}},
+        {discovery::IpAddressV4{std::move(addrRes.first)}, std::move(portRes.first)}},
       std::move(portRes.second));
   }
 
-  asio::ip::udp::endpoint ep;
+  discovery::UdpEndpoint ep;
 };
 
 } // namespace link

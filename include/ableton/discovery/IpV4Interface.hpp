@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include <ableton/platforms/asio/AsioWrapper.hpp>
+#include <ableton/discovery/AsioTypes.hpp>
 #include <ableton/util/Injected.hpp>
 
 namespace ableton
@@ -27,9 +27,9 @@ namespace ableton
 namespace discovery
 {
 
-inline asio::ip::udp::endpoint multicastEndpoint()
+inline UdpEndpoint multicastEndpoint()
 {
-  return {asio::ip::address_v4::from_string("224.76.78.75"), 20808};
+  return {IpAddressV4::from_string("224.76.78.75"), 20808};
 }
 
 // Type tags for dispatching between unicast and multicast packets
@@ -46,7 +46,7 @@ class IpV4Interface
 public:
   using Socket = typename util::Injected<IoContext>::type::template Socket<MaxPacketSize>;
 
-  IpV4Interface(util::Injected<IoContext> io, const asio::ip::address_v4& addr)
+  IpV4Interface(util::Injected<IoContext> io, const IpAddressV4& addr)
     : mIo(std::move(io))
     , mMulticastReceiveSocket(mIo->template openMulticastSocket<MaxPacketSize>(addr))
     , mSendSocket(mIo->template openUnicastSocket<MaxPacketSize>(addr))
@@ -65,7 +65,7 @@ public:
 
 
   std::size_t send(
-    const uint8_t* const pData, const size_t numBytes, const asio::ip::udp::endpoint& to)
+    const uint8_t* const pData, const size_t numBytes, const UdpEndpoint& to)
   {
     return mSendSocket.send(pData, numBytes, to);
   }
@@ -83,7 +83,7 @@ public:
       SocketReceiver<MulticastTag, Handler>(std::move(handler)));
   }
 
-  asio::ip::udp::endpoint endpoint() const
+  UdpEndpoint endpoint() const
   {
     return mSendSocket.endpoint();
   }
@@ -98,8 +98,7 @@ private:
     }
 
     template <typename It>
-    void operator()(
-      const asio::ip::udp::endpoint& from, const It messageBegin, const It messageEnd)
+    void operator()(const UdpEndpoint& from, const It messageBegin, const It messageEnd)
     {
       mHandler(Tag{}, from, messageBegin, messageEnd);
     }
@@ -114,7 +113,7 @@ private:
 
 template <std::size_t MaxPacketSize, typename IoContext>
 IpV4Interface<IoContext, MaxPacketSize> makeIpV4Interface(
-  util::Injected<IoContext> io, const asio::ip::address_v4& addr)
+  util::Injected<IoContext> io, const IpAddressV4& addr)
 {
   return {std::move(io), addr};
 }
