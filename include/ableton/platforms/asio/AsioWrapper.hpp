@@ -75,11 +75,6 @@
 #pragma pop_macro("INCL_EXTRA_HTON_FUNCTIONS")
 #endif
 
-#if !defined(ESP_PLATFORM)
-#pragma pop_macro("ASIO_STANDALONE")
-#pragma pop_macro("ASIO_NO_TYPEID")
-#endif
-
 #if defined(_MSC_VER)
 #pragma warning(pop)
 #undef _SCL_SECURE_NO_WARNINGS
