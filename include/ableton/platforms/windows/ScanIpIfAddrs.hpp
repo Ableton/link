@@ -19,8 +19,7 @@
 
 #pragma once
 
-#include <ableton/platforms/asio/AsioWrapper.hpp>
-#include <ableton/platforms/asio/Util.hpp>
+#include <ableton/discovery/AsioTypes.hpp>
 #include <iphlpapi.h>
 #include <stdio.h>
 #include <vector>
@@ -99,9 +98,9 @@ struct ScanIpIfAddrs
 {
   // Scan active network interfaces and return corresponding addresses
   // for all ip-based interfaces.
-  std::vector<::asio::ip::address> operator()()
+  std::vector<discovery::IpAddress> operator()()
   {
-    std::vector<::asio::ip::address> addrs;
+    std::vector<discovery::IpAddress> addrs;
 
     detail::GetIfAddrs getIfAddrs;
     getIfAddrs.withIfAddrs([&addrs](const IP_ADAPTER_ADDRESSES& interfaces) {
@@ -119,14 +118,14 @@ struct ScanIpIfAddrs
             SOCKADDR_IN* addr4 =
               reinterpret_cast<SOCKADDR_IN*>(address->Address.lpSockaddr);
             auto bytes = reinterpret_cast<const char*>(&addr4->sin_addr);
-            addrs.emplace_back(asio::makeAddress<::asio::ip::address_v4>(bytes));
+            addrs.emplace_back(discovery::makeAddress<discovery::IpAddressV4>(bytes));
           }
           else if (AF_INET6 == family)
           {
             SOCKADDR_IN6* addr6 =
               reinterpret_cast<SOCKADDR_IN6*>(address->Address.lpSockaddr);
             auto bytes = reinterpret_cast<const char*>(&addr6->sin6_addr);
-            addrs.emplace_back(asio::makeAddress<::asio::ip::address_v6>(bytes));
+            addrs.emplace_back(discovery::makeAddress<discovery::IpAddressV6>(bytes));
           }
         }
       }

@@ -62,17 +62,19 @@ namespace platform
 using Clock = platforms::windows::Clock;
 using Random = platforms::stl::Random;
 #if defined(LINK_WINDOWS_SETTHREADDESCRIPTION)
-using IoContext = platforms::asio::Context<platforms::windows::ScanIpIfAddrs,
-  util::NullLog,
-  platforms::windows::ThreadFactory>;
+using IoContext =
+  platforms::LINK_ASIO_NAMESPACE::Context<platforms::windows::ScanIpIfAddrs,
+    util::NullLog,
+    platforms::windows::ThreadFactory>;
 #else
 using IoContext =
-  platforms::asio::Context<platforms::windows::ScanIpIfAddrs, util::NullLog>;
+  platforms::LINK_ASIO_NAMESPACE::Context<platforms::windows::ScanIpIfAddrs,
+    util::NullLog>;
 #endif
 
 #elif defined(LINK_PLATFORM_MACOSX)
 using Clock = platforms::darwin::Clock;
-using IoContext = platforms::asio::Context<platforms::posix::ScanIpIfAddrs,
+using IoContext = platforms::LINK_ASIO_NAMESPACE::Context<platforms::posix::ScanIpIfAddrs,
   util::NullLog,
   platforms::darwin::ThreadFactory>;
 using Random = platforms::stl::Random;
@@ -81,12 +83,12 @@ using Random = platforms::stl::Random;
 using Clock = platforms::linux_::ClockMonotonicRaw;
 using Random = platforms::stl::Random;
 #ifdef __linux__
-using IoContext = platforms::asio::Context<platforms::posix::ScanIpIfAddrs,
+using IoContext = platforms::LINK_ASIO_NAMESPACE::Context<platforms::posix::ScanIpIfAddrs,
   util::NullLog,
   platforms::linux_::ThreadFactory>;
 #else
 using IoContext =
-  platforms::asio::Context<platforms::posix::ScanIpIfAddrs, util::NullLog>;
+  platforms::LINK_ASIO_NAMESPACE::Context<platforms::posix::ScanIpIfAddrs, util::NullLog>;
 #endif
 
 #elif defined(ESP_PLATFORM)

@@ -21,7 +21,6 @@
 
 #include <ableton/discovery/IpV4Interface.hpp>
 #include <ableton/platforms/asio/AsioTimer.hpp>
-#include <ableton/platforms/asio/AsioWrapper.hpp>
 #include <ableton/platforms/asio/LockFreeCallbackDispatcher.hpp>
 #include <ableton/platforms/asio/Socket.hpp>
 #include <thread>
@@ -31,7 +30,7 @@ namespace ableton
 {
 namespace platforms
 {
-namespace asio
+namespace LINK_ASIO_NAMESPACE
 {
 namespace
 {
@@ -51,7 +50,7 @@ template <typename ScanIpIfAddrs, typename LogT, typename ThreadFactoryT = Threa
 class Context
 {
 public:
-  using Timer = AsioTimer;
+  using Timer = LINK_ASIO_NAMESPACE::AsioTimer;
   using Log = LogT;
 
   template <typename Handler, typename Duration>
@@ -59,7 +58,9 @@ public:
     LockFreeCallbackDispatcher<Handler, Duration, ThreadFactoryT>;
 
   template <std::size_t BufferSize>
-  using Socket = asio::Socket<BufferSize>;
+  using Socket = Socket<BufferSize>;
+  using IoService = ::LINK_ASIO_NAMESPACE::io_service;
+  using Work = IoService::work;
 
   Context()
     : Context(DefaultHandler{})
@@ -68,11 +69,11 @@ public:
 
   template <typename ExceptionHandler>
   explicit Context(ExceptionHandler exceptHandler)
-    : mpService(new ::asio::io_service())
-    , mpWork(new ::asio::io_service::work(*mpService))
+    : mpService(new IoService())
+    , mpWork(new Work(*mpService))
   {
     mThread = ThreadFactoryT::makeThread("Link Main",
-      [](::asio::io_service& service, ExceptionHandler handler) {
+      [](IoService& service, ExceptionHandler handler) {
         for (;;)
         {
           try
@@ -121,34 +122,37 @@ public:
 
 
   template <std::size_t BufferSize>
-  Socket<BufferSize> openUnicastSocket(const ::asio::ip::address_v4& addr)
+  Socket<BufferSize> openUnicastSocket(const discovery::IpAddressV4 addr)
   {
     auto socket = Socket<BufferSize>{*mpService};
     socket.mpImpl->mSocket.set_option(
-      ::asio::ip::multicast::enable_loopback(addr.is_loopback()));
-    socket.mpImpl->mSocket.set_option(::asio::ip::multicast::outbound_interface(addr));
-    socket.mpImpl->mSocket.bind(::asio::ip::udp::endpoint{addr, 0});
+      ::LINK_ASIO_NAMESPACE::ip::multicast::enable_loopback(addr.is_loopback()));
+    socket.mpImpl->mSocket.set_option(
+      ::LINK_ASIO_NAMESPACE::ip::multicast::outbound_interface(addr));
+    socket.mpImpl->mSocket.bind(::LINK_ASIO_NAMESPACE::ip::udp::endpoint{addr, 0});
     return socket;
   }
 
   template <std::size_t BufferSize>
-  Socket<BufferSize> openMulticastSocket(const ::asio::ip::address_v4& addr)
+  Socket<BufferSize> openMulticastSocket(const discovery::IpAddressV4& addr)
   {
     auto socket = Socket<BufferSize>{*mpService};
-    socket.mpImpl->mSocket.set_option(::asio::ip::udp::socket::reuse_address(true));
     socket.mpImpl->mSocket.set_option(
-      ::asio::socket_base::broadcast(!addr.is_loopback()));
+      ::LINK_ASIO_NAMESPACE::ip::udp::socket::reuse_address(true));
     socket.mpImpl->mSocket.set_option(
-      ::asio::ip::multicast::enable_loopback(addr.is_loopback()));
-    socket.mpImpl->mSocket.set_option(::asio::ip::multicast::outbound_interface(addr));
-    socket.mpImpl->mSocket.bind({::asio::ip::address::from_string("0.0.0.0"),
+      ::LINK_ASIO_NAMESPACE::socket_base::broadcast(!addr.is_loopback()));
+    socket.mpImpl->mSocket.set_option(
+      ::LINK_ASIO_NAMESPACE::ip::multicast::enable_loopback(addr.is_loopback()));
+    socket.mpImpl->mSocket.set_option(
+      ::LINK_ASIO_NAMESPACE::ip::multicast::outbound_interface(addr));
+    socket.mpImpl->mSocket.bind({discovery::IpAddress::from_string("0.0.0.0"),
       discovery::multicastEndpoint().port()});
-    socket.mpImpl->mSocket.set_option(::asio::ip::multicast::join_group(
+    socket.mpImpl->mSocket.set_option(::LINK_ASIO_NAMESPACE::ip::multicast::join_group(
       discovery::multicastEndpoint().address().to_v4(), addr));
     return socket;
   }
 
-  std::vector<::asio::ip::address> scanNetworkInterfaces()
+  std::vector<discovery::IpAddress> scanNetworkInterfaces()
   {
     return mScanIpIfAddrs();
   }
@@ -184,13 +188,13 @@ private:
     }
   };
 
-  std::unique_ptr<::asio::io_service> mpService;
-  std::unique_ptr<::asio::io_service::work> mpWork;
+  std::unique_ptr<::LINK_ASIO_NAMESPACE::io_service> mpService;
+  std::unique_ptr<::LINK_ASIO_NAMESPACE::io_service::work> mpWork;
   std::thread mThread;
   Log mLog;
   ScanIpIfAddrs mScanIpIfAddrs;
 };
 
-} // namespace asio
+} // namespace LINK_ASIO_NAMESPACE
 } // namespace platforms
 } // namespace ableton

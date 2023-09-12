@@ -19,9 +19,9 @@
 
 #pragma once
 
+#include <ableton/discovery/AsioTypes.hpp>
 #include <ableton/discovery/IpV4Interface.hpp>
 #include <ableton/platforms/asio/AsioTimer.hpp>
-#include <ableton/platforms/asio/AsioWrapper.hpp>
 #include <ableton/platforms/asio/Socket.hpp>
 #include <ableton/platforms/esp32/LockFreeCallbackDispatcher.hpp>
 #include <driver/gptimer.h>
@@ -149,7 +149,7 @@ public:
     socket.mpImpl->mSocket.set_option(
       ::asio::ip::multicast::enable_loopback(addr.is_loopback()));
     socket.mpImpl->mSocket.set_option(::asio::ip::multicast::outbound_interface(addr));
-    socket.mpImpl->mSocket.bind(::asio::ip::udp::endpoint{addr, 0});
+    socket.mpImpl->mSocket.bind(discovery::UdpEndpoint{addr, 0});
     return socket;
   }
 

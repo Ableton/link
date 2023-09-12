@@ -26,11 +26,11 @@ namespace ableton
 namespace discovery
 {
 
-using IpAddress = asio::ip::address;
-using IpAddressV4 = asio::ip::address_v4;
-using IpAddressV6 = asio::ip::address_v6;
-using UdpSocket = asio::ip::udp::socket;
-using UdpEndpoint = asio::ip::udp::endpoint;
+using IpAddress = LINK_ASIO_NAMESPACE::ip::address;
+using IpAddressV4 = LINK_ASIO_NAMESPACE::ip::address_v4;
+using IpAddressV6 = LINK_ASIO_NAMESPACE::ip::address_v6;
+using UdpSocket = LINK_ASIO_NAMESPACE::ip::udp::socket;
+using UdpEndpoint = LINK_ASIO_NAMESPACE::ip::udp::endpoint;
 
 template <typename AsioAddrType>
 AsioAddrType makeAddress(const char* pAddr)

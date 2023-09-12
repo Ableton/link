@@ -26,6 +26,8 @@
  * by Link.
  */
 
+#define LINK_ASIO_NAMESPACE asio
+
 #if !defined(ESP_PLATFORM)
 #pragma push_macro("ASIO_STANDALONE")
 #define ASIO_STANDALONE 1
