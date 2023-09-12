@@ -78,7 +78,7 @@ environment:
       GENERATOR: Visual Studio 17 2022
     - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2004
       ESP_IDF: true
-      IDF_RELEASE: v4.3.1
+      IDF_RELEASE: v5.1.1
     - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2004
       FORMATTING: true
 
