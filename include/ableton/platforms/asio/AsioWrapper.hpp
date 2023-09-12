@@ -26,14 +26,19 @@
  * by Link.
  */
 
+#if defined(ESP_PLATFORM)
+
 #define LINK_ASIO_NAMESPACE asio
 
-#if !defined(ESP_PLATFORM)
+#else
+
 #pragma push_macro("ASIO_STANDALONE")
-#define ASIO_STANDALONE 1
 
 #pragma push_macro("ASIO_NO_TYPEID")
 #define ASIO_NO_TYPEID 1
+#define asio link_asio_1_28_0
+#define LINK_ASIO_NAMESPACE link_asio_1_28_0
+#define ASIO_STANDALONE 1
 #endif
 
 #if defined(LINK_PLATFORM_WINDOWS)
@@ -85,3 +90,5 @@
 #if defined(__clang__)
 #pragma clang diagnostic pop
 #endif
+
+#undef asio
