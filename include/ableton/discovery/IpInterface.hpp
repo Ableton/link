@@ -49,22 +49,22 @@ struct UnicastTag
 };
 
 template <typename IoContext, std::size_t MaxPacketSize>
-class IpV4Interface
+class IpInterface
 {
 public:
   using Socket = typename util::Injected<IoContext>::type::template Socket<MaxPacketSize>;
 
-  IpV4Interface(util::Injected<IoContext> io, const IpAddressV4& addr)
+  IpInterface(util::Injected<IoContext> io, const IpAddress& addr)
     : mIo(std::move(io))
     , mMulticastReceiveSocket(mIo->template openMulticastSocket<MaxPacketSize>(addr))
     , mSendSocket(mIo->template openUnicastSocket<MaxPacketSize>(addr))
   {
   }
 
-  IpV4Interface(const IpV4Interface&) = delete;
-  IpV4Interface& operator=(const IpV4Interface&) = delete;
+  IpInterface(const IpInterface&) = delete;
+  IpInterface& operator=(const IpInterface&) = delete;
 
-  IpV4Interface(IpV4Interface&& rhs)
+  IpInterface(IpInterface&& rhs)
     : mIo(std::move(rhs.mIo))
     , mMulticastReceiveSocket(std::move(rhs.mMulticastReceiveSocket))
     , mSendSocket(std::move(rhs.mSendSocket))
@@ -120,7 +120,7 @@ private:
 };
 
 template <std::size_t MaxPacketSize, typename IoContext>
-IpV4Interface<IoContext, MaxPacketSize> makeIpV4Interface(
+IpInterface<IoContext, MaxPacketSize> makeIpInterface(
   util::Injected<IoContext> io, const IpAddressV4& addr)
 {
   return {std::move(io), addr};

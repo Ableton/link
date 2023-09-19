@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include <ableton/discovery/IpV4Interface.hpp>
+#include <ableton/discovery/IpInterface.hpp>
 #include <ableton/platforms/asio/AsioTimer.hpp>
 #include <ableton/platforms/asio/LockFreeCallbackDispatcher.hpp>
 #include <ableton/platforms/asio/Socket.hpp>

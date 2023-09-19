@@ -51,7 +51,7 @@ set(link_discovery_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ableton/discovery)
 set(link_discovery_HEADERS
   ${link_discovery_DIR}/AsioTypes.hpp
   ${link_discovery_DIR}/InterfaceScanner.hpp
-  ${link_discovery_DIR}/IpV4Interface.hpp
+  ${link_discovery_DIR}/IpInterface.hpp
   ${link_discovery_DIR}/MessageTypes.hpp
   ${link_discovery_DIR}/NetworkByteStreamSerializable.hpp
   ${link_discovery_DIR}/Payload.hpp
