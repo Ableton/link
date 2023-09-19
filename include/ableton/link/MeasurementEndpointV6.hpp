@@ -21,6 +21,7 @@
 
 #include <ableton/discovery/NetworkByteStreamSerializable.hpp>
 #include <ableton/platforms/asio/AsioWrapper.hpp>
+#include <cassert>
 
 namespace ableton
 {
@@ -35,6 +36,10 @@ struct MeasurementEndpointV6
   // Model the NetworkByteStreamSerializable concept
   friend std::uint32_t sizeInByteStream(const MeasurementEndpointV6 mep)
   {
+    if (mep.ep.address().is_v4())
+    {
+      return 0;
+    }
     return discovery::sizeInByteStream(mep.ep.address().to_v6().to_bytes())
            + discovery::sizeInByteStream(mep.ep.port());
   }
@@ -42,6 +47,7 @@ struct MeasurementEndpointV6
   template <typename It>
   friend It toNetworkByteStream(const MeasurementEndpointV6 mep, It out)
   {
+    assert(mep.ep.address().is_v6());
     return discovery::toNetworkByteStream(
       mep.ep.port(), discovery::toNetworkByteStream(
                        mep.ep.address().to_v6().to_bytes(), std::move(out)));
