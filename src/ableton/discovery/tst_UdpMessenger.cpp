@@ -118,7 +118,7 @@ TEST_CASE("UdpMessenger")
     CHECK(state2.nodeId == result.first.ident);
     CHECK(1 == result.first.ttl);
     // Sent to the multicast endpoint
-    CHECK(multicastEndpoint() == sentTo);
+    CHECK(multicastEndpointV4() == sentTo);
 
     // And the payload should parse to equal to the original state
     const auto actualState =
@@ -199,7 +199,7 @@ TEST_CASE("UdpMessenger")
     const auto result = v1::parseMessageHeader<TestNodeState::IdType>(
       begin(messageBuffer), end(messageBuffer));
     CHECK(v1::kByeBye == result.first.messageType);
-    CHECK(multicastEndpoint() == sentTo);
+    CHECK(multicastEndpointV4() == sentTo);
   }
 
   SECTION("MovingMessengerDoesntSendByeBye")

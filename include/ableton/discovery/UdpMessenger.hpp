@@ -176,8 +176,8 @@ private:
 
     void sendByeBye()
     {
-      sendUdpMessage(
-        *mInterface, mState.ident(), 0, v1::kByeBye, makePayload(), multicastEndpoint());
+      sendUdpMessage(*mInterface, mState.ident(), 0, v1::kByeBye, makePayload(),
+        multicastEndpointV4());
     }
 
     void updateState(NodeState state)
@@ -213,7 +213,7 @@ private:
       if (delay < milliseconds{1})
       {
         debug(mIo->log()) << "Broadcasting state";
-        sendPeerState(v1::kAlive, multicastEndpoint());
+        sendPeerState(v1::kAlive, multicastEndpointV4());
       }
     }
 

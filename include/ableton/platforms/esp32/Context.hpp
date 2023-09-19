@@ -143,30 +143,72 @@ public:
   }
 
   template <std::size_t BufferSize>
-  Socket<BufferSize> openUnicastSocket(const ::asio::ip::address_v4& addr)
+  Socket<BufferSize> openUnicastSocket(const ::asio::ip::address& addr)
   {
-    auto socket = Socket<BufferSize>{serviceRunner().service()};
+    auto socket =
+      addr.is_v4() ? Socket<BufferSize>{serviceRunner().service(), ::asio::ip::udp::v4()}
+                   : Socket<BufferSize>{serviceRunner().service(), ::asio::ip::udp::v6()};
     socket.mpImpl->mSocket.set_option(
       ::asio::ip::multicast::enable_loopback(addr.is_loopback()));
-    socket.mpImpl->mSocket.set_option(::asio::ip::multicast::outbound_interface(addr));
-    socket.mpImpl->mSocket.bind(discovery::UdpEndpoint{addr, 0});
+    if (addr.is_v4())
+    {
+      socket.mpImpl->mSocket.set_option(
+        ::asio::ip::multicast::outbound_interface(addr.to_v4()));
+      socket.mpImpl->mSocket.bind(
+        ::LINK_ASIO_NAMESPACE::ip::udp::endpoint{addr.to_v4(), 0});
+    }
+    else if (addr.is_v6())
+    {
+      const auto scopeId = addr.to_v6().scope_id();
+      socket.mpImpl->mSocket.set_option(
+        ::asio::ip::multicast::outbound_interface(static_cast<unsigned int>(scopeId)));
+      socket.mpImpl->mSocket.bind(
+        ::LINK_ASIO_NAMESPACE::ip::udp::endpoint{addr.to_v6(), 0});
+    }
+    else
+    {
+      throw(std::runtime_error("Unknown Protocol"));
+    }
     return socket;
   }
 
   template <std::size_t BufferSize>
-  Socket<BufferSize> openMulticastSocket(const ::asio::ip::address_v4& addr)
+  Socket<BufferSize> openMulticastSocket(const ::asio::ip::address& addr)
   {
-    auto socket = Socket<BufferSize>{serviceRunner().service()};
+    auto socket =
+      addr.is_v4() ? Socket<BufferSize>{serviceRunner().service(), ::asio::ip::udp::v4()}
+                   : Socket<BufferSize>{serviceRunner().service(), ::asio::ip::udp::v6()};
+
     socket.mpImpl->mSocket.set_option(::asio::ip::udp::socket::reuse_address(true));
     socket.mpImpl->mSocket.set_option(
       ::asio::socket_base::broadcast(!addr.is_loopback()));
     socket.mpImpl->mSocket.set_option(
       ::asio::ip::multicast::enable_loopback(addr.is_loopback()));
-    socket.mpImpl->mSocket.set_option(::asio::ip::multicast::outbound_interface(addr));
-    socket.mpImpl->mSocket.bind({::asio::ip::address::from_string("0.0.0.0"),
-      discovery::multicastEndpoint().port()});
-    socket.mpImpl->mSocket.set_option(::asio::ip::multicast::join_group(
-      discovery::multicastEndpoint().address().to_v4(), addr));
+
+    if (addr.is_v4())
+    {
+      socket.mpImpl->mSocket.set_option(
+        ::asio::ip::multicast::outbound_interface(addr.to_v4()));
+      socket.mpImpl->mSocket.bind(
+        {::asio::ip::address_v4::any(), discovery::multicastEndpointV4().port()});
+      socket.mpImpl->mSocket.set_option(::asio::ip::multicast::join_group(
+        discovery::multicastEndpointV4().address().to_v4(), addr.to_v4()));
+    }
+    else if (addr.is_v6())
+    {
+      const auto scopeId = addr.to_v6().scope_id();
+      socket.mpImpl->mSocket.set_option(
+        ::asio::ip::multicast::outbound_interface(static_cast<unsigned int>(scopeId)));
+      const auto multicastEndpoint = discovery::multicastEndpointV6(scopeId);
+      socket.mpImpl->mSocket.bind(
+        {::asio::ip::address_v6::any(), multicastEndpoint.port()});
+      socket.mpImpl->mSocket.set_option(
+        ::asio::ip::multicast::join_group(multicastEndpoint.address().to_v6(), scopeId));
+    }
+    else
+    {
+      throw(std::runtime_error("Unknown Protocol"));
+    }
     return socket;
   }
 
