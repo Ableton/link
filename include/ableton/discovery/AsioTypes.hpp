@@ -41,5 +41,14 @@ AsioAddrType makeAddress(const char* pAddr)
   return AsioAddrType{bytes};
 }
 
+template <typename AsioAddrType>
+AsioAddrType makeAddress(const char* pAddr, uint32_t scopeId)
+{
+  using namespace std;
+  typename AsioAddrType::bytes_type bytes;
+  copy(pAddr, pAddr + bytes.size(), begin(bytes));
+  return AsioAddrType{bytes, scopeId};
+}
+
 } // namespace discovery
 } // namespace ableton

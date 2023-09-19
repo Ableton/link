@@ -40,7 +40,7 @@ class PingResponder
   using Socket = typename IoType::type::template Socket<v1::kMaxMessageSize>;
 
 public:
-  PingResponder(discovery::IpAddressV4 address,
+  PingResponder(discovery::IpAddress address,
     SessionId sessionId,
     GhostXForm ghostXForm,
     Clock clock,
@@ -82,7 +82,7 @@ public:
 private:
   struct Impl : std::enable_shared_from_this<Impl>
   {
-    Impl(discovery::IpAddressV4 address,
+    Impl(discovery::IpAddress address,
       SessionId sessionId,
       GhostXForm ghostXForm,
       Clock clock,

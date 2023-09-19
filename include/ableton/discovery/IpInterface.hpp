@@ -121,7 +121,7 @@ private:
 
 template <std::size_t MaxPacketSize, typename IoContext>
 IpInterface<IoContext, MaxPacketSize> makeIpInterface(
-  util::Injected<IoContext> io, const IpAddressV4& addr)
+  util::Injected<IoContext> io, const IpAddress& addr)
 {
   return {std::move(io), addr};
 }

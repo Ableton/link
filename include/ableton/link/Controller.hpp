@@ -719,16 +719,9 @@ private:
       util::Injected<IoType&> io,
       const discovery::IpAddress& addr)
     {
-      if (addr.is_v4())
-      {
-        return GatewayPtr{new ControllerGateway{std::move(io), addr.to_v4(),
-          util::injectVal(makeGatewayObserver(mController.mPeers, addr)),
-          std::move(state.first), std::move(state.second), mController.mClock}};
-      }
-      else
-      {
-        throw std::runtime_error("Could not create peer gateway on non-ipV4 address");
-      }
+      return GatewayPtr{new ControllerGateway{std::move(io), addr,
+        util::injectVal(makeGatewayObserver(mController.mPeers, addr)),
+        std::move(state.first), std::move(state.second), mController.mClock}};
     }
 
     Controller& mController;

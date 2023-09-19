@@ -230,7 +230,7 @@ using IpV4Gateway =
 template <typename PeerObserver, typename NodeState, typename IoContext>
 IpV4Gateway<PeerObserver, NodeState, IoContext> makeIpV4Gateway(
   util::Injected<IoContext> io,
-  const IpAddressV4& addr,
+  const IpAddress& addr,
   util::Injected<PeerObserver> observer,
   NodeState state)
 {

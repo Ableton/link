@@ -45,7 +45,7 @@ struct Measurement
 
   Measurement(const PeerState& state,
     Callback callback,
-    discovery::IpAddressV4 address,
+    discovery::IpAddress address,
     Clock clock,
     util::Injected<IoContext> io)
     : mIo(std::move(io))
@@ -69,12 +69,11 @@ struct Measurement
 
     Impl(const PeerState& state,
       Callback callback,
-      discovery::IpAddressV4 address,
+      discovery::IpAddress address,
       Clock clock,
       util::Injected<IoContext> io)
       : mSocket(io->template openUnicastSocket<v1::kMaxMessageSize>(address))
       , mSessionId(state.nodeState.sessionId)
-      , mEndpoint(state.endpoint)
       , mCallback(std::move(callback))
       , mClock(std::move(clock))
       , mTimer(io->makeTimer())
@@ -82,6 +81,17 @@ struct Measurement
       , mLog(channel(io->log(), "Measurement on gateway@" + address.to_string()))
       , mSuccess(false)
     {
+      if (state.endpoint.address().is_v4())
+      {
+        mEndpoint = state.endpoint;
+      }
+      else
+      {
+        auto v6Address = state.endpoint.address().to_v6();
+        v6Address.scope_id(address.to_v6().scope_id());
+        mEndpoint = {v6Address, state.endpoint.port()};
+      }
+
       const auto ht = HostTime{mClock.micros()};
       sendPing(mEndpoint, discovery::makePayload(ht));
       resetTimer();

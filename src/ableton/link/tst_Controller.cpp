@@ -98,13 +98,13 @@ struct MockIoContext
   }
 
   template <std::size_t BufferSize>
-  Socket<BufferSize> openUnicastSocket(const discovery::IpAddressV4&)
+  Socket<BufferSize> openUnicastSocket(const discovery::IpAddress&)
   {
     return {};
   }
 
   template <std::size_t BufferSize>
-  Socket<BufferSize> openMulticastSocket(const discovery::IpAddressV4&)
+  Socket<BufferSize> openMulticastSocket(const discovery::IpAddress&)
   {
     return {};
   }

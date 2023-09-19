@@ -48,7 +48,7 @@ struct MockIoContext
   using Socket = discovery::test::Socket;
 
   template <std::size_t BufferSize>
-  Socket<BufferSize> openUnicastSocket(const discovery::IpAddressV4&)
+  Socket<BufferSize> openUnicastSocket(const discovery::IpAddress&)
   {
     return Socket<BufferSize>(mIo);
   }

@@ -33,7 +33,7 @@ class Gateway
 {
 public:
   Gateway(util::Injected<IoContext> io,
-    discovery::IpAddressV4 addr,
+    discovery::IpAddress addr,
     util::Injected<PeerObserver> observer,
     NodeState nodeState,
     GhostXForm ghostXForm,

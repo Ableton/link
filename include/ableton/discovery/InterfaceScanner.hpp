@@ -29,7 +29,7 @@ namespace ableton
 namespace discovery
 {
 
-// Callback takes a range of asio::ip:address which is
+// Callback takes a range of IpAddress which is
 // guaranteed to be sorted and unique
 template <typename Callback, typename IoContext>
 class InterfaceScanner

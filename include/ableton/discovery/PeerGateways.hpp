@@ -28,7 +28,7 @@ namespace ableton
 namespace discovery
 {
 
-// GatewayFactory must have an operator()(NodeState, IoRef, asio::ip::address)
+// GatewayFactory must have an operator()(NodeState, IoRef, IpAddress)
 // that constructs a new PeerGateway on a given interface address.
 template <typename NodeState, typename GatewayFactory, typename IoContext>
 class PeerGateways
@@ -138,12 +138,8 @@ private:
       {
         try
         {
-          // Only handle v4 for now
-          if (addr.is_v4())
-          {
-            info(mIo.log()) << "initializing peer gateway on interface " << addr;
-            mGateways.emplace(addr, mFactory(mState, util::injectRef(mIo), addr.to_v4()));
-          }
+          info(mIo.log()) << "initializing peer gateway on interface " << addr;
+          mGateways.emplace(addr, mFactory(mState, util::injectRef(mIo), addr));
         }
         catch (const runtime_error& e)
         {

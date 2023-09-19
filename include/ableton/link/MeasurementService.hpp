@@ -42,7 +42,7 @@ public:
   using IoType = util::Injected<IoContext>;
   using MeasurementInstance = Measurement<Clock, IoContext>;
 
-  MeasurementService(discovery::IpAddressV4 address,
+  MeasurementService(discovery::IpAddress address,
     SessionId sessionId,
     GhostXForm ghostXForm,
     Clock clock,
@@ -77,7 +77,7 @@ public:
     using namespace std;
 
     const auto nodeId = state.nodeState.nodeId;
-    auto addr = mPingResponder.endpoint().address().to_v4();
+    auto addr = mPingResponder.endpoint().address();
     auto callback = CompletionCallback<Handler>{*this, nodeId, handler};
 
     try

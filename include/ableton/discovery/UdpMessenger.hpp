@@ -46,6 +46,14 @@ struct UdpSendException : std::runtime_error
   IpAddress interfaceAddr;
 };
 
+template <typename Interface>
+UdpEndpoint ipV6Endpoint(Interface& iface, const UdpEndpoint& endpoint)
+{
+  auto v6Address = endpoint.address().to_v6();
+  v6Address.scope_id(iface.endpoint().address().to_v6().scope_id());
+  return {v6Address, endpoint.port()};
+}
+
 // Throws UdpSendException
 template <typename Interface, typename NodeId, typename Payload>
 void sendUdpMessage(Interface& iface,
@@ -176,8 +184,16 @@ private:
 
     void sendByeBye()
     {
-      sendUdpMessage(*mInterface, mState.ident(), 0, v1::kByeBye, makePayload(),
-        multicastEndpointV4());
+      if (mInterface->endpoint().address().is_v4())
+      {
+        sendUdpMessage(*mInterface, mState.ident(), 0, v1::kByeBye, makePayload(),
+          multicastEndpointV4());
+      }
+      if (mInterface->endpoint().address().is_v6())
+      {
+        sendUdpMessage(*mInterface, mState.ident(), 0, v1::kByeBye, makePayload(),
+          multicastEndpointV6(mInterface->endpoint().address().to_v6().scope_id()));
+      }
     }
 
     void updateState(NodeState state)
@@ -213,7 +229,15 @@ private:
       if (delay < milliseconds{1})
       {
         debug(mIo->log()) << "Broadcasting state";
-        sendPeerState(v1::kAlive, multicastEndpointV4());
+        if (mInterface->endpoint().address().is_v4())
+        {
+          sendPeerState(v1::kAlive, multicastEndpointV4());
+        }
+        if (mInterface->endpoint().address().is_v6())
+        {
+          sendPeerState(v1::kAlive,
+            multicastEndpointV6(mInterface->endpoint().address().to_v6().scope_id()));
+        }
       }
     }
 
@@ -226,7 +250,8 @@ private:
 
     void sendResponse(const UdpEndpoint& to)
     {
-      sendPeerState(v1::kResponse, to);
+      const auto endpoint = to.address().is_v4() ? to : ipV6Endpoint(*mInterface, to);
+      sendPeerState(v1::kResponse, endpoint);
     }
 
     template <typename Tag>
