@@ -1,5 +1,6 @@
 function(ConfigureAbletonLink PATH_TO_LINK)
 
+message(STATUS "Configuring link: ${PATH_TO_LINK}")
     if(CMAKE_VERSION VERSION_LESS 3.0)
         message(FATAL_ERROR "CMake 3.0 or greater is required")
     endif()
@@ -16,7 +17,7 @@ function(ConfigureAbletonLink PATH_TO_LINK)
         cxx_generalized_initializers
     )
 
-    if(UNIX)
+    if(UNIX AND NOT APPLE)
         set_property(target ableton::link append property
             interface_compile_definitions
             link_platform_unix=1
@@ -45,7 +46,8 @@ function(ConfigureAbletonLink PATH_TO_LINK)
         )
     endif()
 
-    include(${PATH_TO_LINK}/cmake_include/AsioStandaloneConfig.cmake)
+    include(${PATH_TO_LINK}/cmake_include/ConfigureAsioStandalone.cmake)
+    ConfigureAsioStandalone(${PATH_TO_LINK})
     set_property(TARGET Ableton::Link APPEND PROPERTY
         INTERFACE_LINK_LIBRARIES
         AsioStandalone::AsioStandalone
