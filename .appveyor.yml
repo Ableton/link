@@ -119,6 +119,7 @@ for:
         - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
         - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
     build_script:
+      - py -3 -m pip install setuptools
       - py -3 ci/configure.py --audio-driver %AUDIO_DRIVER% --thread-description %THREAD_DESCRIPTION% --generator "%GENERATOR%" --flags="-DCMAKE_SYSTEM_VERSION=10.0.18362.0"
       - py -3 ci/build.py --configuration %CONFIGURATION%
     test_script:
