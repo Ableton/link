@@ -146,8 +146,10 @@ struct ScanIpIfAddrs
           {
             SOCKADDR_IN6* sockAddr =
               reinterpret_cast<SOCKADDR_IN6*>(address->Address.lpSockaddr);
+            const auto scopeId = sockAddr->sin6_scope_id;
             const auto bytes = reinterpret_cast<const char*>(&sockAddr->sin6_addr);
-            const auto addr6 = discovery::makeAddress<discovery::IpAddressV6>(bytes);
+            const auto addr6 =
+              discovery::makeAddress<discovery::IpAddressV6>(bytes, scopeId);
             if (!addr6.is_loopback() && addr6.is_link_local())
             {
               addrs.emplace_back(addr6);
