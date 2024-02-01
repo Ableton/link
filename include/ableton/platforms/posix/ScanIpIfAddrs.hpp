@@ -104,15 +104,15 @@ struct ScanIpIfAddrs
       {
         const auto addr =
           reinterpret_cast<const struct sockaddr_in*>(interface->ifa_addr);
-        if (addr && interface->ifa_flags & IFF_RUNNING && addr->sin_family == AF_INET6)
+        if (IpInterfaceNames.find(interface->ifa_name) != IpInterfaceNames.end() && addr
+            && interface->ifa_flags & IFF_RUNNING && addr->sin_family == AF_INET6)
         {
           const auto addr6 = reinterpret_cast<const struct sockaddr_in6*>(addr);
           const auto bytes = reinterpret_cast<const char*>(&addr6->sin6_addr);
           const auto scopeId = addr6->sin6_scope_id;
           const auto address =
             discovery::makeAddress<discovery::IpAddressV6>(bytes, scopeId);
-          if (IpInterfaceNames.find(interface->ifa_name) != IpInterfaceNames.end()
-              && !address.is_loopback() && address.is_link_local())
+          if (!address.is_loopback() && address.is_link_local())
           {
             addrs.emplace_back(address);
           }
