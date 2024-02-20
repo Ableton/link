@@ -19,6 +19,11 @@ environment:
       CONFIGURATION: Debug
       XCODE_VERSION: 15.2.0
     - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2004
+      AUDIO_DRIVER: Alsa
+      CONFIGURATION: Release
+      GENERATOR: Ninja
+      CXX: clang++-12
+    - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2004
       AUDIO_DRIVER: Jack
       CONFIGURATION: Debug
       GENERATOR: Ninja
@@ -33,6 +38,16 @@ environment:
       CONFIGURATION: Debug
       GENERATOR: Ninja
       CXX: clang++-9
+    - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2204
+      AUDIO_DRIVER: Alsa
+      CONFIGURATION: Release
+      GENERATOR: Ninja
+      CXX: g++-11
+    - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2204
+      AUDIO_DRIVER: Jack
+      CONFIGURATION: Debug
+      GENERATOR: Ninja
+      CXX: g++-10
     - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2004
       AUDIO_DRIVER: Alsa
       CONFIGURATION: Release
