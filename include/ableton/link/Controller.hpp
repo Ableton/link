@@ -176,7 +176,8 @@ public:
     auto stopped = false;
 
     mIo->async([this, &mutex, &condition, &stopped]() {
-      enable(false);
+      mEnabled = false;
+      mDiscovery.enable(false);
       std::unique_lock<std::mutex> lock(mutex);
       stopped = true;
       condition.notify_one();
