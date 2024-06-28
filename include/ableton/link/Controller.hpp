@@ -193,18 +193,7 @@ public:
     const bool bWasEnabled = mEnabled.exchange(bEnable);
     if (bWasEnabled != bEnable)
     {
-      mIo->async([this, bEnable] {
-        if (bEnable)
-        {
-          // Process the pending client states to make sure we don't push one after we
-          // have joined a running session
-          mRtClientStateSetter.processPendingClientStates();
-          // Always reset when first enabling to avoid hijacking
-          // tempo in existing sessions
-          resetState();
-        }
-        mDiscovery.enable(bEnable);
-      });
+      mRtClientStateSetter.invoke();
     }
   }
 
@@ -570,9 +559,21 @@ private:
     RtClientStateSetter(Controller& controller)
       : mController(controller)
       , mCallbackDispatcher(
-          [this] { mController.mIo->async([this]() { processPendingClientStates(); }); },
+          [this] {
+            mController.mIo->async([this]() {
+              // Process the pending client states first to make sure we don't push one
+              // after we have joined a running session when enabling
+              processPendingClientStates();
+              updateEnabled();
+            });
+          },
           detail::kRtHandlerFallbackPeriod)
     {
+    }
+
+    void invoke()
+    {
+      mCallbackDispatcher.invoke();
     }
 
     void push(const IncomingClientState clientState)
@@ -598,6 +599,20 @@ private:
     {
       const auto clientState = buildMergedPendingClientState();
       mController.handleRtClientState(clientState);
+    }
+
+    void updateEnabled()
+    {
+      if (mController.mEnabled && !mController.mDiscovery.isEnabled())
+      {
+        // Always reset when first enabling to avoid hijacking tempo in existing sessions
+        mController.resetState();
+        mController.mDiscovery.enable(true);
+      }
+      else if (!mController.mEnabled && mController.mDiscovery.isEnabled())
+      {
+        mController.mDiscovery.enable(false);
+      }
     }
 
   private:
