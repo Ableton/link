@@ -1,6 +1,4 @@
 function(ConfigureAbletonLink PATH_TO_LINK)
-
-message(STATUS "Configuring link: ${PATH_TO_LINK}")
     if(CMAKE_VERSION VERSION_LESS 3.0)
         message(FATAL_ERROR "CMake 3.0 or greater is required")
     endif()
@@ -33,7 +31,7 @@ message(STATUS "Configuring link: ${PATH_TO_LINK}")
         set_property(TARGET Ableton::Link APPEND PROPERTY
             INTERFACE_COMPILE_DEFINITIONS
             LINK_PLATFORM_WINDOWS=1
-    )
+        )
     elseif(CMAKE_SYSTEM_NAME MATCHES "Linux|kFreeBSD|GNU")
         set_property(TARGET Ableton::Link APPEND PROPERTY
             INTERFACE_COMPILE_DEFINITIONS
@@ -57,5 +55,4 @@ message(STATUS "Configuring link: ${PATH_TO_LINK}")
         INTERFACE_SOURCES
         ${PATH_TO_LINK}/include/ableton/Link.hpp
     )
-
 endfunction()
