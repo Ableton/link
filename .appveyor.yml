@@ -33,11 +33,6 @@ environment:
       CONFIGURATION: Release
       GENERATOR: Ninja
       CXX: clang++-10
-    - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2004
-      AUDIO_DRIVER: Jack
-      CONFIGURATION: Debug
-      GENERATOR: Ninja
-      CXX: clang++-9
     - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2204
       AUDIO_DRIVER: Alsa
       CONFIGURATION: Release
@@ -53,16 +48,6 @@ environment:
       CONFIGURATION: Release
       GENERATOR: Ninja
       CXX: g++-9
-    - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2004
-      AUDIO_DRIVER: Jack
-      CONFIGURATION: Debug
-      GENERATOR: Ninja
-      CXX: g++-8
-    - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2004
-      AUDIO_DRIVER: Alsa
-      CONFIGURATION: Release
-      GENERATOR: Ninja
-      CXX: g++-7
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
       AUDIO_DRIVER: Wasapi
       THREAD_DESCRIPTION: OFF
