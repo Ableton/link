@@ -1,6 +1,4 @@
-if(CMAKE_VERSION VERSION_LESS 3.0)
-  message(FATAL_ERROR "CMake 3.0 or greater is required")
-endif()
+cmake_minimum_required(VERSION 3.5)
 
 add_library(abl_link STATIC
   ${CMAKE_CURRENT_LIST_DIR}/src/abl_link.cpp
