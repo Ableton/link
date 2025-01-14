@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.10)
 
 add_library(Ableton::Link IMPORTED INTERFACE)
 set_property(TARGET Ableton::Link APPEND PROPERTY
