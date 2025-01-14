@@ -1,6 +1,4 @@
-if(CMAKE_VERSION VERSION_LESS 3.0)
-  message(FATAL_ERROR "CMake 3.0 or greater is required")
-endif()
+cmake_minimum_required(VERSION 3.5)
 
 add_library(Ableton::Link IMPORTED INTERFACE)
 set_property(TARGET Ableton::Link APPEND PROPERTY
