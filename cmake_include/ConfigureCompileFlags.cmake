@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.10)
 
 set(build_flags_COMMON_LIST)
 set(build_flags_DEBUG_LIST)
