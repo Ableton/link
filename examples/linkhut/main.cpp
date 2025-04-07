@@ -178,6 +178,8 @@ void input(State& state)
         engine.startPlaying();
       }
       break;
+    default:
+      break;
     }
   }
 }
