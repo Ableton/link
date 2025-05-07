@@ -70,7 +70,7 @@ struct MockIoContext
 struct RpFixture
 {
   RpFixture()
-    : mAddress(discovery::IpAddressV4::from_string("127.0.0.1"))
+    : mAddress(discovery::makeAddress("127.0.0.1"))
     , mResponder(mAddress,
         NodeId::random<Random>(),
         GhostXForm{1.0, std::chrono::microseconds{0}},
@@ -89,7 +89,7 @@ struct RpFixture
     return responderSocket().sentMessages.size();
   }
 
-  discovery::IpAddressV4 mAddress = discovery::IpAddressV4::from_string("127.0.0.1");
+  discovery::IpAddress mAddress = discovery::makeAddress("127.0.0.1");
   util::Injected<MockIoContext> mIo;
   PingResponder<MockClock, MockIoContext> mResponder;
 };

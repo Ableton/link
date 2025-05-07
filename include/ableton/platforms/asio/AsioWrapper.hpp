@@ -36,8 +36,8 @@
 
 #pragma push_macro("ASIO_NO_TYPEID")
 #define ASIO_NO_TYPEID 1
-#define asio link_asio_1_28_0
-#define LINK_ASIO_NAMESPACE link_asio_1_28_0
+#define asio link_asio_1_30_2
+#define LINK_ASIO_NAMESPACE link_asio_1_30_2
 #define ASIO_STANDALONE 1
 #endif
 

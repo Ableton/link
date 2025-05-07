@@ -43,7 +43,7 @@ class AsioTimer
 public:
   using ErrorCode = ::LINK_ASIO_NAMESPACE::error_code;
   using TimePoint = std::chrono::system_clock::time_point;
-  using IoService = ::LINK_ASIO_NAMESPACE::io_service;
+  using IoService = ::LINK_ASIO_NAMESPACE::io_context;
   using SystemTimer = ::LINK_ASIO_NAMESPACE::system_timer;
 
 
@@ -82,15 +82,18 @@ public:
   template <typename T>
   void expires_from_now(T duration)
   {
-    mpTimer->expires_from_now(std::move(duration));
+    mpTimer->expires_after(std::move(duration));
   }
 
-  ErrorCode cancel()
+  void cancel()
   {
-    ErrorCode ec;
-    mpTimer->cancel(ec);
-    mpAsyncHandler->mpHandler = nullptr;
-    return ec;
+    try
+    {
+      mpTimer->cancel();
+    }
+    catch (...)
+    {
+    }
   }
 
   template <typename Handler>

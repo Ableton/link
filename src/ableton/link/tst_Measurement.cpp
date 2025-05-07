@@ -92,8 +92,7 @@ struct TFixture
     {
       using Random = ableton::platforms::stl::Random;
       mState.nodeState.sessionId = NodeId::random<Random>();
-      mState.endpoint =
-        discovery::UdpEndpoint(discovery::IpAddressV4::from_string("127.0.0.1"), 9999);
+      mState.endpoint = discovery::UdpEndpoint(discovery::makeAddress("127.0.0.1"), 9999);
     }
 
     PeerState operator()()
@@ -113,8 +112,7 @@ TEST_CASE("PeerMeasurement")
 {
   using Micros = std::chrono::microseconds;
   TFixture fixture;
-  const auto endpoint =
-    discovery::UdpEndpoint(discovery::IpAddressV4::from_string("127.0.0.1"), 8888);
+  const auto endpoint = discovery::UdpEndpoint(discovery::makeAddress("127.0.0.1"), 8888);
 
   SECTION("SendPingsOnConstruction")
   {

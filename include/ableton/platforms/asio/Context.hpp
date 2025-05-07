@@ -23,6 +23,7 @@
 #include <ableton/platforms/asio/AsioTimer.hpp>
 #include <ableton/platforms/asio/LockFreeCallbackDispatcher.hpp>
 #include <ableton/platforms/asio/Socket.hpp>
+#include <memory>
 #include <thread>
 #include <utility>
 
@@ -59,8 +60,8 @@ public:
 
   template <std::size_t BufferSize>
   using Socket = Socket<BufferSize>;
-  using IoService = ::LINK_ASIO_NAMESPACE::io_service;
-  using Work = IoService::work;
+  using IoService = ::LINK_ASIO_NAMESPACE::io_context;
+  using Work = ::LINK_ASIO_NAMESPACE::executor_work_guard<IoService::executor_type>;
 
   Context()
     : Context(DefaultHandler{})
@@ -70,7 +71,7 @@ public:
   template <typename ExceptionHandler>
   explicit Context(ExceptionHandler exceptHandler)
     : mpService(new IoService())
-    , mpWork(new Work(*mpService))
+    , mpWork(new Work(mpService->get_executor()))
   {
     mThread = ThreadFactoryT::makeThread("Link Main",
       [](IoService& service, ExceptionHandler handler) {
@@ -212,7 +213,7 @@ public:
   template <typename Handler>
   void async(Handler handler)
   {
-    mpService->post(std::move(handler));
+    ::LINK_ASIO_NAMESPACE::post(*mpService, std::move(handler));
   }
 
 private:
@@ -230,8 +231,8 @@ private:
     }
   };
 
-  std::unique_ptr<::LINK_ASIO_NAMESPACE::io_service> mpService;
-  std::unique_ptr<::LINK_ASIO_NAMESPACE::io_service::work> mpWork;
+  std::unique_ptr<IoService> mpService;
+  std::unique_ptr<Work> mpWork;
   std::thread mThread;
   Log mLog;
   ScanIpIfAddrs mScanIpIfAddrs;

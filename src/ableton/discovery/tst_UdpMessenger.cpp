@@ -97,10 +97,9 @@ TEST_CASE("UdpMessenger")
 {
   const TestNodeState state1 = {5, 15};
   const auto state2 = TestNodeState{3, 10};
-  const auto peerEndpoint = UdpEndpoint{IpAddress::from_string("123.123.234.234"), 1900};
+  const auto peerEndpoint = UdpEndpoint{makeAddress("123.123.234.234"), 1900};
   ::ableton::test::serial_io::Fixture io;
-  auto iface =
-    test::Interface(UdpEndpoint{IpAddress::from_string("123.123.234.42"), 1234});
+  auto iface = test::Interface(UdpEndpoint{makeAddress("123.123.234.42"), 1234});
 
   SECTION("BroadcastsStateOnConstruction")
   {
@@ -229,7 +228,7 @@ TEST_CASE("UdpMessenger")
     const auto messageEnd =
       v1::aliveMessage(state1.ident(), 0, makePayload(), begin(buffer));
     iface.incomingMessage(
-      UdpEndpoint{IpAddress::from_string("1.2.3.4"), 5678}, begin(buffer), messageEnd);
+      UdpEndpoint{makeAddress("1.2.3.4"), 5678}, begin(buffer), messageEnd);
 
     // Received message should not be handled
     CHECK(0 == handler.peerStates.size());

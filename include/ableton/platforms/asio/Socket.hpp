@@ -34,7 +34,7 @@ namespace LINK_ASIO_NAMESPACE
 template <std::size_t MaxPacketSize>
 struct Socket
 {
-  Socket(::LINK_ASIO_NAMESPACE::io_service& io, ::LINK_ASIO_NAMESPACE::ip::udp protocol)
+  Socket(::LINK_ASIO_NAMESPACE::io_context& io, ::LINK_ASIO_NAMESPACE::ip::udp protocol)
     : mpImpl(std::make_shared<Impl>(io, protocol))
   {
   }
@@ -70,7 +70,7 @@ struct Socket
 
   struct Impl
   {
-    Impl(::LINK_ASIO_NAMESPACE::io_service& io, ::LINK_ASIO_NAMESPACE::ip::udp protocol)
+    Impl(::LINK_ASIO_NAMESPACE::io_context& io, ::LINK_ASIO_NAMESPACE::ip::udp protocol)
       : mSocket(io, protocol)
     {
     }

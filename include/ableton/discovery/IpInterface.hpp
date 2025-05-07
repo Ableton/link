@@ -29,15 +29,13 @@ namespace discovery
 
 inline UdpEndpoint multicastEndpointV4()
 {
-  return {IpAddressV4::from_string("224.76.78.75"), 20808};
+  return {makeAddress("224.76.78.75"), 20808};
 }
 
 inline UdpEndpoint multicastEndpointV6(uint64_t scopeId)
 {
   // This is a non-permanently-assigned link-local multicast address (RFC4291)
-  return {
-    ::LINK_ASIO_NAMESPACE::ip::make_address("ff12::8080%" + std::to_string(scopeId)),
-    20808};
+  return {makeAddress("ff12::8080%" + std::to_string(scopeId)), 20808};
 }
 
 // Type tags for dispatching between unicast and multicast packets

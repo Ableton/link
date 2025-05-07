@@ -41,7 +41,7 @@ struct MeasurementEndpointV4
       return 0;
     }
     return discovery::sizeInByteStream(
-             static_cast<std::uint32_t>(mep.ep.address().to_v4().to_ulong()))
+             static_cast<std::uint32_t>(mep.ep.address().to_v4().to_uint()))
            + discovery::sizeInByteStream(mep.ep.port());
   }
 
@@ -51,7 +51,7 @@ struct MeasurementEndpointV4
     assert(mep.ep.address().is_v4());
     return discovery::toNetworkByteStream(mep.ep.port(),
       discovery::toNetworkByteStream(
-        static_cast<std::uint32_t>(mep.ep.address().to_v4().to_ulong()), std::move(out)));
+        static_cast<std::uint32_t>(mep.ep.address().to_v4().to_uint()), std::move(out)));
   }
 
   template <typename It>

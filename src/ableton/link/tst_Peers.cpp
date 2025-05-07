@@ -104,8 +104,8 @@ TEST_CASE("Peers")
                 Timeline{Tempo{100.}, Beats{4.}, std::chrono::microseconds{100}}, {}},
       {}};
 
-  const auto gateway1 = discovery::IpAddress::from_string("123.123.123.123");
-  const auto gateway2 = discovery::IpAddress::from_string("210.210.210.210");
+  const auto gateway1 = discovery::makeAddress("123.123.123.123");
+  const auto gateway2 = discovery::makeAddress("210.210.210.210");
 
   auto membership = SessionMembershipCallback{};
   auto sessions = SessionTimelineCallback{};

@@ -74,8 +74,8 @@ void expectGateways(
 
 TEST_CASE("PeerGateways")
 {
-  const IpAddress addr1 = IpAddress::from_string("192.192.192.1");
-  const IpAddress addr2 = IpAddress::from_string("192.192.192.2");
+  const IpAddress addr1 = makeAddress("192.192.192.1");
+  const IpAddress addr2 = makeAddress("192.192.192.2");
 
   test::serial_io::Fixture io;
   auto pGateways = makePeerGateways(

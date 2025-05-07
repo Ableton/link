@@ -91,7 +91,8 @@ struct ScanIpIfAddrs
         if (addr && interface->ifa_flags & IFF_RUNNING && addr->sin_family == AF_INET)
         {
           const auto bytes = reinterpret_cast<const char*>(&addr->sin_addr);
-          const auto address = discovery::makeAddress<discovery::IpAddressV4>(bytes);
+          const auto address =
+            discovery::makeAddressFromBytes<discovery::IpAddressV4>(bytes);
           addrs.emplace_back(address);
           IpInterfaceNames.insert(std::make_pair(interface->ifa_name, address));
         }
@@ -111,7 +112,7 @@ struct ScanIpIfAddrs
           const auto bytes = reinterpret_cast<const char*>(&addr6->sin6_addr);
           const auto scopeId = addr6->sin6_scope_id;
           const auto address =
-            discovery::makeAddress<discovery::IpAddressV6>(bytes, scopeId);
+            discovery::makeAddressFromBytes<discovery::IpAddressV6>(bytes, scopeId);
           if (!address.is_loopback() && address.is_link_local())
           {
             addrs.emplace_back(address);

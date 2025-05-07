@@ -43,8 +43,9 @@ struct TestCallback
 
 TEST_CASE("InterfaceScanner")
 {
-  const auto addr1 = discovery::IpAddress::from_string("123.123.123.1");
-  const auto addr2 = discovery::IpAddress::from_string("123.123.123.2");
+  const auto addr1 = discovery::makeAddress("123.123.123.1");
+  const auto addr2 = discovery::makeAddress("123.123.123.2");
+
   test::serial_io::Fixture io;
   auto callback = TestCallback{};
 

@@ -32,8 +32,14 @@ using IpAddressV6 = LINK_ASIO_NAMESPACE::ip::address_v6;
 using UdpSocket = LINK_ASIO_NAMESPACE::ip::udp::socket;
 using UdpEndpoint = LINK_ASIO_NAMESPACE::ip::udp::endpoint;
 
+template <typename... Args>
+inline IpAddress makeAddress(Args&&... args)
+{
+  return LINK_ASIO_NAMESPACE::ip::make_address(std::forward<Args>(args)...);
+}
+
 template <typename AsioAddrType>
-AsioAddrType makeAddress(const char* pAddr)
+AsioAddrType makeAddressFromBytes(const char* pAddr)
 {
   using namespace std;
   typename AsioAddrType::bytes_type bytes;
@@ -42,7 +48,7 @@ AsioAddrType makeAddress(const char* pAddr)
 }
 
 template <typename AsioAddrType>
-AsioAddrType makeAddress(const char* pAddr, uint32_t scopeId)
+AsioAddrType makeAddressFromBytes(const char* pAddr, uint32_t scopeId)
 {
   using namespace std;
   typename AsioAddrType::bytes_type bytes;

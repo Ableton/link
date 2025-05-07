@@ -122,7 +122,7 @@ struct ScanIpIfAddrs
               reinterpret_cast<SOCKADDR_IN*>(address->Address.lpSockaddr);
             const auto bytes = reinterpret_cast<const char*>(&addr4->sin_addr);
             const auto ipv4address =
-              discovery::makeAddress<discovery::IpAddressV4>(bytes);
+              discovery::makeAddressFromBytes<discovery::IpAddressV4>(bytes);
             addrs.emplace_back(ipv4address);
             IpInterfaceNames.insert(
               std::make_pair(networkInterface->AdapterName, ipv4address));
@@ -149,7 +149,7 @@ struct ScanIpIfAddrs
             const auto scopeId = sockAddr->sin6_scope_id;
             const auto bytes = reinterpret_cast<const char*>(&sockAddr->sin6_addr);
             const auto addr6 =
-              discovery::makeAddress<discovery::IpAddressV6>(bytes, scopeId);
+              discovery::makeAddressFromBytes<discovery::IpAddressV6>(bytes, scopeId);
             if (!addr6.is_loopback() && addr6.is_link_local())
             {
               addrs.emplace_back(addr6);
