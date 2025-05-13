@@ -1,0 +1,144 @@
+name: Link CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  macos:
+    strategy:
+      matrix:
+        include:
+          - os: macos-14
+            configuration: Debug
+            xcode-version: 15.4.0
+          - os: macos-14
+            configuration: Release
+            xcode-version: 16.2.0
+      fail-fast: false
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Configure
+        run: |
+          sudo xcode-select -s '/Applications/Xcode_${{ matrix.xcode-version }}.app/Contents/Developer'
+          cmake -B build -GNinja . -DCMAKE_BUILD_TYPE=${{ matrix.configuration }}
+      - name: Build
+        run: cmake --build build --config ${{ matrix.configuration }}
+      - name: Test
+        run: |
+          ./build/bin/LinkCoreTest
+          ./build/bin/LinkDiscoveryTest
+
+  linux:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-22.04
+            configuration: Debug
+            cxx: clang++-13
+            audio-driver: Alsa
+          - os: ubuntu-22.04
+            configuration: Release
+            cxx: clang++-14
+            audio-driver: Jack
+          - os: ubuntu-22.04
+            configuration: Debug
+            cxx: g++-10
+            audio-driver: Jack
+          - os: ubuntu-22.04
+            configuration: Release
+            cxx: g++-11
+            audio-driver: Alsa
+      fail-fast: false
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Set up
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake libjack-dev portaudio19-dev valgrind
+      - name: Configure
+        env:
+          CXX: ${{ matrix.cxx }}
+        run: |
+          args=(-Bbuild . -GNinja -DCMAKE_BUILD_TYPE=${{ matrix.configuration }})
+          if [[ "${{ matrix.audio-driver }}" == "Jack" ]]; then
+            args+=(-DLINK_BUILD_JACK=ON)
+          fi
+          cmake "${args[@]}"
+      - name: Build
+        run: cmake --build build --config ${{ matrix.configuration }}
+      - name: Test
+        run: |
+          valgrind --leak-check=full --show-reachable=yes --gen-suppressions=all --error-exitcode=1 --track-origins=yes --suppressions=ci/memcheck.supp build/bin/LinkCoreTest
+          valgrind --leak-check=full --show-reachable=yes --gen-suppressions=all --error-exitcode=1 --track-origins=yes --suppressions=ci/memcheck.supp build/bin/LinkDiscoveryTest
+
+  windows:
+    strategy:
+      matrix:
+        include:
+          - os: windows-2022
+            generator: "Visual Studio 17 2022"
+            configuration: Debug
+            audio-driver: Asio
+            thread-description: ON
+          - os: windows-2022
+            generator: "Visual Studio 17 2022"
+            configuration: Release
+            audio-driver: Wasapi
+            thread-description: OFF
+      fail-fast: false
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Configure
+        run: |
+          $args = @("-Bbuild", ".", "-DCMAKE_BUILD_TYPE=${{ matrix.configuration }}", "-G${{ matrix.generator }}")
+          if ("${{ matrix.audio-driver }}" -eq "Asio") {
+            $args += "-DLINK_BUILD_ASIO=ON"
+          }
+          if ("${{ matrix.audio-driver }}" -eq "Wasapi") {
+            $args += "-DLINK_BUILD_ASIO=OFF"
+          }
+          if ("${{ matrix.thread-description }}" -eq "ON") {
+            $args += "-DLINK_WINDOWS_SETTHREADDESCRIPTION=ON"
+          }
+          cmake @args
+      - name: Build
+        run: cmake --build build --config ${{ matrix.configuration }}
+      - name: Test
+        run: |
+          .\build\bin\${{ matrix.configuration }}\LinkCoreTest.exe
+          .\build\bin\${{ matrix.configuration }}\LinkDiscoveryTest.exe
+
+  esp-idf:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Build ESP-IDF
+        run: docker run --rm -v ${{ github.workspace }}:/link -w /link/examples/esp32 -e LC_ALL=C.UTF-8 espressif/idf:v5.1.1 idf.py build
+
+  check-formatting:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Check Formatting
+        run: docker run -v ${{ github.workspace }}:/link dalg24/clang-format:18.04.0 python /link/ci/check-formatting.py -c /usr/bin/clang-format-6.0
