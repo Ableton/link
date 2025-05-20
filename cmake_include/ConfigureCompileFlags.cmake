@@ -35,6 +35,7 @@ if(UNIX)
       "-Wno-poison-system-directories"
       "-Wno-reserved-id-macro"
       "-Wno-unknown-warning-option"
+      "-Wno-unsafe-buffer-usage"
       "-Wno-unused-member-function"
     )
 

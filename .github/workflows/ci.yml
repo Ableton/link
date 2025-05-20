@@ -43,18 +43,19 @@ jobs:
             configuration: Debug
             cxx: clang++-13
             audio-driver: Alsa
-          - os: ubuntu-22.04
+          - os: ubuntu-24.04
             configuration: Release
-            cxx: clang++-14
+            cxx: clang++-18
             audio-driver: Jack
           - os: ubuntu-22.04
             configuration: Debug
             cxx: g++-10
             audio-driver: Jack
-          - os: ubuntu-22.04
+          - os: ubuntu-24.04
             configuration: Release
-            cxx: g++-11
+            cxx: g++-14
             audio-driver: Alsa
+
       fail-fast: false
     runs-on: ${{ matrix.os }}
     steps:
@@ -96,6 +97,7 @@ jobs:
             configuration: Release
             audio-driver: Wasapi
             thread-description: OFF
+
       fail-fast: false
     runs-on: ${{ matrix.os }}
     steps:
