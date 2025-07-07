@@ -52,7 +52,8 @@ inline SessionState initSessionState(const Tempo tempo, const Clock& clock)
 {
   using namespace std::chrono;
   return {clampTempo(Timeline{tempo, Beats{0.}, microseconds{0}}),
-    StartStopState{false, Beats{0.}, microseconds{0}}, initXForm(clock)};
+          StartStopState{false, Beats{0.}, microseconds{0}},
+          initXForm(clock)};
 }
 
 inline ClientState initClientState(const SessionState& sessionState)
@@ -116,19 +117,19 @@ using StartStopStateCallback = std::function<void(bool)>;
 
 // The main Link controller
 template <typename PeerCountCallback,
-  typename TempoCallback,
-  typename StartStopStateCallback,
-  typename Clock,
-  typename Random,
-  typename IoContext>
+          typename TempoCallback,
+          typename StartStopStateCallback,
+          typename Clock,
+          typename Random,
+          typename IoContext>
 class Controller
 {
 public:
   Controller(Tempo tempo,
-    PeerCountCallback peerCallback,
-    TempoCallback tempoCallback,
-    StartStopStateCallback startStopStateCallback,
-    Clock clock)
+             PeerCountCallback peerCallback,
+             TempoCallback tempoCallback,
+             StartStopStateCallback startStopStateCallback,
+             Clock clock)
     : mTempoCallback(std::move(tempoCallback))
     , mStartStopStateCallback(std::move(startStopStateCallback))
     , mClock(std::move(clock))
@@ -145,9 +146,9 @@ public:
     , mIo(IoContext{UdpSendExceptionHandler{this}})
     , mRtClientStateSetter(*this)
     , mPeers(util::injectRef(*mIo),
-        std::ref(mSessionPeerCounter),
-        SessionTimelineCallback{*this},
-        SessionStartStopStateCallback{*this})
+             std::ref(mSessionPeerCounter),
+             SessionTimelineCallback{*this},
+             SessionStartStopStateCallback{*this})
     , mSessions(
         {mSessionId, mSessionState.timeline, {mSessionState.ghostXForm, mClock.micros()}},
         util::injectRef(mPeers),
@@ -155,9 +156,11 @@ public:
         JoinSessionCallback{*this},
         util::injectRef(*mIo),
         mClock)
-    , mDiscovery(std::make_pair(NodeState{mNodeId, mSessionId, mSessionState.timeline,
-                                  mSessionState.startStopState},
-                   mSessionState.ghostXForm),
+    , mDiscovery(
+        std::make_pair(
+          NodeState{
+            mNodeId, mSessionId, mSessionState.timeline, mSessionState.startStopState},
+          mSessionState.ghostXForm),
         GatewayFactory{*this},
         util::injectRef(*mIo))
   {
@@ -175,13 +178,15 @@ public:
     std::condition_variable condition;
     auto stopped = false;
 
-    mIo->async([this, &mutex, &condition, &stopped]() {
-      mEnabled = false;
-      mDiscovery.enable(false);
-      std::unique_lock<std::mutex> lock(mutex);
-      stopped = true;
-      condition.notify_one();
-    });
+    mIo->async(
+      [this, &mutex, &condition, &stopped]()
+      {
+        mEnabled = false;
+        mDiscovery.enable(false);
+        std::unique_lock<std::mutex> lock(mutex);
+        stopped = true;
+        condition.notify_one();
+      });
 
     std::unique_lock<std::mutex> lock(mutex);
     condition.wait(lock, [&stopped] { return stopped; });
@@ -198,51 +203,38 @@ public:
     }
   }
 
-  bool isEnabled() const
-  {
-    return mEnabled;
-  }
+  bool isEnabled() const { return mEnabled; }
 
-  void enableStartStopSync(const bool bEnable)
-  {
-    mStartStopSyncEnabled = bEnable;
-  }
+  void enableStartStopSync(const bool bEnable) { mStartStopSyncEnabled = bEnable; }
 
-  bool isStartStopSyncEnabled() const
-  {
-    return mStartStopSyncEnabled;
-  }
+  bool isStartStopSyncEnabled() const { return mStartStopSyncEnabled; }
 
-  std::size_t numPeers() const
-  {
-    return mSessionPeerCounter.mSessionPeerCount;
-  }
+  std::size_t numPeers() const { return mSessionPeerCounter.mSessionPeerCount; }
 
   // Get the current Link client state. Thread-safe but may block, so
   // it cannot be used from audio thread.
-  ClientState clientState() const
-  {
-    return mClientState.get();
-  }
+  ClientState clientState() const { return mClientState.get(); }
 
   // Set the client state to be used, starting at the given time.
   // Thread-safe but may block, so it cannot be used from audio thread.
   void setClientState(IncomingClientState newClientState)
   {
-    mClientState.update([&](ClientState& clientState) {
-      if (newClientState.timeline)
+    mClientState.update(
+      [&](ClientState& clientState)
       {
-        *newClientState.timeline = clampTempo(*newClientState.timeline);
-        clientState.timeline = *newClientState.timeline;
-      }
-      if (newClientState.startStopState)
-      {
-        // Prevent updating client start stop state with an outdated start stop state
-        *newClientState.startStopState = detail::selectPreferredStartStopState(
-          clientState.startStopState, *newClientState.startStopState);
-        clientState.startStopState = *newClientState.startStopState;
-      }
-    });
+        if (newClientState.timeline)
+        {
+          *newClientState.timeline = clampTempo(*newClientState.timeline);
+          clientState.timeline = *newClientState.timeline;
+        }
+        if (newClientState.startStopState)
+        {
+          // Prevent updating client start stop state with an outdated start stop state
+          *newClientState.startStopState = detail::selectPreferredStartStopState(
+            clientState.startStopState, *newClientState.startStopState);
+          clientState.startStopState = *newClientState.startStopState;
+        }
+      });
     mIo->async([this, newClientState] { handleClientState(newClientState); });
   }
 
@@ -332,11 +324,13 @@ private:
   {
     bool shouldInvokeCallback = false;
 
-    mClientState.update([&](ClientState& clientState) {
-      shouldInvokeCallback =
-        mLastIsPlayingForStartStopStateCallback != clientState.startStopState.isPlaying;
-      mLastIsPlayingForStartStopStateCallback = clientState.startStopState.isPlaying;
-    });
+    mClientState.update(
+      [&](ClientState& clientState)
+      {
+        shouldInvokeCallback =
+          mLastIsPlayingForStartStopStateCallback != clientState.startStopState.isPlaying;
+        mLastIsPlayingForStartStopStateCallback = clientState.startStopState.isPlaying;
+      });
 
     if (shouldInvokeCallback)
     {
@@ -347,10 +341,10 @@ private:
   void updateDiscovery()
   {
     // Push the change to the discovery service
-    mDiscovery.updateNodeState(
-      std::make_pair(NodeState{mNodeId, mSessionId, mSessionState.timeline,
-                       mSessionState.startStopState},
-        mSessionState.ghostXForm));
+    mDiscovery.updateNodeState(std::make_pair(
+      NodeState{
+        mNodeId, mSessionId, mSessionState.timeline, mSessionState.startStopState},
+      mSessionState.ghostXForm));
   }
 
   void updateSessionTiming(Timeline newTimeline, const GhostXForm newXForm)
@@ -370,19 +364,25 @@ private:
       }
 
       // Update the client timeline and start stop state based on the new session timing
-      mClientState.update([&](ClientState& clientState) {
-        clientState.timeline = updateClientTimelineFromSession(clientState.timeline,
-          mSessionState.timeline, mClock.micros(), mSessionState.ghostXForm);
-        // Don't pass the start stop state to the client when start stop sync is disabled
-        // or when we have a default constructed start stop state
-        if (mStartStopSyncEnabled && mSessionState.startStopState != StartStopState{})
+      mClientState.update(
+        [&](ClientState& clientState)
         {
-          std::lock_guard<std::mutex> startStopStateLock(mSessionStateGuard);
-          clientState.startStopState =
-            detail::mapStartStopStateFromSessionToClient(mSessionState.startStopState,
-              mSessionState.timeline, mSessionState.ghostXForm);
-        }
-      });
+          clientState.timeline =
+            updateClientTimelineFromSession(clientState.timeline,
+                                            mSessionState.timeline,
+                                            mClock.micros(),
+                                            mSessionState.ghostXForm);
+          // Don't pass the start stop state to the client when start stop sync is
+          // disabled or when we have a default constructed start stop state
+          if (mStartStopSyncEnabled && mSessionState.startStopState != StartStopState{})
+          {
+            std::lock_guard<std::mutex> startStopStateLock(mSessionStateGuard);
+            clientState.startStopState =
+              detail::mapStartStopStateFromSessionToClient(mSessionState.startStopState,
+                                                           mSessionState.timeline,
+                                                           mSessionState.ghostXForm);
+          }
+        });
 
       if (oldTimeline.tempo != newTimeline.tempo)
       {
@@ -396,14 +396,11 @@ private:
     debug(mIo->log()) << "Received timeline with tempo: " << timeline.tempo.bpm()
                       << " for session: " << id;
     updateSessionTiming(mSessions.sawSessionTimeline(std::move(id), std::move(timeline)),
-      mSessionState.ghostXForm);
+                        mSessionState.ghostXForm);
     updateDiscovery();
   }
 
-  void resetSessionStartStopState()
-  {
-    mSessionState.startStopState = StartStopState{};
-  }
+  void resetSessionStartStopState() { mSessionState.startStopState = StartStopState{}; }
 
   void handleStartStopStateFromSession(SessionId sessionId, StartStopState startStopState)
   {
@@ -423,10 +420,12 @@ private:
 
       if (mStartStopSyncEnabled)
       {
-        mClientState.update([&](ClientState& clientState) {
-          clientState.startStopState = detail::mapStartStopStateFromSessionToClient(
-            startStopState, mSessionState.timeline, mSessionState.ghostXForm);
-        });
+        mClientState.update(
+          [&](ClientState& clientState)
+          {
+            clientState.startStopState = detail::mapStartStopStateFromSessionToClient(
+              startStopState, mSessionState.timeline, mSessionState.ghostXForm);
+          });
         invokeStartStopStateCallbackIfChanged();
       }
     }
@@ -438,8 +437,11 @@ private:
 
     if (clientState.timeline)
     {
-      auto sessionTimeline = updateSessionTimelineFromClient(mSessionState.timeline,
-        *clientState.timeline, clientState.timelineTimestamp, mSessionState.ghostXForm);
+      auto sessionTimeline =
+        updateSessionTimelineFromClient(mSessionState.timeline,
+                                        *clientState.timeline,
+                                        clientState.timelineTimestamp,
+                                        mSessionState.ghostXForm);
 
       mSessions.resetTimeline(sessionTimeline);
       mPeers.setSessionTimeline(mSessionId, sessionTimeline);
@@ -455,12 +457,15 @@ private:
         mSessionState.ghostXForm.hostToGhost(clientState.startStopState->timestamp);
       if (newGhostTime > mSessionState.startStopState.timestamp)
       {
-        mClientState.update([&](ClientState& currentClientState) {
-          mSessionState.startStopState =
-            detail::mapStartStopStateFromClientToSession(*clientState.startStopState,
-              mSessionState.timeline, mSessionState.ghostXForm);
-          currentClientState.startStopState = *clientState.startStopState;
-        });
+        mClientState.update(
+          [&](ClientState& currentClientState)
+          {
+            mSessionState.startStopState =
+              detail::mapStartStopStateFromClientToSession(*clientState.startStopState,
+                                                           mSessionState.timeline,
+                                                           mSessionState.ghostXForm);
+            currentClientState.startStopState = *clientState.startStopState;
+          });
 
         mustUpdateDiscovery = true;
       }
@@ -476,19 +481,21 @@ private:
 
   void handleRtClientState(IncomingClientState clientState)
   {
-    mClientState.update([&](ClientState& currentClientState) {
-      if (clientState.timeline)
+    mClientState.update(
+      [&](ClientState& currentClientState)
       {
-        currentClientState.timeline = *clientState.timeline;
-      }
-      if (clientState.startStopState)
-      {
-        // Prevent updating client start stop state with an outdated start stop state
-        *clientState.startStopState = detail::selectPreferredStartStopState(
-          currentClientState.startStopState, *clientState.startStopState);
-        currentClientState.startStopState = *clientState.startStopState;
-      }
-    });
+        if (clientState.timeline)
+        {
+          currentClientState.timeline = *clientState.timeline;
+        }
+        if (clientState.startStopState)
+        {
+          // Prevent updating client start stop state with an outdated start stop state
+          *clientState.startStopState = detail::selectPreferredStartStopState(
+            currentClientState.startStopState, *clientState.startStopState);
+          currentClientState.startStopState = *clientState.startStopState;
+        }
+      });
 
     handleClientState(clientState);
     mHasPendingRtClientStates = false;
@@ -528,7 +535,8 @@ private:
     // the beat on the old session timeline corresponding to the
     // current host time and mapping it to the new ghost time
     // representation of the current host time.
-    const auto newTl = Timeline{mSessionState.timeline.tempo,
+    const auto newTl = Timeline{
+      mSessionState.timeline.tempo,
       mSessionState.timeline.toBeats(mSessionState.ghostXForm.hostToGhost(hostTime)),
       xform.hostToGhost(hostTime)};
 
@@ -555,27 +563,27 @@ private:
   {
     using CallbackDispatcher =
       typename IoContext::template LockFreeCallbackDispatcher<std::function<void()>,
-        std::chrono::milliseconds>;
+                                                              std::chrono::milliseconds>;
 
     RtClientStateSetter(Controller& controller)
       : mController(controller)
       , mCallbackDispatcher(
-          [this] {
-            mController.mIo->async([this]() {
-              // Process the pending client states first to make sure we don't push one
-              // after we have joined a running session when enabling
-              processPendingClientStates();
-              updateEnabled();
-            });
+          [this]
+          {
+            mController.mIo->async(
+              [this]()
+              {
+                // Process the pending client states first to make sure we don't push one
+                // after we have joined a running session when enabling
+                processPendingClientStates();
+                updateEnabled();
+              });
           },
           detail::kRtHandlerFallbackPeriod)
     {
     }
 
-    void invoke()
-    {
-      mCallbackDispatcher.invoke();
-    }
+    void invoke() { mCallbackDispatcher.invoke(); }
 
     void push(const IncomingClientState clientState)
     {
@@ -688,21 +696,23 @@ private:
     {
       using It = typename Discovery::ServicePeerGateways::GatewayMap::iterator;
       using ValueType = typename Discovery::ServicePeerGateways::GatewayMap::value_type;
-      mController.mDiscovery.withGateways([peer, handler](It begin, const It end) {
-        const auto addr = peer.second;
-        const auto it = std::find_if(
-          begin, end, [&addr](const ValueType& vt) { return vt.first == addr; });
-        if (it != end)
+      mController.mDiscovery.withGateways(
+        [peer, handler](It begin, const It end)
         {
-          it->second->measurePeer(std::move(peer.first), std::move(handler));
-        }
-        else
-        {
-          // invoke the handler with an empty result if we couldn't
-          // find the peer's gateway
-          handler(GhostXForm{});
-        }
-      });
+          const auto addr = peer.second;
+          const auto it = std::find_if(
+            begin, end, [&addr](const ValueType& vt) { return vt.first == addr; });
+          if (it != end)
+          {
+            it->second->measurePeer(std::move(peer.first), std::move(handler));
+          }
+          else
+          {
+            // invoke the handler with an empty result if we couldn't
+            // find the peer's gateway
+            handler(GhostXForm{});
+          }
+        });
     }
 
     Controller& mController;
@@ -710,10 +720,7 @@ private:
 
   struct JoinSessionCallback
   {
-    void operator()(Session session)
-    {
-      mController.joinSession(std::move(session));
-    }
+    void operator()(Session session) { mController.joinSession(std::move(session)); }
 
     Controller& mController;
   };
@@ -721,9 +728,9 @@ private:
   using IoType = typename util::Injected<IoContext>::type;
 
   using ControllerPeers = Peers<IoType&,
-    std::reference_wrapper<SessionPeerCounter>,
-    SessionTimelineCallback,
-    SessionStartStopStateCallback>;
+                                std::reference_wrapper<SessionPeerCounter>,
+                                SessionTimelineCallback,
+                                SessionStartStopStateCallback>;
 
   using ControllerGateway =
     Gateway<typename ControllerPeers::GatewayObserver, Clock, IoType&>;
@@ -732,12 +739,16 @@ private:
   struct GatewayFactory
   {
     GatewayPtr operator()(std::pair<NodeState, GhostXForm> state,
-      util::Injected<IoType&> io,
-      const discovery::IpAddress& addr)
+                          util::Injected<IoType&> io,
+                          const discovery::IpAddress& addr)
     {
-      return GatewayPtr{new ControllerGateway{std::move(io), addr,
+      return GatewayPtr{new ControllerGateway{
+        std::move(io),
+        addr,
         util::injectVal(makeGatewayObserver(mController.mPeers, addr)),
-        std::move(state.first), std::move(state.second), mController.mClock}};
+        std::move(state.first),
+        std::move(state.second),
+        mController.mClock}};
     }
 
     Controller& mController;
@@ -749,9 +760,9 @@ private:
 
     void operator()(const Exception exception)
     {
-      mpController->mIo->async([this, exception] {
-        mpController->mDiscovery.repairGateway(exception.interfaceAddr);
-      });
+      mpController->mIo->async(
+        [this, exception]
+        { mpController->mDiscovery.repairGateway(exception.interfaceAddr); });
     }
 
     Controller* mpController;
@@ -785,15 +796,15 @@ private:
   ControllerPeers mPeers;
 
   using ControllerSessions = Sessions<ControllerPeers&,
-    MeasurePeer,
-    JoinSessionCallback,
-    typename util::Injected<IoContext>::type&,
-    Clock>;
+                                      MeasurePeer,
+                                      JoinSessionCallback,
+                                      typename util::Injected<IoContext>::type&,
+                                      Clock>;
   ControllerSessions mSessions;
 
   using Discovery = discovery::Service<std::pair<NodeState, GhostXForm>,
-    GatewayFactory,
-    typename util::Injected<IoContext>::type&>;
+                                       GatewayFactory,
+                                       typename util::Injected<IoContext>::type&>;
   Discovery mDiscovery;
 };
 

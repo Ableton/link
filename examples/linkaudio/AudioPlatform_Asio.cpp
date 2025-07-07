@@ -180,8 +180,10 @@ void AudioPlatform::createAsioBuffers()
   }
 
   driverInfo.numBuffers = numInputBuffers + numOutputBuffers;
-  ASIOError result = ASIOCreateBuffers(driverInfo.bufferInfos, driverInfo.numBuffers,
-    driverInfo.preferredSize, &(mAsioCallbacks));
+  ASIOError result = ASIOCreateBuffers(driverInfo.bufferInfos,
+                                       driverInfo.numBuffers,
+                                       driverInfo.preferredSize,
+                                       &(mAsioCallbacks));
   if (result != ASE_OK)
   {
     fatalError(result, "ASIOCreateBuffers");

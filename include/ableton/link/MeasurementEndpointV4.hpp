@@ -49,7 +49,8 @@ struct MeasurementEndpointV4
   friend It toNetworkByteStream(const MeasurementEndpointV4 mep, It out)
   {
     assert(mep.ep.address().is_v4());
-    return discovery::toNetworkByteStream(mep.ep.port(),
+    return discovery::toNetworkByteStream(
+      mep.ep.port(),
       discovery::toNetworkByteStream(
         static_cast<std::uint32_t>(mep.ep.address().to_v4().to_uint()), std::move(out)));
   }

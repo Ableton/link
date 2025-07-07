@@ -33,16 +33,13 @@ namespace test
 class Socket
 {
 public:
-  Socket(util::test::IoService&)
-  {
-  }
+  Socket(util::test::IoService&) {}
 
-  friend void configureUnicastSocket(Socket&, const IpAddressV4&)
-  {
-  }
+  friend void configureUnicastSocket(Socket&, const IpAddressV4&) {}
 
-  std::size_t send(
-    const uint8_t* const pData, const size_t numBytes, const discovery::UdpEndpoint& to)
+  std::size_t send(const uint8_t* const pData,
+                   const size_t numBytes,
+                   const discovery::UdpEndpoint& to)
   {
     sentMessages.push_back(
       std::make_pair(std::vector<uint8_t>{pData, pData + numBytes}, to));
@@ -52,9 +49,8 @@ public:
   template <typename Handler>
   void receive(Handler handler)
   {
-    mCallback = [handler](const UdpEndpoint& from, const std::vector<uint8_t>& buffer) {
-      handler(from, begin(buffer), end(buffer));
-    };
+    mCallback = [handler](const UdpEndpoint& from, const std::vector<uint8_t>& buffer)
+    { handler(from, begin(buffer), end(buffer)); };
   }
 
   template <typename It>
@@ -64,10 +60,7 @@ public:
     mCallback(from, buffer);
   }
 
-  UdpEndpoint endpoint() const
-  {
-    return UdpEndpoint({}, 0);
-  }
+  UdpEndpoint endpoint() const { return UdpEndpoint({}, 0); }
 
   using SentMessage = std::pair<std::vector<uint8_t>, UdpEndpoint>;
   std::vector<SentMessage> sentMessages;

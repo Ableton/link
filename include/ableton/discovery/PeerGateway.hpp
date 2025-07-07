@@ -42,8 +42,8 @@ public:
   using TimerError = typename Timer::ErrorCode;
 
   PeerGateway(util::Injected<Messenger> messenger,
-    util::Injected<PeerObserver> observer,
-    util::Injected<IoContext> io)
+              util::Injected<PeerObserver> observer,
+              util::Injected<IoContext> io)
     : mpImpl(new Impl(std::move(messenger), std::move(observer), std::move(io)))
   {
     mpImpl->listen();
@@ -57,10 +57,7 @@ public:
   {
   }
 
-  void updateState(NodeState state)
-  {
-    mpImpl->updateState(std::move(state));
-  }
+  void updateState(NodeState state) { mpImpl->updateState(std::move(state)); }
 
 private:
   using PeerTimeout = std::pair<std::chrono::system_clock::time_point, NodeId>;
@@ -69,8 +66,8 @@ private:
   struct Impl : std::enable_shared_from_this<Impl>
   {
     Impl(util::Injected<Messenger> messenger,
-      util::Injected<PeerObserver> observer,
-      util::Injected<IoContext> io)
+         util::Injected<PeerObserver> observer,
+         util::Injected<IoContext> io)
       : mMessenger(std::move(messenger))
       , mObserver(std::move(observer))
       , mIo(std::move(io))
@@ -91,10 +88,7 @@ private:
       }
     }
 
-    void listen()
-    {
-      mMessenger->receive(util::makeAsyncSafe(this->shared_from_this()));
-    }
+    void listen() { mMessenger->receive(util::makeAsyncSafe(this->shared_from_this())); }
 
     // Operators for handling incoming messages
     void operator()(const PeerState<NodeState>& msg)
@@ -150,10 +144,13 @@ private:
       const auto endExpired =
         lower_bound(begin(mPeerTimeouts), end(mPeerTimeouts), test, TimeoutCompare{});
 
-      for_each(begin(mPeerTimeouts), endExpired, [this](const PeerTimeout& pto) {
-        info(mIo->log()) << "pruning peer " << pto.second;
-        peerTimedOut(*mObserver, pto.second);
-      });
+      for_each(begin(mPeerTimeouts),
+               endExpired,
+               [this](const PeerTimeout& pto)
+               {
+                 info(mIo->log()) << "pruning peer " << pto.second;
+                 peerTimedOut(*mObserver, pto.second);
+               });
       mPeerTimeouts.erase(begin(mPeerTimeouts), endExpired);
       scheduleNextPruning();
     }
@@ -171,12 +168,14 @@ private:
                           << mPeerTimeouts.front().second;
 
         mPruneTimer.expires_at(t);
-        mPruneTimer.async_wait([this](const TimerError e) {
-          if (!e)
+        mPruneTimer.async_wait(
+          [this](const TimerError e)
           {
-            pruneExpiredPeers();
-          }
-        });
+            if (!e)
+            {
+              pruneExpiredPeers();
+            }
+          });
       }
     }
 
@@ -190,8 +189,10 @@ private:
 
     typename PeerTimeouts::iterator findPeer(const NodeId& peerId)
     {
-      return std::find_if(begin(mPeerTimeouts), end(mPeerTimeouts),
-        [&peerId](const PeerTimeout& pto) { return pto.second == peerId; });
+      return std::find_if(begin(mPeerTimeouts),
+                          end(mPeerTimeouts),
+                          [&peerId](const PeerTimeout& pto)
+                          { return pto.second == peerId; });
     }
 
     util::Injected<Messenger> mMessenger;
@@ -222,12 +223,13 @@ using Messenger = UdpMessenger<
 template <typename PeerObserver, typename StateQuery, typename IoContext>
 using Gateway =
   PeerGateway<Messenger<StateQuery, typename util::Injected<IoContext>::type&>,
-    PeerObserver,
-    IoContext>;
+              PeerObserver,
+              IoContext>;
 
 // Factory function to bind a PeerGateway to an IpInterface with the given address.
 template <typename PeerObserver, typename NodeState, typename IoContext>
-Gateway<PeerObserver, NodeState, IoContext> makeGateway(util::Injected<IoContext> io,
+Gateway<PeerObserver, NodeState, IoContext> makeGateway(
+  util::Injected<IoContext> io,
   const IpAddress& addr,
   util::Injected<PeerObserver> observer,
   NodeState state)

@@ -40,10 +40,7 @@ public:
   {
   }
 
-  ~Fixture()
-  {
-    flush();
-  }
+  ~Fixture() { flush(); }
 
   Fixture(const Fixture&) = delete;
   Fixture& operator=(const Fixture&) = delete;
@@ -55,15 +52,9 @@ public:
     mIfAddrs = std::move(ifAddrs);
   }
 
-  Context makeIoContext()
-  {
-    return {mNow, mIfAddrs, mpScheduler};
-  }
+  Context makeIoContext() { return {mNow, mIfAddrs, mpScheduler}; }
 
-  void flush()
-  {
-    mpScheduler->run();
-  }
+  void flush() { mpScheduler->run(); }
 
   template <typename T, typename Rep>
   void advanceTime(std::chrono::duration<T, Rep> duration)

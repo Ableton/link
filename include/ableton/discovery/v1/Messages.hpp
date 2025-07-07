@@ -61,9 +61,12 @@ struct MessageHeader
   template <typename It>
   friend It toNetworkByteStream(const MessageHeader& header, It out)
   {
-    return discovery::toNetworkByteStream(header.ident,
-      discovery::toNetworkByteStream(header.groupId,
-        discovery::toNetworkByteStream(header.ttl,
+    return discovery::toNetworkByteStream(
+      header.ident,
+      discovery::toNetworkByteStream(
+        header.groupId,
+        discovery::toNetworkByteStream(
+          header.ttl,
           discovery::toNetworkByteStream(header.messageType, std::move(out)))));
   }
 
@@ -97,10 +100,10 @@ const ProtocolHeader kProtocolHeader = {{'_', 'a', 's', 'd', 'p', '_', 'v', 1}};
 // Must have at least kMaxMessageSize bytes available in the output stream
 template <typename NodeId, typename Payload, typename It>
 It encodeMessage(NodeId from,
-  const uint8_t ttl,
-  const MessageType messageType,
-  const Payload& payload,
-  It out)
+                 const uint8_t ttl,
+                 const MessageType messageType,
+                 const Payload& payload,
+                 It out)
 {
   using namespace std;
   const MessageHeader<NodeId> header = {messageType, ttl, 0, std::move(from)};
@@ -110,8 +113,9 @@ It encodeMessage(NodeId from,
   if (messageSize < kMaxMessageSize)
   {
     return toNetworkByteStream(
-      payload, toNetworkByteStream(header,
-                 copy(begin(kProtocolHeader), end(kProtocolHeader), std::move(out))));
+      payload,
+      toNetworkByteStream(
+        header, copy(begin(kProtocolHeader), end(kProtocolHeader), std::move(out))));
   }
   else
   {

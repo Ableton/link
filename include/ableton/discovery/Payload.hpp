@@ -166,8 +166,8 @@ struct Payload<First, Rest>
 
   // Concatenate payloads together into a single payload
   template <typename RhsFirst, typename RhsRest>
-  friend PayloadSum<RhsFirst, RhsRest> operator+(
-    Payload lhs, Payload<RhsFirst, RhsRest> rhs)
+  friend PayloadSum<RhsFirst, RhsRest> operator+(Payload lhs,
+                                                 Payload<RhsFirst, RhsRest> rhs)
   {
     return {std::move(lhs.mFirst), std::move(lhs.mRest) + std::move(rhs)};
   }
@@ -200,10 +200,7 @@ struct Payload<>
     return rhs;
   }
 
-  friend std::size_t sizeInByteStream(const Payload&)
-  {
-    return 0;
-  }
+  friend std::size_t sizeInByteStream(const Payload&) { return 0; }
 
   template <typename It>
   friend It toNetworkByteStream(const Payload&, It streamIt)
@@ -236,10 +233,7 @@ struct PayloadBuilder<First, Rest...>
 template <>
 struct PayloadBuilder<>
 {
-  Payload<> operator()()
-  {
-    return {};
-  }
+  Payload<> operator()() { return {}; }
 };
 
 // Parse payloads to values
@@ -258,11 +252,13 @@ struct ParsePayload<First, Rest...>
   }
 
   template <typename It, typename FirstHandler, typename... RestHandlers>
-  static void collectHandlers(
-    detail::HandlerMap<It>& map, FirstHandler handler, RestHandlers... rest)
+  static void collectHandlers(detail::HandlerMap<It>& map,
+                              FirstHandler handler,
+                              RestHandlers... rest)
   {
     using namespace std;
-    map[First::key] = [handler](const It begin, const It end) {
+    map[First::key] = [handler](const It begin, const It end)
+    {
       const auto res = First::fromNetworkByteStream(begin, end);
       if (res.second != end)
       {

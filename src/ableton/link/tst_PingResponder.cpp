@@ -40,10 +40,7 @@ using Random = ableton::platforms::stl::Random;
 
 struct MockClock
 {
-  std::chrono::microseconds micros() const
-  {
-    return std::chrono::microseconds{4};
-  }
+  std::chrono::microseconds micros() const { return std::chrono::microseconds{4}; }
 };
 
 struct MockIoContext
@@ -59,10 +56,7 @@ struct MockIoContext
 
   using Log = util::NullLog;
 
-  Log log() const
-  {
-    return {};
-  }
+  Log log() const { return {}; }
 
   ableton::util::test::IoService mIo;
 };
@@ -72,22 +66,16 @@ struct RpFixture
   RpFixture()
     : mAddress(discovery::makeAddress("127.0.0.1"))
     , mResponder(mAddress,
-        NodeId::random<Random>(),
-        GhostXForm{1.0, std::chrono::microseconds{0}},
-        MockClock{},
-        util::injectRef(*mIo))
+                 NodeId::random<Random>(),
+                 GhostXForm{1.0, std::chrono::microseconds{0}},
+                 MockClock{},
+                 util::injectRef(*mIo))
   {
   }
 
-  discovery::test::Socket responderSocket()
-  {
-    return mResponder.socket();
-  }
+  discovery::test::Socket responderSocket() { return mResponder.socket(); }
 
-  std::size_t numSentMessages()
-  {
-    return responderSocket().sentMessages.size();
-  }
+  std::size_t numSentMessages() { return responderSocket().sentMessages.size(); }
 
   discovery::IpAddress mAddress = discovery::makeAddress("127.0.0.1");
   util::Injected<MockIoContext> mIo;
@@ -125,7 +113,8 @@ TEST_CASE("PingResponder")
     std::chrono::microseconds ghostTime{0};
     std::chrono::microseconds prevGHostTime{0};
     std::chrono::microseconds hostTime{0};
-    discovery::parsePayload<GHostTime, PrevGHostTime, HostTime>(result.second,
+    discovery::parsePayload<GHostTime, PrevGHostTime, HostTime>(
+      result.second,
       std::end(messageBuffer),
       [&ghostTime](GHostTime gt) { ghostTime = std::move(gt.time); },
       [&prevGHostTime](PrevGHostTime gt) { prevGHostTime = std::move(gt.time); },

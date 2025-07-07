@@ -20,30 +20,15 @@ struct NullLog
     return log;
   }
 
-  friend const NullLog& debug(const NullLog& log)
-  {
-    return log;
-  }
+  friend const NullLog& debug(const NullLog& log) { return log; }
 
-  friend const NullLog& info(const NullLog& log)
-  {
-    return log;
-  }
+  friend const NullLog& info(const NullLog& log) { return log; }
 
-  friend const NullLog& warning(const NullLog& log)
-  {
-    return log;
-  }
+  friend const NullLog& warning(const NullLog& log) { return log; }
 
-  friend const NullLog& error(const NullLog& log)
-  {
-    return log;
-  }
+  friend const NullLog& error(const NullLog& log) { return log; }
 
-  friend NullLog channel(const NullLog&, std::string)
-  {
-    return {};
-  }
+  friend NullLog channel(const NullLog&, std::string) { return {}; }
 };
 
 // std streams-based log
@@ -90,25 +75,13 @@ struct StdLog
     const std::string& mChannelName;
   };
 
-  friend StdLogStream debug(const StdLog& log)
-  {
-    return {std::clog, log.mChannelName};
-  }
+  friend StdLogStream debug(const StdLog& log) { return {std::clog, log.mChannelName}; }
 
-  friend StdLogStream info(const StdLog& log)
-  {
-    return {std::clog, log.mChannelName};
-  }
+  friend StdLogStream info(const StdLog& log) { return {std::clog, log.mChannelName}; }
 
-  friend StdLogStream warning(const StdLog& log)
-  {
-    return {std::clog, log.mChannelName};
-  }
+  friend StdLogStream warning(const StdLog& log) { return {std::clog, log.mChannelName}; }
 
-  friend StdLogStream error(const StdLog& log)
-  {
-    return {std::cerr, log.mChannelName};
-  }
+  friend StdLogStream error(const StdLog& log) { return {std::cerr, log.mChannelName}; }
 
   friend StdLog channel(const StdLog& log, const std::string& channelName)
   {

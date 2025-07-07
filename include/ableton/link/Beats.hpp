@@ -42,25 +42,13 @@ struct Beats
   {
   }
 
-  double floating() const
-  {
-    return static_cast<double>(mValue) / 1e6;
-  }
+  double floating() const { return static_cast<double>(mValue) / 1e6; }
 
-  std::int64_t microBeats() const
-  {
-    return mValue;
-  }
+  std::int64_t microBeats() const { return mValue; }
 
-  Beats operator-() const
-  {
-    return Beats{-mValue};
-  }
+  Beats operator-() const { return Beats{-mValue}; }
 
-  friend Beats abs(const Beats b)
-  {
-    return Beats{std::abs(b.mValue)};
-  }
+  friend Beats abs(const Beats b) { return Beats{std::abs(b.mValue)}; }
 
   friend Beats operator+(const Beats lhs, const Beats rhs)
   {

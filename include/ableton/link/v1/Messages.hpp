@@ -87,8 +87,9 @@ It encodeMessage(const MessageType messageType, const Payload& payload, It out)
   if (messageSize < kMaxMessageSize)
   {
     return toNetworkByteStream(
-      payload, toNetworkByteStream(header,
-                 copy(begin(kProtocolHeader), end(kProtocolHeader), std::move(out))));
+      payload,
+      toNetworkByteStream(
+        header, copy(begin(kProtocolHeader), end(kProtocolHeader), std::move(out))));
   }
   else
   {
@@ -125,7 +126,7 @@ std::pair<MessageHeader, It> parseMessageHeader(It bytesBegin, const It bytesEnd
   // proceed to parse the stream.
   if (std::distance(bytesBegin, bytesEnd) >= minMessageSize
       && std::equal(
-           begin(detail::kProtocolHeader), end(detail::kProtocolHeader), bytesBegin))
+        begin(detail::kProtocolHeader), end(detail::kProtocolHeader), bytesBegin))
   {
     std::tie(header, bytesBegin) =
       MessageHeader::fromNetworkByteStream(bytesBegin + protocolHeaderSize, bytesEnd);

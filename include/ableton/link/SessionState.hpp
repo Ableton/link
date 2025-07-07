@@ -80,10 +80,7 @@ struct ControllerClientState
     return mState;
   }
 
-  ClientState getRt() const
-  {
-    return mRtState.read();
-  }
+  ClientState getRt() const { return mRtState.read(); }
 
 private:
   mutable std::mutex mMutex;

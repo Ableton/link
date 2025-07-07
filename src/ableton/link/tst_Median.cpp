@@ -59,7 +59,7 @@ TEST_CASE("Median")
       data.emplace_back(i * slope + intercept);
     }
     CHECK_THAT(slope * 5000 + intercept,
-      Catch::Matchers::WithinAbs(median(data.begin(), data.end()), 1e-10));
+               Catch::Matchers::WithinAbs(median(data.begin(), data.end()), 1e-10));
   }
 }
 

@@ -138,10 +138,10 @@ TEST_CASE("ClientSessionTimelines")
   {
     const auto shift = Beats{1.1};
     const auto timeline = Timeline{Tempo{60.}, b0, t0};
-    CHECK(
-      shiftClientTimeline(timeline, shift).toBeats(t0) == timeline.toBeats(t0) + shift);
-    CHECK(
-      shiftClientTimeline(timeline, -shift).toBeats(t0) == timeline.toBeats(t0) - shift);
+    CHECK(shiftClientTimeline(timeline, shift).toBeats(t0)
+          == timeline.toBeats(t0) + shift);
+    CHECK(shiftClientTimeline(timeline, -shift).toBeats(t0)
+          == timeline.toBeats(t0) - shift);
   }
 }
 

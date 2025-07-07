@@ -38,8 +38,8 @@ public:
   using Timer = typename util::Injected<IoContext>::type::Timer;
 
   InterfaceScanner(const std::chrono::seconds period,
-    util::Injected<Callback> callback,
-    util::Injected<IoContext> io)
+                   util::Injected<Callback> callback,
+                   util::Injected<IoContext> io)
     : mPeriod(period)
     , mCallback(std::move(callback))
     , mIo(std::move(io))
@@ -73,12 +73,14 @@ public:
     // setup the next scanning
     mTimer.expires_from_now(mPeriod);
     using ErrorCode = typename Timer::ErrorCode;
-    mTimer.async_wait([this](const ErrorCode e) {
-      if (!e)
+    mTimer.async_wait(
+      [this](const ErrorCode e)
       {
-        scan();
-      }
-    });
+        if (!e)
+        {
+          scan();
+        }
+      });
   }
 
 private:

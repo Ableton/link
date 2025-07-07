@@ -49,8 +49,9 @@ struct MeasurementEndpointV6
   {
     assert(mep.ep.address().is_v6());
     return discovery::toNetworkByteStream(
-      mep.ep.port(), discovery::toNetworkByteStream(
-                       mep.ep.address().to_v6().to_bytes(), std::move(out)));
+      mep.ep.port(),
+      discovery::toNetworkByteStream(
+        mep.ep.address().to_v6().to_bytes(), std::move(out)));
   }
 
   template <typename It>

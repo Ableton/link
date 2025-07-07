@@ -55,25 +55,13 @@ struct Injected
     return *this;
   }
 
-  T* operator->()
-  {
-    return &val;
-  }
+  T* operator->() { return &val; }
 
-  const T* operator->() const
-  {
-    return &val;
-  }
+  const T* operator->() const { return &val; }
 
-  T& operator*()
-  {
-    return val;
-  }
+  T& operator*() { return val; }
 
-  const T& operator*() const
-  {
-    return val;
-  }
+  const T& operator*() const { return val; }
 
   T val;
 };
@@ -110,25 +98,13 @@ struct Injected<T&>
     return *this;
   }
 
-  T* operator->()
-  {
-    return &ref.get();
-  }
+  T* operator->() { return &ref.get(); }
 
-  const T* operator->() const
-  {
-    return &ref.get();
-  }
+  const T* operator->() const { return &ref.get(); }
 
-  T& operator*()
-  {
-    return ref;
-  }
+  T& operator*() { return ref; }
 
-  const T& operator*() const
-  {
-    return ref;
-  }
+  const T& operator*() const { return ref; }
 
   std::reference_wrapper<T> ref;
 };
@@ -165,25 +141,13 @@ struct Injected<std::shared_ptr<T>>
     return *this;
   }
 
-  T* operator->()
-  {
-    return shared.get();
-  }
+  T* operator->() { return shared.get(); }
 
-  const T* operator->() const
-  {
-    return shared.get();
-  }
+  const T* operator->() const { return shared.get(); }
 
-  T& operator*()
-  {
-    return *shared;
-  }
+  T& operator*() { return *shared; }
 
-  const T& operator*() const
-  {
-    return *shared;
-  }
+  const T& operator*() const { return *shared; }
 
   std::shared_ptr<T> shared;
 };
@@ -220,25 +184,13 @@ struct Injected<std::unique_ptr<T>>
     return *this;
   }
 
-  T* operator->()
-  {
-    return unique.get();
-  }
+  T* operator->() { return unique.get(); }
 
-  const T* operator->() const
-  {
-    return unique.get();
-  }
+  const T* operator->() const { return unique.get(); }
 
-  T& operator*()
-  {
-    return *unique;
-  }
+  T& operator*() { return *unique; }
 
-  const T& operator*() const
-  {
-    return *unique;
-  }
+  const T& operator*() const { return *unique; }
 
   std::unique_ptr<T> unique;
 };

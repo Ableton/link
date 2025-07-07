@@ -51,10 +51,7 @@ class AudioPlatform
       mLink.commitAppSessionState(sessionState);
     }
 
-    bool isPlaying() const
-    {
-      return mLink.captureAppSessionState().isPlaying();
-    }
+    bool isPlaying() const { return mLink.captureAppSessionState().isPlaying(); }
 
     double beatTime() const
     {
@@ -69,31 +66,16 @@ class AudioPlatform
       mLink.commitAppSessionState(sessionState);
     }
 
-    double quantum() const
-    {
-      return mQuantum;
-    }
+    double quantum() const { return mQuantum; }
 
-    void setQuantum(double quantum)
-    {
-      mQuantum = quantum;
-    }
+    void setQuantum(double quantum) { mQuantum = quantum; }
 
-    bool isStartStopSyncEnabled() const
-    {
-      return mLink.isStartStopSyncEnabled();
-    }
+    bool isStartStopSyncEnabled() const { return mLink.isStartStopSyncEnabled(); }
 
-    void setStartStopSyncEnabled(bool enabled)
-    {
-      mLink.enableStartStopSync(enabled);
-    }
+    void setStartStopSyncEnabled(bool enabled) { mLink.enableStartStopSync(enabled); }
 
   private:
-    std::chrono::microseconds now() const
-    {
-      return mLink.clock().micros();
-    }
+    std::chrono::microseconds now() const { return mLink.clock().micros(); }
 
     Link& mLink;
     double mQuantum;

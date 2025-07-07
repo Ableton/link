@@ -28,8 +28,9 @@ namespace link
 namespace
 {
 
-std::chrono::microseconds phaseEncodingRoundtrip(
-  const Timeline& tl, const std::chrono::microseconds t, const Beats quantum)
+std::chrono::microseconds phaseEncodingRoundtrip(const Timeline& tl,
+                                                 const std::chrono::microseconds t,
+                                                 const Beats quantum)
 {
   return fromPhaseEncodedBeats(tl, toPhaseEncodedBeats(tl, t, quantum), quantum);
 }

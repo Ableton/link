@@ -55,15 +55,9 @@ struct Clock
     return static_cast<Ticks>(micros.count() / mTicksToMicros);
   }
 
-  Ticks ticks() const
-  {
-    return mach_absolute_time();
-  }
+  Ticks ticks() const { return mach_absolute_time(); }
 
-  std::chrono::microseconds micros() const
-  {
-    return ticksToMicros(ticks());
-  }
+  std::chrono::microseconds micros() const { return ticksToMicros(ticks()); }
 
   double mTicksToMicros;
 };

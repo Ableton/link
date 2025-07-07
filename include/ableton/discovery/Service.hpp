@@ -45,10 +45,7 @@ public:
     mGateways.enable(bEnable);
   }
 
-  bool isEnabled() const
-  {
-    return mEnabled;
-  }
+  bool isEnabled() const { return mEnabled; }
 
   // Asynchronously operate on the current set of peer gateways. The
   // handler will be invoked in the service's io context.
@@ -58,10 +55,7 @@ public:
     mGateways.withGateways(std::move(handler));
   }
 
-  void updateNodeState(const NodeState& state)
-  {
-    mGateways.updateNodeState(state);
-  }
+  void updateNodeState(const NodeState& state) { mGateways.updateNodeState(state); }
 
   // Repair the gateway with the given address if possible. Its
   // sockets may have been closed, for example, and the gateway needs

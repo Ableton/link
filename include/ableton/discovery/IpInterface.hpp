@@ -70,8 +70,9 @@ public:
   }
 
 
-  std::size_t send(
-    const uint8_t* const pData, const size_t numBytes, const UdpEndpoint& to)
+  std::size_t send(const uint8_t* const pData,
+                   const size_t numBytes,
+                   const UdpEndpoint& to)
   {
     return mSendSocket.send(pData, numBytes, to);
   }
@@ -89,10 +90,7 @@ public:
       SocketReceiver<MulticastTag, Handler>(std::move(handler)));
   }
 
-  UdpEndpoint endpoint() const
-  {
-    return mSendSocket.endpoint();
-  }
+  UdpEndpoint endpoint() const { return mSendSocket.endpoint(); }
 
 private:
   template <typename Tag, typename Handler>
@@ -118,8 +116,8 @@ private:
 };
 
 template <std::size_t MaxPacketSize, typename IoContext>
-IpInterface<IoContext, MaxPacketSize> makeIpInterface(
-  util::Injected<IoContext> io, const IpAddress& addr)
+IpInterface<IoContext, MaxPacketSize> makeIpInterface(util::Injected<IoContext> io,
+                                                      const IpAddress& addr)
 {
   return {std::move(io), addr};
 }

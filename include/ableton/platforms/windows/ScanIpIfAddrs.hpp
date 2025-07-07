@@ -54,10 +54,13 @@ public:
       adapter_addrs = (IP_ADAPTER_ADDRESSES*)malloc(adapter_addrs_buffer_size);
       assert(adapter_addrs);
 
-      DWORD error = ::GetAdaptersAddresses(AF_UNSPEC,
-        GAA_FLAG_SKIP_ANYCAST | GAA_FLAG_SKIP_MULTICAST | GAA_FLAG_SKIP_DNS_SERVER
-          | GAA_FLAG_SKIP_FRIENDLY_NAME,
-        NULL, adapter_addrs, &adapter_addrs_buffer_size);
+      DWORD error =
+        ::GetAdaptersAddresses(AF_UNSPEC,
+                               GAA_FLAG_SKIP_ANYCAST | GAA_FLAG_SKIP_MULTICAST
+                                 | GAA_FLAG_SKIP_DNS_SERVER | GAA_FLAG_SKIP_FRIENDLY_NAME,
+                               NULL,
+                               adapter_addrs,
+                               &adapter_addrs_buffer_size);
 
       if (error == ERROR_SUCCESS)
       {
@@ -106,58 +109,66 @@ struct ScanIpIfAddrs
     std::map<std::string, discovery::IpAddress> IpInterfaceNames;
 
     detail::GetIfAddrs getIfAddrs;
-    getIfAddrs.withIfAddrs([&](const IP_ADAPTER_ADDRESSES& interfaces) {
-      const IP_ADAPTER_ADDRESSES* networkInterface;
-      for (networkInterface = &interfaces; networkInterface;
-           networkInterface = networkInterface->Next)
+    getIfAddrs.withIfAddrs(
+      [&](const IP_ADAPTER_ADDRESSES& interfaces)
       {
-        for (IP_ADAPTER_UNICAST_ADDRESS* address = networkInterface->FirstUnicastAddress;
-             NULL != address; address = address->Next)
+        const IP_ADAPTER_ADDRESSES* networkInterface;
+        for (networkInterface = &interfaces; networkInterface;
+             networkInterface = networkInterface->Next)
         {
-          auto family = address->Address.lpSockaddr->sa_family;
-          if (AF_INET == family)
+          for (IP_ADAPTER_UNICAST_ADDRESS* address =
+                 networkInterface->FirstUnicastAddress;
+               NULL != address;
+               address = address->Next)
           {
-            // IPv4
-            SOCKADDR_IN* addr4 =
-              reinterpret_cast<SOCKADDR_IN*>(address->Address.lpSockaddr);
-            const auto bytes = reinterpret_cast<const char*>(&addr4->sin_addr);
-            const auto ipv4address =
-              discovery::makeAddressFromBytes<discovery::IpAddressV4>(bytes);
-            addrs.emplace_back(ipv4address);
-            IpInterfaceNames.insert(
-              std::make_pair(networkInterface->AdapterName, ipv4address));
-          }
-        }
-      }
-    });
-
-    getIfAddrs.withIfAddrs([&](const IP_ADAPTER_ADDRESSES& interfaces) {
-      const IP_ADAPTER_ADDRESSES* networkInterface;
-      for (networkInterface = &interfaces; networkInterface;
-           networkInterface = networkInterface->Next)
-      {
-        for (IP_ADAPTER_UNICAST_ADDRESS* address = networkInterface->FirstUnicastAddress;
-             NULL != address; address = address->Next)
-        {
-          auto family = address->Address.lpSockaddr->sa_family;
-          if (AF_INET6 == family
-              && IpInterfaceNames.find(networkInterface->AdapterName)
-                   != IpInterfaceNames.end())
-          {
-            SOCKADDR_IN6* sockAddr =
-              reinterpret_cast<SOCKADDR_IN6*>(address->Address.lpSockaddr);
-            const auto scopeId = sockAddr->sin6_scope_id;
-            const auto bytes = reinterpret_cast<const char*>(&sockAddr->sin6_addr);
-            const auto addr6 =
-              discovery::makeAddressFromBytes<discovery::IpAddressV6>(bytes, scopeId);
-            if (!addr6.is_loopback() && addr6.is_link_local())
+            auto family = address->Address.lpSockaddr->sa_family;
+            if (AF_INET == family)
             {
-              addrs.emplace_back(addr6);
+              // IPv4
+              SOCKADDR_IN* addr4 =
+                reinterpret_cast<SOCKADDR_IN*>(address->Address.lpSockaddr);
+              const auto bytes = reinterpret_cast<const char*>(&addr4->sin_addr);
+              const auto ipv4address =
+                discovery::makeAddressFromBytes<discovery::IpAddressV4>(bytes);
+              addrs.emplace_back(ipv4address);
+              IpInterfaceNames.insert(
+                std::make_pair(networkInterface->AdapterName, ipv4address));
             }
           }
         }
-      }
-    });
+      });
+
+    getIfAddrs.withIfAddrs(
+      [&](const IP_ADAPTER_ADDRESSES& interfaces)
+      {
+        const IP_ADAPTER_ADDRESSES* networkInterface;
+        for (networkInterface = &interfaces; networkInterface;
+             networkInterface = networkInterface->Next)
+        {
+          for (IP_ADAPTER_UNICAST_ADDRESS* address =
+                 networkInterface->FirstUnicastAddress;
+               NULL != address;
+               address = address->Next)
+          {
+            auto family = address->Address.lpSockaddr->sa_family;
+            if (AF_INET6 == family
+                && IpInterfaceNames.find(networkInterface->AdapterName)
+                     != IpInterfaceNames.end())
+            {
+              SOCKADDR_IN6* sockAddr =
+                reinterpret_cast<SOCKADDR_IN6*>(address->Address.lpSockaddr);
+              const auto scopeId = sockAddr->sin6_scope_id;
+              const auto bytes = reinterpret_cast<const char*>(&sockAddr->sin6_addr);
+              const auto addr6 =
+                discovery::makeAddressFromBytes<discovery::IpAddressV6>(bytes, scopeId);
+              if (!addr6.is_loopback() && addr6.is_link_local())
+              {
+                addrs.emplace_back(addr6);
+              }
+            }
+          }
+        }
+      });
 
     return addrs;
   }

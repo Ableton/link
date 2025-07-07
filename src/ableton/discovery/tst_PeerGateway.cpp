@@ -36,10 +36,7 @@ struct TestNodeState : std::tuple<std::string, double>
   {
   }
 
-  std::string ident() const
-  {
-    return std::get<0>(*this);
-  }
+  std::string ident() const { return std::get<0>(*this); }
 };
 
 struct TestMessenger
@@ -109,7 +106,8 @@ TEST_CASE("PeerGateway")
   SECTION("NoActivity")
   {
     auto listener = makePeerGateway(util::injectVal(TestMessenger{}),
-      util::injectRef(observer), util::injectVal(io.makeIoContext()));
+                                    util::injectRef(observer),
+                                    util::injectVal(io.makeIoContext()));
     io.advanceTime(std::chrono::seconds(10));
 
     // Without any outside interaction but the passage of time, our
@@ -120,8 +118,9 @@ TEST_CASE("PeerGateway")
   }
 
   TestMessenger messenger;
-  auto listener = makePeerGateway(util::injectRef(messenger), util::injectRef(observer),
-    util::injectVal(io.makeIoContext()));
+  auto listener = makePeerGateway(util::injectRef(messenger),
+                                  util::injectRef(observer),
+                                  util::injectVal(io.makeIoContext()));
 
   SECTION("ReceivedPeerState")
   {

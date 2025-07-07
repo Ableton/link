@@ -35,10 +35,7 @@ struct NodeState
   using Payload =
     decltype(discovery::makePayload(Timeline{}, SessionMembership{}, StartStopState{}));
 
-  NodeId ident() const
-  {
-    return nodeId;
-  }
+  NodeId ident() const { return nodeId; }
 
   friend bool operator==(const NodeState& lhs, const NodeState& rhs)
   {
@@ -57,13 +54,14 @@ struct NodeState
   {
     using namespace std;
     auto nodeState = NodeState{std::move(nodeId), {}, {}, {}};
-    discovery::parsePayload<Timeline, SessionMembership, StartStopState>(std::move(begin),
-      std::move(end), [&nodeState](Timeline tl) { nodeState.timeline = std::move(tl); },
-      [&nodeState](SessionMembership membership) {
-        nodeState.sessionId = std::move(membership.sessionId);
-      },
-      [&nodeState](
-        StartStopState ststst) { nodeState.startStopState = std::move(ststst); });
+    discovery::parsePayload<Timeline, SessionMembership, StartStopState>(
+      std::move(begin),
+      std::move(end),
+      [&nodeState](Timeline tl) { nodeState.timeline = std::move(tl); },
+      [&nodeState](SessionMembership membership)
+      { nodeState.sessionId = std::move(membership.sessionId); },
+      [&nodeState](StartStopState ststst)
+      { nodeState.startStopState = std::move(ststst); });
     return nodeState;
   }
 

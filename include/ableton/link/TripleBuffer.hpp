@@ -99,13 +99,10 @@ private:
     return (state & 0x0000FFFFu) != 0;
   }
 
-  static constexpr uint32_t backIndex(const BackingState state)
-  {
-    return state >> 16;
-  }
+  static constexpr uint32_t backIndex(const BackingState state) { return state >> 16; }
 
-  static constexpr BackingState makeState(
-    const uint32_t backBufferIndex, const bool isWrite)
+  static constexpr BackingState makeState(const uint32_t backBufferIndex,
+                                          const bool isWrite)
   {
     return (backBufferIndex << 16) | uint32_t(isWrite);
   }

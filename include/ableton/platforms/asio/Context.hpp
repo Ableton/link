@@ -73,8 +73,10 @@ public:
     : mpService(new IoService())
     , mpWork(new Work(mpService->get_executor()))
   {
-    mThread = ThreadFactoryT::makeThread("Link Main",
-      [](IoService& service, ExceptionHandler handler) {
+    mThread = ThreadFactoryT::makeThread(
+      "Link Main",
+      [](IoService& service, ExceptionHandler handler)
+      {
         for (;;)
         {
           try
@@ -88,7 +90,8 @@ public:
           }
         }
       },
-      std::ref(*mpService), std::move(exceptHandler));
+      std::ref(*mpService),
+      std::move(exceptHandler));
   }
 
   Context(const Context&) = delete;
@@ -172,7 +175,7 @@ public:
       socket.mpImpl->mSocket.set_option(
         ::LINK_ASIO_NAMESPACE::ip::multicast::outbound_interface(addr.to_v4()));
       socket.mpImpl->mSocket.bind({::LINK_ASIO_NAMESPACE::ip::address_v4::any(),
-        discovery::multicastEndpointV4().port()});
+                                   discovery::multicastEndpointV4().port()});
       socket.mpImpl->mSocket.set_option(::LINK_ASIO_NAMESPACE::ip::multicast::join_group(
         discovery::multicastEndpointV4().address().to_v4(), addr.to_v4()));
     }
@@ -195,20 +198,11 @@ public:
     return socket;
   }
 
-  std::vector<discovery::IpAddress> scanNetworkInterfaces()
-  {
-    return mScanIpIfAddrs();
-  }
+  std::vector<discovery::IpAddress> scanNetworkInterfaces() { return mScanIpIfAddrs(); }
 
-  Timer makeTimer() const
-  {
-    return {*mpService};
-  }
+  Timer makeTimer() const { return {*mpService}; }
 
-  Log& log()
-  {
-    return mLog;
-  }
+  Log& log() { return mLog; }
 
   template <typename Handler>
   void async(Handler handler)
@@ -226,9 +220,7 @@ private:
     {
     };
 
-    void operator()(const Exception&)
-    {
-    }
+    void operator()(const Exception&) {}
   };
 
   std::unique_ptr<IoService> mpService;

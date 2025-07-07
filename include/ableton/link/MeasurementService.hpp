@@ -43,17 +43,17 @@ public:
   using MeasurementInstance = Measurement<Clock, IoContext>;
 
   MeasurementService(discovery::IpAddress address,
-    SessionId sessionId,
-    GhostXForm ghostXForm,
-    Clock clock,
-    IoType io)
+                     SessionId sessionId,
+                     GhostXForm ghostXForm,
+                     Clock clock,
+                     IoType io)
     : mClock(std::move(clock))
     , mIo(std::move(io))
     , mPingResponder(std::move(address),
-        std::move(sessionId),
-        std::move(ghostXForm),
-        mClock,
-        util::injectRef(*mIo))
+                     std::move(sessionId),
+                     std::move(ghostXForm),
+                     mClock,
+                     util::injectRef(*mIo))
   {
   }
 
@@ -65,10 +65,7 @@ public:
     mPingResponder.updateNodeState(sessionId, xform);
   }
 
-  discovery::UdpEndpoint endpoint() const
-  {
-    return mPingResponder.endpoint();
-  }
+  discovery::UdpEndpoint endpoint() const { return mPingResponder.endpoint(); }
 
   // Measure the peer and invoke the handler with a GhostXForm
   template <typename Handler>

@@ -33,7 +33,8 @@ inline Timeline clampTempo(const Timeline timeline)
   const double kMinBpm = 20.0;
   const double kMaxBpm = 999.0;
   return {Tempo{(std::min)((std::max)(timeline.tempo.bpm(), kMinBpm), kMaxBpm)},
-    timeline.beatOrigin, timeline.timeOrigin};
+          timeline.beatOrigin,
+          timeline.timeOrigin};
 }
 
 // Given an existing client timeline, a session timeline, and the
@@ -42,9 +43,9 @@ inline Timeline clampTempo(const Timeline timeline)
 // previous timeline so that curClient.toBeats(atTime) ==
 // result.toBeats(atTime).
 inline Timeline updateClientTimelineFromSession(const Timeline curClient,
-  const Timeline session,
-  const std::chrono::microseconds atTime,
-  const GhostXForm xform)
+                                                const Timeline session,
+                                                const std::chrono::microseconds atTime,
+                                                const GhostXForm xform)
 {
   // An intermediate timeline representing the continuation of the
   // existing client timeline with the tempo from the session timeline.
@@ -63,9 +64,9 @@ inline Timeline updateClientTimelineFromSession(const Timeline curClient,
 
 
 inline Timeline updateSessionTimelineFromClient(const Timeline curSession,
-  const Timeline client,
-  const std::chrono::microseconds atTime,
-  const GhostXForm xform)
+                                                const Timeline client,
+                                                const std::chrono::microseconds atTime,
+                                                const GhostXForm xform)
 {
   // The client timeline was constructed so that it's timeOrigin
   // corresponds to beat 0 on the session timeline.
@@ -94,7 +95,7 @@ inline Timeline updateSessionTimelineFromClient(const Timeline curSession,
     // but we must also make sure that it's > curSession.beatOrigin
     // because otherwise it will get ignored.
     const auto newBeatOrigin = (std::max)(curSession.toBeats(xform.hostToGhost(atTime)),
-      curSession.beatOrigin + Beats{INT64_C(1)});
+                                          curSession.beatOrigin + Beats{INT64_C(1)});
     return {client.tempo, newBeatOrigin, tempTl.fromBeats(newBeatOrigin)};
   }
 }

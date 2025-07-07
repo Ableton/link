@@ -43,16 +43,18 @@ std::shared_ptr<SchedulerTree> SchedulerTree::makeChild()
 
 void SchedulerTree::cancelTimer(const TimerId timerId)
 {
-  const auto it = std::find_if(
-    begin(mTimers), end(mTimers), [timerId](const TimerMap::value_type& timer) {
-      return timer.first.second == timerId;
-    });
+  const auto it = std::find_if(begin(mTimers),
+                               end(mTimers),
+                               [timerId](const TimerMap::value_type& timer)
+                               { return timer.first.second == timerId; });
   if (it != end(mTimers))
   {
     auto handler = std::move(it->second);
-    mPendingHandlers.push_back([handler]() {
-      handler(1); // truthy indicates error
-    });
+    mPendingHandlers.push_back(
+      [handler]()
+      {
+        handler(1); // truthy indicates error
+      });
     mTimers.erase(it);
   }
 }
@@ -60,9 +62,9 @@ void SchedulerTree::cancelTimer(const TimerId timerId)
 SchedulerTree::TimePoint SchedulerTree::nextTimerExpiration()
 {
   auto nextTimePoint = TimePoint::max();
-  withChildren([&nextTimePoint](SchedulerTree& child) {
-    nextTimePoint = (std::min)(nextTimePoint, child.nextOwnTimerExpiration());
-  });
+  withChildren(
+    [&nextTimePoint](SchedulerTree& child)
+    { nextTimePoint = (std::min)(nextTimePoint, child.nextOwnTimerExpiration()); });
   return (std::min)(nextTimePoint, nextOwnTimerExpiration());
 }
 
@@ -72,19 +74,24 @@ void SchedulerTree::triggerTimersUntil(const TimePoint t)
   withChildren([t](SchedulerTree& child) { child.triggerTimersUntil(t); });
 
   const auto it = mTimers.upper_bound(make_pair(t, numeric_limits<TimerId>::max()));
-  for_each(begin(mTimers), it, [this](const TimerMap::value_type& timer) {
-    mPendingHandlers.push_back([timer]() {
-      timer.second(0); // 0 indicates no error
-    });
-  });
+  for_each(begin(mTimers),
+           it,
+           [this](const TimerMap::value_type& timer)
+           {
+             mPendingHandlers.push_back(
+               [timer]()
+               {
+                 timer.second(0); // 0 indicates no error
+               });
+           });
   mTimers.erase(begin(mTimers), it);
 }
 
 bool SchedulerTree::handlePending()
 {
   bool subtreeWorked = false;
-  withChildren(
-    [&subtreeWorked](SchedulerTree& child) { subtreeWorked |= child.handlePending(); });
+  withChildren([&subtreeWorked](SchedulerTree& child)
+               { subtreeWorked |= child.handlePending(); });
 
   if (mPendingHandlers.empty())
   {

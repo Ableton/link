@@ -127,8 +127,11 @@ void AudioPlatform::initialize()
   }
 
   IMMDeviceEnumerator* enumerator = nullptr;
-  result = CoCreateInstance(kMMDeviceEnumeratorId, nullptr, CLSCTX_ALL,
-    kIMMDeviceEnumeratorId, (void**)&enumerator);
+  result = CoCreateInstance(kMMDeviceEnumeratorId,
+                            nullptr,
+                            CLSCTX_ALL,
+                            kIMMDeviceEnumeratorId,
+                            (void**)&enumerator);
   if (FAILED(result))
   {
     fatalError(result, "Could not create device instance");
@@ -173,7 +176,11 @@ void AudioPlatform::initialize()
   }
 
   result = mAudioClient->Initialize(AUDCLNT_SHAREMODE_SHARED,
-    AUDCLNT_STREAMFLAGS_EVENTCALLBACK, kBufferDuration, 0, mStreamFormat, nullptr);
+                                    AUDCLNT_STREAMFLAGS_EVENTCALLBACK,
+                                    kBufferDuration,
+                                    0,
+                                    mStreamFormat,
+                                    nullptr);
   if (FAILED(result))
   {
     fatalError(result, "Could not initialize audio device");

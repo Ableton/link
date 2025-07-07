@@ -49,23 +49,26 @@ struct Factory
 
 
 template <typename Gateways>
-void expectGateways(
-  Gateways& gateways, test::serial_io::Fixture& io, std::vector<IpAddress> addrs)
+void expectGateways(Gateways& gateways,
+                    test::serial_io::Fixture& io,
+                    std::vector<IpAddress> addrs)
 
 {
   using namespace std;
   using GatewayIt = typename Gateways::GatewayMap::iterator;
   bool bTested = false;
 
-  gateways.withGateways([addrs, &bTested](GatewayIt begin, const GatewayIt end) {
-    bTested = true;
-    REQUIRE(static_cast<size_t>(distance(begin, end)) == addrs.size());
-    std::size_t i = 0;
-    for (; begin != end; ++begin)
+  gateways.withGateways(
+    [addrs, &bTested](GatewayIt begin, const GatewayIt end)
     {
-      CHECK(begin->first == addrs[i++]);
-    }
-  });
+      bTested = true;
+      REQUIRE(static_cast<size_t>(distance(begin, end)) == addrs.size());
+      std::size_t i = 0;
+      for (; begin != end; ++begin)
+      {
+        CHECK(begin->first == addrs[i++]);
+      }
+    });
   io.flush();
   CHECK(bTested);
 }

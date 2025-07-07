@@ -53,7 +53,8 @@ TEST_CASE("InterfaceScanner")
   {
     {
       auto scanner = discovery::makeInterfaceScanner(std::chrono::seconds(2),
-        util::injectRef(callback), util::injectVal(io.makeIoContext()));
+                                                     util::injectRef(callback),
+                                                     util::injectVal(io.makeIoContext()));
       scanner.enable(true);
       CHECK(1 == callback.addrRanges.size());
       io.setNetworkInterfaces({addr1});
@@ -75,7 +76,8 @@ TEST_CASE("InterfaceScanner")
     io.setNetworkInterfaces({addr1});
     {
       auto scanner = discovery::makeInterfaceScanner(std::chrono::seconds(2),
-        util::injectRef(callback), util::injectVal(io.makeIoContext()));
+                                                     util::injectRef(callback),
+                                                     util::injectVal(io.makeIoContext()));
       scanner.enable(true);
       io.setNetworkInterfaces({});
       io.advanceTime(std::chrono::seconds(3));

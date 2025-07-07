@@ -71,8 +71,13 @@ class Context
       : mpService(new ::asio::io_service())
       , mpWork(new ::asio::io_service::work(*mpService))
     {
-      xTaskCreatePinnedToCore(run, "link", 8192, this, 2 | portPRIVILEGE_BIT,
-        &mTaskHandle, LINK_ESP_TASK_CORE_ID);
+      xTaskCreatePinnedToCore(run,
+                              "link",
+                              8192,
+                              this,
+                              2 | portPRIVILEGE_BIT,
+                              &mTaskHandle,
+                              LINK_ESP_TASK_CORE_ID);
 
       const esp_timer_create_args_t timerArgs = {
         .callback = &timerIsr,
@@ -98,10 +103,7 @@ class Context
       mpService->post(std::move(handler));
     }
 
-    ::asio::io_service& service() const
-    {
-      return *mpService;
-    }
+    ::asio::io_service& service() const { return *mpService; }
 
   private:
     TaskHandle_t mTaskHandle;
@@ -138,9 +140,7 @@ public:
   {
   }
 
-  void stop()
-  {
-  }
+  void stop() {}
 
   template <std::size_t BufferSize>
   Socket<BufferSize> openUnicastSocket(const ::asio::ip::address& addr)
@@ -212,20 +212,11 @@ public:
     return socket;
   }
 
-  std::vector<::asio::ip::address> scanNetworkInterfaces()
-  {
-    return mScanIpIfAddrs();
-  }
+  std::vector<::asio::ip::address> scanNetworkInterfaces() { return mScanIpIfAddrs(); }
 
-  Timer makeTimer() const
-  {
-    return {serviceRunner().service()};
-  }
+  Timer makeTimer() const { return {serviceRunner().service()}; }
 
-  Log& log()
-  {
-    return mLog;
-  }
+  Log& log() { return mLog; }
 
   template <typename Handler>
   void async(Handler handler)
@@ -243,9 +234,7 @@ private:
     {
     };
 
-    void operator()(const Exception&)
-    {
-    }
+    void operator()(const Exception&) {}
   };
 
   static ServiceRunner& serviceRunner()

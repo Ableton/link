@@ -59,10 +59,7 @@ struct Optional
     return *this;
   }
 
-  explicit operator bool() const
-  {
-    return mHasValue;
-  }
+  explicit operator bool() const { return mHasValue; }
 
   const T& operator*() const
   {

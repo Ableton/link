@@ -37,34 +37,23 @@ struct PeerState
 {
   using IdType = NodeId;
 
-  IdType ident() const
-  {
-    return nodeState.ident();
-  }
+  IdType ident() const { return nodeState.ident(); }
 
-  SessionId sessionId() const
-  {
-    return nodeState.sessionId;
-  }
+  SessionId sessionId() const { return nodeState.sessionId; }
 
-  Timeline timeline() const
-  {
-    return nodeState.timeline;
-  }
+  Timeline timeline() const { return nodeState.timeline; }
 
-  StartStopState startStopState() const
-  {
-    return nodeState.startStopState;
-  }
+  StartStopState startStopState() const { return nodeState.startStopState; }
 
   friend bool operator==(const PeerState& lhs, const PeerState& rhs)
   {
     return lhs.nodeState == rhs.nodeState && lhs.endpoint == rhs.endpoint;
   }
 
-  friend auto toPayload(const PeerState& state) -> decltype(
-    std::declval<NodeState::Payload>() + discovery::makePayload(MeasurementEndpointV4{{}})
-    + discovery::makePayload(MeasurementEndpointV6{{}}))
+  friend auto toPayload(const PeerState& state)
+    -> decltype(std::declval<NodeState::Payload>()
+                + discovery::makePayload(MeasurementEndpointV4{{}})
+                + discovery::makePayload(MeasurementEndpointV6{{}}))
   {
     // This implements a switch if either an IPv4 or IPv6 endpoint is serialized.
     // MeasurementEndpoints that contain an endpoint that does not match the IP protocol
@@ -81,10 +70,11 @@ struct PeerState
     auto peerState = PeerState{NodeState::fromPayload(std::move(id), begin, end), {}};
 
     discovery::parsePayload<MeasurementEndpointV4, MeasurementEndpointV6>(
-      std::move(begin), std::move(end),
+      std::move(begin),
+      std::move(end),
       [&peerState](MeasurementEndpointV4 me4) { peerState.endpoint = std::move(me4.ep); },
-      [&peerState](
-        MeasurementEndpointV6 me6) { peerState.endpoint = std::move(me6.ep); });
+      [&peerState](MeasurementEndpointV6 me6)
+      { peerState.endpoint = std::move(me6.ep); });
     return peerState;
   }
 

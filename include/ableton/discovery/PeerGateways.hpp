@@ -35,15 +35,16 @@ class PeerGateways
 {
 public:
   using IoType = typename util::Injected<IoContext>::type;
-  using Gateway = decltype(std::declval<GatewayFactory>()(std::declval<NodeState>(),
-    std::declval<util::Injected<IoType&>>(),
-    std::declval<IpAddress>()));
+  using Gateway =
+    decltype(std::declval<GatewayFactory>()(std::declval<NodeState>(),
+                                            std::declval<util::Injected<IoType&>>(),
+                                            std::declval<IpAddress>()));
   using GatewayMap = std::map<IpAddress, Gateway>;
 
   PeerGateways(const std::chrono::seconds rescanPeriod,
-    NodeState state,
-    GatewayFactory factory,
-    util::Injected<IoContext> io)
+               NodeState state,
+               GatewayFactory factory,
+               util::Injected<IoContext> io)
     : mIo(std::move(io))
   {
     mpScannerCallback =
@@ -114,18 +115,26 @@ private:
       // Get the set of current addresses.
       vector<IpAddress> curAddrs;
       curAddrs.reserve(mGateways.size());
-      transform(std::begin(mGateways), std::end(mGateways), back_inserter(curAddrs),
-        [](const typename GatewayMap::value_type& vt) { return vt.first; });
+      transform(std::begin(mGateways),
+                std::end(mGateways),
+                back_inserter(curAddrs),
+                [](const typename GatewayMap::value_type& vt) { return vt.first; });
 
       // Now use set_difference to determine the set of addresses that
       // are new and the set of cur addresses that are no longer there
       vector<IpAddress> newAddrs;
-      set_difference(std::begin(range), std::end(range), std::begin(curAddrs),
-        std::end(curAddrs), back_inserter(newAddrs));
+      set_difference(std::begin(range),
+                     std::end(range),
+                     std::begin(curAddrs),
+                     std::end(curAddrs),
+                     back_inserter(newAddrs));
 
       vector<IpAddress> staleAddrs;
-      set_difference(std::begin(curAddrs), std::end(curAddrs), std::begin(range),
-        std::end(range), back_inserter(staleAddrs));
+      set_difference(std::begin(curAddrs),
+                     std::end(curAddrs),
+                     std::begin(range),
+                     std::end(range),
+                     back_inserter(staleAddrs));
 
       // Remove the stale addresses
       for (const auto& addr : staleAddrs)

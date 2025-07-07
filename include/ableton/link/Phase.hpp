@@ -73,8 +73,9 @@ inline Beats closestPhaseMatch(const Beats x, const Beats target, const Beats qu
 // time. The phase of the resulting beat value can be calculated with
 // phase(beats, quantum). The result will deviate by up to +-
 // (quantum/2) beats compared to the result of tl.toBeats(time).
-inline Beats toPhaseEncodedBeats(
-  const Timeline& tl, const std::chrono::microseconds time, const Beats quantum)
+inline Beats toPhaseEncodedBeats(const Timeline& tl,
+                                 const std::chrono::microseconds time,
+                                 const Beats quantum)
 {
   const auto beat = tl.toBeats(time);
   return closestPhaseMatch(beat, beat - tl.beatOrigin, quantum);
@@ -83,8 +84,9 @@ inline Beats toPhaseEncodedBeats(
 // The inverse of toPhaseEncodedBeats. Given a phase encoded beat
 // value from the given timeline and quantum, find the time value that
 // it maps to.
-inline std::chrono::microseconds fromPhaseEncodedBeats(
-  const Timeline& tl, const Beats beat, const Beats quantum)
+inline std::chrono::microseconds fromPhaseEncodedBeats(const Timeline& tl,
+                                                       const Beats beat,
+                                                       const Beats quantum)
 {
   const auto fromOrigin = beat - tl.beatOrigin;
   const auto originOffset = fromOrigin - phase(fromOrigin, quantum);

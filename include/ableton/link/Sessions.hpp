@@ -42,21 +42,21 @@ struct Session
 };
 
 template <typename Peers,
-  typename MeasurePeer,
-  typename JoinSessionCallback,
-  typename IoContext,
-  typename Clock>
+          typename MeasurePeer,
+          typename JoinSessionCallback,
+          typename IoContext,
+          typename Clock>
 class Sessions
 {
 public:
   using Timer = typename util::Injected<IoContext>::type::Timer;
 
   Sessions(Session init,
-    util::Injected<Peers> peers,
-    MeasurePeer measure,
-    JoinSessionCallback join,
-    util::Injected<IoContext> io,
-    Clock clock)
+           util::Injected<Peers> peers,
+           MeasurePeer measure,
+           JoinSessionCallback join,
+           util::Injected<IoContext> io,
+           Clock clock)
     : mPeers(std::move(peers))
     , mMeasure(std::move(measure))
     , mCallback(std::move(join))
@@ -73,10 +73,7 @@ public:
     mOtherSessions.clear();
   }
 
-  void resetTimeline(Timeline timeline)
-  {
-    mCurrent.timeline = std::move(timeline);
-  }
+  void resetTimeline(Timeline timeline) { mCurrent.timeline = std::move(timeline); }
 
   // Consider the observed session/timeline pair and return a possibly
   // new timeline that should be used going forward.
@@ -117,8 +114,10 @@ private:
     if (!peers.empty())
     {
       // first criteria: always prefer the founding peer
-      const auto it = find_if(begin(peers), end(peers),
-        [&session](const Peer& peer) { return session.sessionId == peer.first.ident(); });
+      const auto it = find_if(begin(peers),
+                              end(peers),
+                              [&session](const Peer& peer)
+                              { return session.sessionId == peer.first.ident(); });
       // TODO: second criteria should be degree. We don't have that
       // represented yet so just use the first peer for now
       auto peer = it == end(peers) ? peers.front() : *it;
@@ -161,7 +160,7 @@ private:
         const auto ghostDiff = newGhost - curGhost;
         if (ghostDiff > SESSION_EPS
             || (std::abs(ghostDiff.count()) < SESSION_EPS.count()
-                 && id < mCurrent.sessionId))
+                && id < mCurrent.sessionId))
         {
           // The new session wins, switch over to it
           auto current = mCurrent;
@@ -185,13 +184,15 @@ private:
   {
     // set a timer to re-measure the active session after a period
     mTimer.expires_from_now(std::chrono::microseconds{30000000});
-    mTimer.async_wait([this](const typename Timer::ErrorCode e) {
-      if (!e)
+    mTimer.async_wait(
+      [this](const typename Timer::ErrorCode e)
       {
-        launchSessionMeasurement(mCurrent);
-        scheduleRemeasurement();
-      }
-    });
+        if (!e)
+        {
+          launchSessionMeasurement(mCurrent);
+          scheduleRemeasurement();
+        }
+      });
   }
 
   void handleFailedMeasurement(const SessionId& id)
@@ -280,10 +281,10 @@ private:
 };
 
 template <typename Peers,
-  typename MeasurePeer,
-  typename JoinSessionCallback,
-  typename IoContext,
-  typename Clock>
+          typename MeasurePeer,
+          typename JoinSessionCallback,
+          typename IoContext,
+          typename Clock>
 Sessions<Peers, MeasurePeer, JoinSessionCallback, IoContext, Clock> makeSessions(
   Session init,
   util::Injected<Peers> peers,
@@ -293,8 +294,12 @@ Sessions<Peers, MeasurePeer, JoinSessionCallback, IoContext, Clock> makeSessions
   Clock clock)
 {
   using namespace std;
-  return {std::move(init), std::move(peers), std::move(measure), std::move(join),
-    std::move(io), std::move(clock)};
+  return {std::move(init),
+          std::move(peers),
+          std::move(measure),
+          std::move(join),
+          std::move(io),
+          std::move(clock)};
 }
 
 } // namespace link

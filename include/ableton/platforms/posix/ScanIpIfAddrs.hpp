@@ -82,44 +82,48 @@ struct ScanIpIfAddrs
     std::map<std::string, discovery::IpAddress> IpInterfaceNames;
 
     detail::GetIfAddrs getIfAddrs;
-    getIfAddrs.withIfAddrs([&addrs, &IpInterfaceNames](const struct ifaddrs& interfaces) {
-      const struct ifaddrs* interface;
-      for (interface = &interfaces; interface; interface = interface->ifa_next)
+    getIfAddrs.withIfAddrs(
+      [&addrs, &IpInterfaceNames](const struct ifaddrs& interfaces)
       {
-        const auto addr =
-          reinterpret_cast<const struct sockaddr_in*>(interface->ifa_addr);
-        if (addr && interface->ifa_flags & IFF_RUNNING && addr->sin_family == AF_INET)
+        const struct ifaddrs* interface;
+        for (interface = &interfaces; interface; interface = interface->ifa_next)
         {
-          const auto bytes = reinterpret_cast<const char*>(&addr->sin_addr);
-          const auto address =
-            discovery::makeAddressFromBytes<discovery::IpAddressV4>(bytes);
-          addrs.emplace_back(address);
-          IpInterfaceNames.insert(std::make_pair(interface->ifa_name, address));
-        }
-      }
-    });
-
-    getIfAddrs.withIfAddrs([&addrs, &IpInterfaceNames](const struct ifaddrs& interfaces) {
-      const struct ifaddrs* interface;
-      for (interface = &interfaces; interface; interface = interface->ifa_next)
-      {
-        const auto addr =
-          reinterpret_cast<const struct sockaddr_in*>(interface->ifa_addr);
-        if (IpInterfaceNames.find(interface->ifa_name) != IpInterfaceNames.end() && addr
-            && interface->ifa_flags & IFF_RUNNING && addr->sin_family == AF_INET6)
-        {
-          const auto addr6 = reinterpret_cast<const struct sockaddr_in6*>(addr);
-          const auto bytes = reinterpret_cast<const char*>(&addr6->sin6_addr);
-          const auto scopeId = addr6->sin6_scope_id;
-          const auto address =
-            discovery::makeAddressFromBytes<discovery::IpAddressV6>(bytes, scopeId);
-          if (!address.is_loopback() && address.is_link_local())
+          const auto addr =
+            reinterpret_cast<const struct sockaddr_in*>(interface->ifa_addr);
+          if (addr && interface->ifa_flags & IFF_RUNNING && addr->sin_family == AF_INET)
           {
+            const auto bytes = reinterpret_cast<const char*>(&addr->sin_addr);
+            const auto address =
+              discovery::makeAddressFromBytes<discovery::IpAddressV4>(bytes);
             addrs.emplace_back(address);
+            IpInterfaceNames.insert(std::make_pair(interface->ifa_name, address));
           }
         }
-      }
-    });
+      });
+
+    getIfAddrs.withIfAddrs(
+      [&addrs, &IpInterfaceNames](const struct ifaddrs& interfaces)
+      {
+        const struct ifaddrs* interface;
+        for (interface = &interfaces; interface; interface = interface->ifa_next)
+        {
+          const auto addr =
+            reinterpret_cast<const struct sockaddr_in*>(interface->ifa_addr);
+          if (IpInterfaceNames.find(interface->ifa_name) != IpInterfaceNames.end() && addr
+              && interface->ifa_flags & IFF_RUNNING && addr->sin_family == AF_INET6)
+          {
+            const auto addr6 = reinterpret_cast<const struct sockaddr_in6*>(addr);
+            const auto bytes = reinterpret_cast<const char*>(&addr6->sin6_addr);
+            const auto scopeId = addr6->sin6_scope_id;
+            const auto address =
+              discovery::makeAddressFromBytes<discovery::IpAddressV6>(bytes, scopeId);
+            if (!address.is_loopback() && address.is_link_local())
+            {
+              addrs.emplace_back(address);
+            }
+          }
+        }
+      });
 
     return addrs;
   };

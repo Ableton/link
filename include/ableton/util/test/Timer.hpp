@@ -70,10 +70,7 @@ struct Timer
     mHandler = [handler](ErrorCode ec) { handler(ec); };
   }
 
-  std::chrono::system_clock::time_point now() const
-  {
-    return mNow;
-  }
+  std::chrono::system_clock::time_point now() const { return mNow; }
 
   template <typename T, typename Rep>
   void advance(std::chrono::duration<T, Rep> duration)

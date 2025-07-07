@@ -39,11 +39,11 @@ public:
 
 private:
   static int audioCallback(const void* inputBuffer,
-    void* outputBuffer,
-    unsigned long inNumFrames,
-    const PaStreamCallbackTimeInfo* timeInfo,
-    PaStreamCallbackFlags statusFlags,
-    void* userData);
+                           void* outputBuffer,
+                           unsigned long inNumFrames,
+                           const PaStreamCallbackTimeInfo* timeInfo,
+                           PaStreamCallbackFlags statusFlags,
+                           void* userData);
 
   void initialize();
   void uninitialize();

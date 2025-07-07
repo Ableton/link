@@ -361,8 +361,10 @@ public:
     /*! @brief: Convenience function to start or stop transport at a given time and
      *  attempt to map the given beat to this time in context of the given quantum.
      */
-    void setIsPlayingAndRequestBeatAtTime(
-      bool isPlaying, std::chrono::microseconds time, double beat, double quantum);
+    void setIsPlayingAndRequestBeatAtTime(bool isPlaying,
+                                          std::chrono::microseconds time,
+                                          double beat,
+                                          double quantum);
 
   private:
     friend BasicLink<Clock>;
@@ -373,11 +375,11 @@ public:
 
 private:
   using Controller = ableton::link::Controller<link::PeerCountCallback,
-    link::TempoCallback,
-    link::StartStopStateCallback,
-    Clock,
-    link::platform::Random,
-    link::platform::IoContext>;
+                                               link::TempoCallback,
+                                               link::StartStopStateCallback,
+                                               Clock,
+                                               link::platform::Random,
+                                               link::platform::IoContext>;
 
   std::mutex mCallbackMutex;
   link::PeerCountCallback mPeerCountCallback = [](std::size_t) {};

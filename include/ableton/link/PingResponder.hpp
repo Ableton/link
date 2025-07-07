@@ -41,16 +41,16 @@ class PingResponder
 
 public:
   PingResponder(discovery::IpAddress address,
-    SessionId sessionId,
-    GhostXForm ghostXForm,
-    Clock clock,
-    IoType io)
+                SessionId sessionId,
+                GhostXForm ghostXForm,
+                Clock clock,
+                IoType io)
     : mIo(io)
     , mpImpl(std::make_shared<Impl>(std::move(address),
-        std::move(sessionId),
-        std::move(ghostXForm),
-        std::move(clock),
-        std::move(io)))
+                                    std::move(sessionId),
+                                    std::move(ghostXForm),
+                                    std::move(clock),
+                                    std::move(io)))
   {
     mpImpl->listen();
   }
@@ -64,29 +64,20 @@ public:
     mpImpl->mGhostXForm = std::move(xform);
   }
 
-  discovery::UdpEndpoint endpoint() const
-  {
-    return mpImpl->mSocket.endpoint();
-  }
+  discovery::UdpEndpoint endpoint() const { return mpImpl->mSocket.endpoint(); }
 
-  discovery::IpAddress address() const
-  {
-    return endpoint().address();
-  }
+  discovery::IpAddress address() const { return endpoint().address(); }
 
-  Socket socket() const
-  {
-    return mpImpl->mSocket;
-  }
+  Socket socket() const { return mpImpl->mSocket; }
 
 private:
   struct Impl : std::enable_shared_from_this<Impl>
   {
     Impl(discovery::IpAddress address,
-      SessionId sessionId,
-      GhostXForm ghostXForm,
-      Clock clock,
-      IoType io)
+         SessionId sessionId,
+         GhostXForm ghostXForm,
+         Clock clock,
+         IoType io)
       : mSessionId(std::move(sessionId))
       , mGhostXForm(std::move(ghostXForm))
       , mClock(std::move(clock))
@@ -95,10 +86,7 @@ private:
     {
     }
 
-    void listen()
-    {
-      mSocket.receive(util::makeAsyncSafe(this->shared_from_this()));
-    }
+    void listen() { mSocket.receive(util::makeAsyncSafe(this->shared_from_this())); }
 
     // Operator to handle incoming messages on the interface
     template <typename It>

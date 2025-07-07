@@ -36,10 +36,7 @@ namespace
 
 struct MockClock
 {
-  std::chrono::microseconds micros() const
-  {
-    return std::chrono::microseconds{4};
-  }
+  std::chrono::microseconds micros() const { return std::chrono::microseconds{4}; }
 };
 
 struct MockIoContext
@@ -55,17 +52,11 @@ struct MockIoContext
 
   using Timer = util::test::Timer;
 
-  Timer makeTimer()
-  {
-    return {};
-  }
+  Timer makeTimer() { return {}; }
 
   using Log = util::NullLog;
 
-  Log log() const
-  {
-    return {};
-  }
+  Log log() const { return {}; }
 
   ableton::util::test::IoService mIo;
 };
@@ -73,7 +64,8 @@ struct MockIoContext
 struct TFixture
 {
   TFixture()
-    : mMeasurement(mStateQuery(),
+    : mMeasurement(
+        mStateQuery(),
         [](std::vector<double>) {},
         {},
         MockClock{},
@@ -81,10 +73,7 @@ struct TFixture
   {
   }
 
-  discovery::test::Socket socket()
-  {
-    return mMeasurement.mpImpl->mSocket;
-  }
+  discovery::test::Socket socket() { return mMeasurement.mpImpl->mSocket; }
 
   struct StateQuery
   {
@@ -95,10 +84,7 @@ struct TFixture
       mState.endpoint = discovery::UdpEndpoint(discovery::makeAddress("127.0.0.1"), 9999);
     }
 
-    PeerState operator()()
-    {
-      return mState;
-    }
+    PeerState operator()() { return mState; }
     PeerState mState;
   };
 
@@ -125,7 +111,9 @@ TEST_CASE("PeerMeasurement")
 
     std::chrono::microseconds gt{0};
     std::chrono::microseconds ht{0};
-    discovery::parsePayload<GHostTime, HostTime>(result.second, std::end(messageBuffer),
+    discovery::parsePayload<GHostTime, HostTime>(
+      result.second,
+      std::end(messageBuffer),
       [&gt](GHostTime ghostTime) { gt = std::move(ghostTime.time); },
       [&ht](HostTime hostTime) { ht = std::move(hostTime.time); });
 

@@ -58,10 +58,7 @@ struct Clock
     return count.QuadPart;
   }
 
-  std::chrono::microseconds micros() const
-  {
-    return ticksToMicros(ticks());
-  }
+  std::chrono::microseconds micros() const { return ticksToMicros(ticks()); }
 
   double mTicksToMicros;
 };

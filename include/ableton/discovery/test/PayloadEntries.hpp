@@ -122,10 +122,7 @@ struct Foobar
     return std::make_pair(std::move(foobar), std::move(result.second));
   }
 
-  FoobarTuple asTuple() const
-  {
-    return std::make_tuple(fooVals, barVals);
-  }
+  FoobarTuple asTuple() const { return std::make_tuple(fooVals, barVals); }
 };
 
 } // namespace test

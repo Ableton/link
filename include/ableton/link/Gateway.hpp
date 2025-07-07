@@ -33,21 +33,22 @@ class Gateway
 {
 public:
   Gateway(util::Injected<IoContext> io,
-    discovery::IpAddress addr,
-    util::Injected<PeerObserver> observer,
-    NodeState nodeState,
-    GhostXForm ghostXForm,
-    Clock clock)
+          discovery::IpAddress addr,
+          util::Injected<PeerObserver> observer,
+          NodeState nodeState,
+          GhostXForm ghostXForm,
+          Clock clock)
     : mIo(std::move(io))
     , mMeasurement(addr,
-        nodeState.sessionId,
-        std::move(ghostXForm),
-        std::move(clock),
-        util::injectRef(*mIo))
-    , mPeerGateway(discovery::makeGateway(util::injectRef(*mIo),
-        std::move(addr),
-        std::move(observer),
-        PeerState{std::move(nodeState), mMeasurement.endpoint()}))
+                   nodeState.sessionId,
+                   std::move(ghostXForm),
+                   std::move(clock),
+                   util::injectRef(*mIo))
+    , mPeerGateway(
+        discovery::makeGateway(util::injectRef(*mIo),
+                               std::move(addr),
+                               std::move(observer),
+                               PeerState{std::move(nodeState), mMeasurement.endpoint()}))
   {
   }
 

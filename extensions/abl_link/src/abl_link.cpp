@@ -61,8 +61,8 @@ extern "C"
     abl_link link, abl_link_num_peers_callback callback, void *context)
   {
     reinterpret_cast<ableton::Link *>(link.impl)->setNumPeersCallback(
-      [callback, context](
-        std::size_t numPeers) { (*callback)(static_cast<uint64_t>(numPeers), context); });
+      [callback, context](std::size_t numPeers)
+      { (*callback)(static_cast<uint64_t>(numPeers), context); });
   }
 
   void abl_link_set_tempo_callback(

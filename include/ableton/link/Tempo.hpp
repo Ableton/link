@@ -42,10 +42,7 @@ struct Tempo
   {
   }
 
-  double bpm() const
-  {
-    return mValue;
-  }
+  double bpm() const { return mValue; }
 
   std::chrono::microseconds microsPerBeat() const
   {
@@ -55,8 +52,8 @@ struct Tempo
   // Given the tempo, convert a time to a beat value
   Beats microsToBeats(const std::chrono::microseconds micros) const
   {
-    return Beats{
-      static_cast<double>(micros.count()) / static_cast<double>(microsPerBeat().count())};
+    return Beats{static_cast<double>(micros.count())
+                 / static_cast<double>(microsPerBeat().count())};
   }
 
   // Given the tempo, convert a beat to a time value

@@ -42,8 +42,9 @@ struct StartStopState
 
   StartStopState() = default;
 
-  StartStopState(
-    const bool aIsPlaying, const Beats aBeats, const std::chrono::microseconds aTimestamp)
+  StartStopState(const bool aIsPlaying,
+                 const Beats aBeats,
+                 const std::chrono::microseconds aTimestamp)
     : isPlaying(aIsPlaying)
     , beats(aBeats)
     , timestamp(aTimestamp)
@@ -101,8 +102,8 @@ struct ClientStartStopState
   ClientStartStopState() = default;
 
   ClientStartStopState(const bool aIsPlaying,
-    const std::chrono::microseconds aTime,
-    const std::chrono::microseconds aTimestamp)
+                       const std::chrono::microseconds aTime,
+                       const std::chrono::microseconds aTimestamp)
     : isPlaying(aIsPlaying)
     , time(aTime)
     , timestamp(aTimestamp)

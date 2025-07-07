@@ -38,9 +38,9 @@ namespace link
 // whenever a new combination of these values is seen
 
 template <typename IoContext,
-  typename SessionMembershipCallback,
-  typename SessionTimelineCallback,
-  typename SessionStartStopStateCallback>
+          typename SessionMembershipCallback,
+          typename SessionTimelineCallback,
+          typename SessionStartStopStateCallback>
 class Peers
 {
   // non-movable private implementation type
@@ -50,9 +50,9 @@ public:
   using Peer = std::pair<PeerState, discovery::IpAddress>;
 
   Peers(util::Injected<IoContext> io,
-    SessionMembershipCallback membership,
-    SessionTimelineCallback timeline,
-    SessionStartStopStateCallback startStop)
+        SessionMembershipCallback membership,
+        SessionTimelineCallback timeline,
+        SessionStartStopStateCallback startStop)
     : mpImpl(std::make_shared<Impl>(
         std::move(io), std::move(membership), std::move(timeline), std::move(startStop)))
   {
@@ -75,8 +75,10 @@ public:
   {
     using namespace std;
     auto peerVec = sessionPeers(sid);
-    auto last = unique(begin(peerVec), end(peerVec),
-      [](const Peer& a, const Peer& b) { return a.first.ident() == b.first.ident(); });
+    auto last = unique(begin(peerVec),
+                       end(peerVec),
+                       [](const Peer& a, const Peer& b)
+                       { return a.first.ident() == b.first.ident(); });
     return static_cast<size_t>(distance(begin(peerVec), last));
   }
 
@@ -106,10 +108,7 @@ public:
       remove_if(begin(peerVec), end(peerVec), SessionMemberPred{sid}), end(peerVec));
   }
 
-  void resetPeers()
-  {
-    mpImpl->mPeers.clear();
-  }
+  void resetPeers() { mpImpl->mPeers.clear(); }
 
   // Observer type that monitors peer discovery on a particular
   // gateway and relays the information to a Peers instance.
@@ -178,9 +177,9 @@ private:
   struct Impl
   {
     Impl(util::Injected<IoContext> io,
-      SessionMembershipCallback membership,
-      SessionTimelineCallback timeline,
-      SessionStartStopStateCallback startStop)
+         SessionMembershipCallback membership,
+         SessionTimelineCallback timeline,
+         SessionStartStopStateCallback startStop)
       : mIo(std::move(io))
       , mSessionMembershipCallback(std::move(membership))
       , mSessionTimelineCallback(std::move(timeline))
@@ -214,9 +213,10 @@ private:
       {
         // We've seen this peer before... does it have a new session?
         didSessionMembershipChange =
-          all_of(idRange.first, idRange.second, [&peerSession](const Peer& test) {
-            return test.first.sessionId() != peerSession;
-          });
+          all_of(idRange.first,
+                 idRange.second,
+                 [&peerSession](const Peer& test)
+                 { return test.first.sessionId() != peerSession; });
 
         // was it on this gateway?
         const auto addrRange =
@@ -259,9 +259,11 @@ private:
     {
       using namespace std;
 
-      auto it = find_if(begin(mPeers), end(mPeers), [&](const Peer& peer) {
-        return peer.first.ident() == nodeId && peer.second == gatewayAddr;
-      });
+      auto it =
+        find_if(begin(mPeers),
+                end(mPeers),
+                [&](const Peer& peer)
+                { return peer.first.ident() == nodeId && peer.second == gatewayAddr; });
 
       bool didSessionMembershipChange = false;
       if (it != end(mPeers))
@@ -280,10 +282,11 @@ private:
     {
       using namespace std;
 
-      mPeers.erase(
-        remove_if(begin(mPeers), end(mPeers),
-          [&gatewayAddr](const Peer& peer) { return peer.second == gatewayAddr; }),
-        end(mPeers));
+      mPeers.erase(remove_if(begin(mPeers),
+                             end(mPeers),
+                             [&gatewayAddr](const Peer& peer)
+                             { return peer.second == gatewayAddr; }),
+                   end(mPeers));
 
       mSessionMembershipCallback();
     }
@@ -292,23 +295,27 @@ private:
     bool hasPeerWith(const SessionId& sessionId, Predicate predicate)
     {
       using namespace std;
-      return find_if(begin(mPeers), end(mPeers), [&](const Peer& peer) {
-        return peer.first.sessionId() == sessionId && predicate(peer.first);
-      }) != end(mPeers);
+      return find_if(
+               begin(mPeers),
+               end(mPeers),
+               [&](const Peer& peer)
+               { return peer.first.sessionId() == sessionId && predicate(peer.first); })
+             != end(mPeers);
     }
 
     bool sessionTimelineExists(const SessionId& session, const Timeline& timeline)
     {
       return hasPeerWith(session,
-        [&](const PeerState& peerState) { return peerState.timeline() == timeline; });
+                         [&](const PeerState& peerState)
+                         { return peerState.timeline() == timeline; });
     }
 
-    bool sessionStartStopStateExists(
-      const SessionId& sessionId, const StartStopState& startStopState)
+    bool sessionStartStopStateExists(const SessionId& sessionId,
+                                     const StartStopState& startStopState)
     {
-      return hasPeerWith(sessionId, [&](const PeerState& peerState) {
-        return peerState.startStopState() == startStopState;
-      });
+      return hasPeerWith(sessionId,
+                         [&](const PeerState& peerState)
+                         { return peerState.startStopState() == startStopState; });
     }
 
     struct PeerIdComp
@@ -336,10 +343,7 @@ private:
 
   struct SessionMemberPred
   {
-    bool operator()(const Peer& peer) const
-    {
-      return peer.first.sessionId() == sid;
-    }
+    bool operator()(const Peer& peer) const { return peer.first.sessionId() == sid; }
 
     const SessionId& sid;
   };
@@ -348,20 +352,22 @@ private:
 };
 
 template <typename Io,
-  typename SessionMembershipCallback,
-  typename SessionTimelineCallback,
-  typename SessionStartStopStateCallback>
+          typename SessionMembershipCallback,
+          typename SessionTimelineCallback,
+          typename SessionStartStopStateCallback>
 Peers<Io,
-  SessionMembershipCallback,
-  SessionTimelineCallback,
-  SessionStartStopStateCallback>
+      SessionMembershipCallback,
+      SessionTimelineCallback,
+      SessionStartStopStateCallback>
 makePeers(util::Injected<Io> io,
-  SessionMembershipCallback membershipCallback,
-  SessionTimelineCallback timelineCallback,
-  SessionStartStopStateCallback startStopStateCallback)
+          SessionMembershipCallback membershipCallback,
+          SessionTimelineCallback timelineCallback,
+          SessionStartStopStateCallback startStopStateCallback)
 {
-  return {std::move(io), std::move(membershipCallback), std::move(timelineCallback),
-    std::move(startStopStateCallback)};
+  return {std::move(io),
+          std::move(membershipCallback),
+          std::move(timelineCallback),
+          std::move(startStopStateCallback)};
 }
 
 } // namespace link

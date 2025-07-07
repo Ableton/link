@@ -34,8 +34,8 @@ struct Timer
   using TimePoint = SchedulerTree::TimePoint;
 
   Timer(const SchedulerTree::TimerId timerId,
-    const TimePoint& now,
-    std::shared_ptr<SchedulerTree> pScheduler)
+        const TimePoint& now,
+        std::shared_ptr<SchedulerTree> pScheduler)
     : mId(timerId)
     , mNow(now)
     , mpScheduler(std::move(pScheduler))
@@ -93,10 +93,7 @@ struct Timer
     pScheduler->setTimer(mId, mExpiration, std::move(handler));
   }
 
-  TimePoint now() const
-  {
-    return mNow;
-  }
+  TimePoint now() const { return mNow; }
 
   const SchedulerTree::TimerId mId;
   const TimePoint& mNow;

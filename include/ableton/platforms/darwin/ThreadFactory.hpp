@@ -35,11 +35,14 @@ struct ThreadFactory
   template <typename Callable, typename... Args>
   static std::thread makeThread(std::string name, Callable&& f, Args&&... args)
   {
-    return std::thread{[](std::string name, Callable&& f, Args&&... args) {
+    return std::thread{[](std::string name, Callable&& f, Args&&... args)
+                       {
                          pthread_setname_np(name.c_str());
                          f(args...);
                        },
-      std::move(name), std::forward<Callable>(f), std::forward<Args>(args)...};
+                       std::move(name),
+                       std::forward<Callable>(f),
+                       std::forward<Args>(args)...};
   }
 };
 

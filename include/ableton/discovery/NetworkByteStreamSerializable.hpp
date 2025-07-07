@@ -85,7 +85,7 @@ struct Deserialize
 // Default size implementation. Works for primitive types.
 
 template <typename T,
-  typename std::enable_if<std::is_fundamental<T>::value>::type* = nullptr>
+          typename std::enable_if<std::is_fundamental<T>::value>::type* = nullptr>
 std::uint32_t sizeInByteStream(T)
 {
   return sizeof(T);
@@ -274,7 +274,7 @@ template <typename It>
 It toNetworkByteStream(const std::chrono::microseconds micros, It out)
 {
   static_assert(sizeof(int64_t) == sizeof(std::chrono::microseconds::rep),
-    "The size of microseconds::rep must matche the size of int64_t.");
+                "The size of microseconds::rep must matche the size of int64_t.");
   return toNetworkByteStream(static_cast<int64_t>(micros.count()), std::move(out));
 }
 
@@ -319,9 +319,9 @@ It containerToNetworkByteStream(const Container& container, It out)
 
 template <typename T, typename BytesIt, typename InsertIt>
 BytesIt deserializeContainer(BytesIt bytesBegin,
-  const BytesIt bytesEnd,
-  InsertIt contBegin,
-  const std::uint32_t maxElements)
+                             const BytesIt bytesEnd,
+                             InsertIt contBegin,
+                             const std::uint32_t maxElements)
 {
   using namespace std;
   std::uint32_t numElements = 0;
@@ -385,15 +385,17 @@ template <typename T, typename Alloc>
 struct Deserialize<std::vector<T, Alloc>>
 {
   template <typename It>
-  static std::pair<std::vector<T, Alloc>, It> fromNetworkByteStream(
-    It bytesBegin, It bytesEnd)
+  static std::pair<std::vector<T, Alloc>, It> fromNetworkByteStream(It bytesBegin,
+                                                                    It bytesEnd)
   {
     using namespace std;
     auto result_size =
       Deserialize<uint32_t>::fromNetworkByteStream(std::move(bytesBegin), bytesEnd);
     vector<T, Alloc> result;
     auto resultIt = detail::deserializeContainer<T>(std::move(result_size.second),
-      std::move(bytesEnd), back_inserter(result), result_size.first);
+                                                    std::move(bytesEnd),
+                                                    back_inserter(result),
+                                                    result_size.first);
     return make_pair(std::move(result), std::move(resultIt));
   }
 };
@@ -438,8 +440,9 @@ template <typename X, typename Y, typename Z, typename It>
 It toNetworkByteStream(const std::tuple<X, Y, Z>& tup, It out)
 {
   return toNetworkByteStream(
-    std::get<2>(tup), toNetworkByteStream(std::get<1>(tup),
-                        toNetworkByteStream(std::get<0>(tup), std::move(out))));
+    std::get<2>(tup),
+    toNetworkByteStream(
+      std::get<1>(tup), toNetworkByteStream(std::get<0>(tup), std::move(out))));
 }
 
 template <typename X, typename Y, typename Z>

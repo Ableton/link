@@ -36,11 +36,11 @@ public:
 
 private:
   static OSStatus audioCallback(void* inRefCon,
-    AudioUnitRenderActionFlags*,
-    const AudioTimeStamp* inTimeStamp,
-    UInt32,
-    UInt32 inNumberFrames,
-    AudioBufferList* ioData);
+                                AudioUnitRenderActionFlags*,
+                                const AudioTimeStamp* inTimeStamp,
+                                UInt32,
+                                UInt32 inNumberFrames,
+                                AudioBufferList* ioData);
 
   void initialize();
   void uninitialize();

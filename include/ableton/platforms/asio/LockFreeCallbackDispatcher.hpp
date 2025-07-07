@@ -57,10 +57,7 @@ public:
     mThread.join();
   }
 
-  void invoke()
-  {
-    mCondition.notify_one();
-  }
+  void invoke() { mCondition.notify_one(); }
 
 private:
   void run()

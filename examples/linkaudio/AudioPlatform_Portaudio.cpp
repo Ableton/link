@@ -43,11 +43,11 @@ AudioPlatform::~AudioPlatform()
 }
 
 int AudioPlatform::audioCallback(const void* /*inputBuffer*/,
-  void* outputBuffer,
-  unsigned long inNumFrames,
-  const PaStreamCallbackTimeInfo* /*timeInfo*/,
-  PaStreamCallbackFlags /*statusFlags*/,
-  void* userData)
+                                 void* outputBuffer,
+                                 unsigned long inNumFrames,
+                                 const PaStreamCallbackTimeInfo* /*timeInfo*/,
+                                 PaStreamCallbackFlags /*statusFlags*/,
+                                 void* userData)
 {
   using namespace std::chrono;
   float* buffer = static_cast<float*>(outputBuffer);
@@ -96,8 +96,14 @@ void AudioPlatform::initialize()
   outputParameters.hostApiSpecificStreamInfo = nullptr;
   mEngine.mOutputLatency.store(
     std::chrono::microseconds(llround(outputParameters.suggestedLatency * 1.0e6)));
-  result = Pa_OpenStream(&pStream, nullptr, &outputParameters, mEngine.mSampleRate,
-    mEngine.mBuffer.size(), paClipOff, &audioCallback, this);
+  result = Pa_OpenStream(&pStream,
+                         nullptr,
+                         &outputParameters,
+                         mEngine.mSampleRate,
+                         mEngine.mBuffer.size(),
+                         paClipOff,
+                         &audioCallback,
+                         this);
 
   if (result)
   {

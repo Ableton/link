@@ -103,10 +103,7 @@ public:
     mpTimer->async_wait(util::makeAsyncSafe(mpAsyncHandler));
   }
 
-  TimePoint now() const
-  {
-    return std::chrono::system_clock::now();
-  }
+  TimePoint now() const { return std::chrono::system_clock::now(); }
 
 private:
   struct AsyncHandler

@@ -41,10 +41,7 @@ struct IoService
     {
     }
 
-    void expires_at(std::chrono::system_clock::time_point t)
-    {
-      mpTimer->expires_at(t);
-    }
+    void expires_at(std::chrono::system_clock::time_point t) { mpTimer->expires_at(t); }
 
     template <typename T, typename Rep>
     void expires_from_now(std::chrono::duration<T, Rep> duration)
@@ -52,10 +49,7 @@ struct IoService
       mpTimer->expires_from_now(duration);
     }
 
-    ErrorCode cancel()
-    {
-      return mpTimer->cancel();
-    }
+    ErrorCode cancel() { return mpTimer->cancel(); }
 
     template <typename Handler>
     void async_wait(Handler handler)
@@ -63,10 +57,7 @@ struct IoService
       mpTimer->async_wait(std::move(handler));
     }
 
-    TimePoint now() const
-    {
-      return mpTimer->now();
-    }
+    TimePoint now() const { return mpTimer->now(); }
 
     util::test::Timer* mpTimer;
   };

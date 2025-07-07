@@ -37,8 +37,8 @@ class Context
 {
 public:
   Context(const SchedulerTree::TimePoint& now,
-    const std::vector<discovery::IpAddress>& ifAddrs,
-    std::shared_ptr<SchedulerTree> pScheduler)
+          const std::vector<discovery::IpAddress>& ifAddrs,
+          std::shared_ptr<SchedulerTree> pScheduler)
     : mNow(now)
     , mIfAddrs(ifAddrs)
     , mpScheduler(std::move(pScheduler))
@@ -67,9 +67,7 @@ public:
   {
   }
 
-  void stop()
-  {
-  }
+  void stop() {}
 
   template <typename Handler>
   void async(Handler handler)
@@ -79,22 +77,13 @@ public:
 
   using Timer = serial_io::Timer;
 
-  Timer makeTimer()
-  {
-    return {mNextTimerId++, mNow, mpScheduler};
-  }
+  Timer makeTimer() { return {mNextTimerId++, mNow, mpScheduler}; }
 
   using Log = util::NullLog;
 
-  Log& log()
-  {
-    return mLog;
-  }
+  Log& log() { return mLog; }
 
-  std::vector<discovery::IpAddress> scanNetworkInterfaces()
-  {
-    return mIfAddrs;
-  }
+  std::vector<discovery::IpAddress> scanNetworkInterfaces() { return mIfAddrs; }
 
 private:
   const SchedulerTree::TimePoint& mNow;

@@ -129,9 +129,9 @@ AudioEngine::EngineData AudioEngine::pullEngineData()
 }
 
 void AudioEngine::renderMetronomeIntoBuffer(const Link::SessionState sessionState,
-  const double quantum,
-  const std::chrono::microseconds beginHostTime,
-  const std::size_t numSamples)
+                                            const double quantum,
+                                            const std::chrono::microseconds beginHostTime,
+                                            const std::size_t numSamples)
 {
   using namespace std::chrono;
 
@@ -188,8 +188,8 @@ void AudioEngine::renderMetronomeIntoBuffer(const Link::SessionState sessionStat
   }
 }
 
-void AudioEngine::audioCallback(
-  const std::chrono::microseconds hostTime, const std::size_t numSamples)
+void AudioEngine::audioCallback(const std::chrono::microseconds hostTime,
+                                const std::size_t numSamples)
 {
   const auto engineData = pullEngineData();
 

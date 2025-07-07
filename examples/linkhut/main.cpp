@@ -92,11 +92,11 @@ void printStateHeader()
 }
 
 void printState(const std::chrono::microseconds time,
-  const ableton::Link::SessionState sessionState,
-  const bool linkEnabled,
-  const std::size_t numPeers,
-  const double quantum,
-  const bool startStopSyncOn)
+                const ableton::Link::SessionState sessionState,
+                const bool linkEnabled,
+                const std::size_t numPeers,
+                const double quantum,
+                const bool startStopSyncOn)
 {
   using namespace std;
   const auto enabled = linkEnabled ? "yes" : "no";
@@ -198,9 +198,12 @@ int main(int, char**)
   {
     const auto time = state.link.clock().micros();
     auto sessionState = state.link.captureAppSessionState();
-    printState(time, sessionState, state.link.isEnabled(), state.link.numPeers(),
-      state.audioPlatform.mEngine.quantum(),
-      state.audioPlatform.mEngine.isStartStopSyncEnabled());
+    printState(time,
+               sessionState,
+               state.link.isEnabled(),
+               state.link.numPeers(),
+               state.audioPlatform.mEngine.quantum(),
+               state.audioPlatform.mEngine.isStartStopSyncEnabled());
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
   }
 

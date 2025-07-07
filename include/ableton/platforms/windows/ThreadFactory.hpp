@@ -36,14 +36,17 @@ struct ThreadFactory
   static std::thread makeThread(std::string name, Callable&& f, Args&&... args)
   {
     return std::thread(
-      [](std::string name, Callable&& f, Args&&... args) {
+      [](std::string name, Callable&& f, Args&&... args)
+      {
         assert(name.length() < 20);
         wchar_t nativeName[20];
         mbstowcs(nativeName, name.c_str(), name.length() + 1);
         SetThreadDescription(GetCurrentThread(), nativeName);
         f(args...);
       },
-      std::move(name), std::forward<Callable>(f), std::forward<Args>(args)...);
+      std::move(name),
+      std::forward<Callable>(f),
+      std::forward<Args>(args)...);
   }
 };
 

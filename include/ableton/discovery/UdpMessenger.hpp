@@ -57,11 +57,11 @@ UdpEndpoint ipV6Endpoint(Interface& iface, const UdpEndpoint& endpoint)
 // Throws UdpSendException
 template <typename Interface, typename NodeId, typename Payload>
 void sendUdpMessage(Interface& iface,
-  NodeId from,
-  const uint8_t ttl,
-  const v1::MessageType messageType,
-  const Payload& payload,
-  const UdpEndpoint& to)
+                    NodeId from,
+                    const uint8_t ttl,
+                    const v1::MessageType messageType,
+                    const Payload& payload,
+                    const UdpEndpoint& to)
 {
   using namespace std;
   v1::MessageBuffer buffer;
@@ -93,10 +93,10 @@ public:
   using TimePoint = typename Timer::TimePoint;
 
   UdpMessenger(util::Injected<Interface> iface,
-    NodeState state,
-    util::Injected<IoContext> io,
-    const uint8_t ttl,
-    const uint8_t ttlRatio)
+               NodeState state,
+               util::Injected<IoContext> io,
+               const uint8_t ttl,
+               const uint8_t ttlRatio)
     : mpImpl(std::make_shared<Impl>(
         std::move(iface), std::move(state), std::move(io), ttl, ttlRatio))
   {
@@ -130,18 +130,12 @@ public:
     }
   }
 
-  void updateState(NodeState state)
-  {
-    mpImpl->updateState(std::move(state));
-  }
+  void updateState(NodeState state) { mpImpl->updateState(std::move(state)); }
 
   // Broadcast the current state of the system to all peers. May throw
   // std::runtime_error if assembling a broadcast message fails or if
   // there is an error at the transport layer. Throws on failure.
-  void broadcastState()
-  {
-    mpImpl->broadcastState();
-  }
+  void broadcastState() { mpImpl->broadcastState(); }
 
   // Asynchronous receive function for incoming messages from peers. Will
   // return immediately and the handler will be invoked when a message
@@ -157,10 +151,10 @@ private:
   struct Impl : std::enable_shared_from_this<Impl>
   {
     Impl(util::Injected<Interface> iface,
-      NodeState state,
-      util::Injected<IoContext> io,
-      const uint8_t ttl,
-      const uint8_t ttlRatio)
+         NodeState state,
+         util::Injected<IoContext> io,
+         const uint8_t ttl,
+         const uint8_t ttlRatio)
       : mIo(std::move(io))
       , mInterface(std::move(iface))
       , mState(std::move(state))
@@ -176,8 +170,8 @@ private:
     template <typename Handler>
     void setReceiveHandler(Handler handler)
     {
-      mPeerStateHandler = [handler](
-                            PeerState<NodeState> state) { handler(std::move(state)); };
+      mPeerStateHandler = [handler](PeerState<NodeState> state)
+      { handler(std::move(state)); };
 
       mByeByeHandler = [handler](ByeBye<NodeId> byeBye) { handler(std::move(byeBye)); };
     }
@@ -186,20 +180,26 @@ private:
     {
       if (mInterface->endpoint().address().is_v4())
       {
-        sendUdpMessage(*mInterface, mState.ident(), 0, v1::kByeBye, makePayload(),
-          multicastEndpointV4());
+        sendUdpMessage(*mInterface,
+                       mState.ident(),
+                       0,
+                       v1::kByeBye,
+                       makePayload(),
+                       multicastEndpointV4());
       }
       if (mInterface->endpoint().address().is_v6())
       {
-        sendUdpMessage(*mInterface, mState.ident(), 0, v1::kByeBye, makePayload(),
+        sendUdpMessage(
+          *mInterface,
+          mState.ident(),
+          0,
+          v1::kByeBye,
+          makePayload(),
           multicastEndpointV6(mInterface->endpoint().address().to_v6().scope_id()));
       }
     }
 
-    void updateState(NodeState state)
-    {
-      mState = std::move(state);
-    }
+    void updateState(NodeState state) { mState = std::move(state); }
 
     void broadcastState()
     {
@@ -218,12 +218,14 @@ private:
       // scheduled to try again. We want to keep trying at our
       // interval as long as this instance is alive.
       mTimer.expires_from_now(delay > milliseconds{0} ? delay : nominalBroadcastPeriod);
-      mTimer.async_wait([this](const TimerError e) {
-        if (!e)
+      mTimer.async_wait(
+        [this](const TimerError e)
         {
-          broadcastState();
-        }
-      });
+          if (!e)
+          {
+            broadcastState();
+          }
+        });
 
       // If we're not delaying, broadcast now
       if (delay < milliseconds{1})
@@ -235,7 +237,8 @@ private:
         }
         if (mInterface->endpoint().address().is_v6())
         {
-          sendPeerState(v1::kAlive,
+          sendPeerState(
+            v1::kAlive,
             multicastEndpointV6(mInterface->endpoint().address().to_v6().scope_id()));
         }
       }
@@ -261,8 +264,10 @@ private:
     }
 
     template <typename Tag, typename It>
-    void operator()(
-      Tag tag, const UdpEndpoint& from, const It messageBegin, const It messageEnd)
+    void operator()(Tag tag,
+                    const UdpEndpoint& from,
+                    const It messageBegin,
+                    const It messageEnd)
     {
       auto result = v1::parseMessageHeader<NodeId>(messageBegin, messageEnd);
 
@@ -312,8 +317,9 @@ private:
     }
 
     template <typename It>
-    void receivePeerState(
-      v1::MessageHeader<NodeId> header, It payloadBegin, It payloadEnd)
+    void receivePeerState(v1::MessageHeader<NodeId> header,
+                          It payloadBegin,
+                          It payloadEnd)
     {
       try
       {

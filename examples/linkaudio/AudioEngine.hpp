@@ -58,9 +58,9 @@ private:
   void setSampleRate(double sampleRate);
   EngineData pullEngineData();
   void renderMetronomeIntoBuffer(Link::SessionState sessionState,
-    double quantum,
-    std::chrono::microseconds beginHostTime,
-    std::size_t numSamples);
+                                 double quantum,
+                                 std::chrono::microseconds beginHostTime,
+                                 std::size_t numSamples);
   void audioCallback(const std::chrono::microseconds hostTime, std::size_t numSamples);
 
   Link& mLink;

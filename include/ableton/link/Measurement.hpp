@@ -44,10 +44,10 @@ struct Measurement
   static const std::size_t kNumberMeasurements = 5;
 
   Measurement(const PeerState& state,
-    Callback callback,
-    discovery::IpAddress address,
-    Clock clock,
-    util::Injected<IoContext> io)
+              Callback callback,
+              discovery::IpAddress address,
+              Clock clock,
+              util::Injected<IoContext> io)
     : mIo(std::move(io))
     , mpImpl(std::make_shared<Impl>(
         std::move(state), std::move(callback), std::move(address), std::move(clock), mIo))
@@ -68,10 +68,10 @@ struct Measurement
     using Log = typename util::Injected<IoContext>::type::Log;
 
     Impl(const PeerState& state,
-      Callback callback,
-      discovery::IpAddress address,
-      Clock clock,
-      util::Injected<IoContext> io)
+         Callback callback,
+         discovery::IpAddress address,
+         Clock clock,
+         util::Injected<IoContext> io)
       : mSocket(io->template openUnicastSocket<v1::kMaxMessageSize>(address))
       , mSessionId(state.nodeState.sessionId)
       , mCallback(std::move(callback))
@@ -101,33 +101,33 @@ struct Measurement
     {
       mTimer.cancel();
       mTimer.expires_from_now(std::chrono::milliseconds(50));
-      mTimer.async_wait([this](const typename Timer::ErrorCode e) {
-        if (!e)
+      mTimer.async_wait(
+        [this](const typename Timer::ErrorCode e)
         {
-          if (mMeasurementsStarted < kNumberMeasurements)
+          if (!e)
           {
-            const auto ht = HostTime{mClock.micros()};
-            sendPing(mEndpoint, discovery::makePayload(ht));
-            ++mMeasurementsStarted;
-            resetTimer();
+            if (mMeasurementsStarted < kNumberMeasurements)
+            {
+              const auto ht = HostTime{mClock.micros()};
+              sendPing(mEndpoint, discovery::makePayload(ht));
+              ++mMeasurementsStarted;
+              resetTimer();
+            }
+            else
+            {
+              fail();
+            }
           }
-          else
-          {
-            fail();
-          }
-        }
-      });
+        });
     }
 
-    void listen()
-    {
-      mSocket.receive(util::makeAsyncSafe(this->shared_from_this()));
-    }
+    void listen() { mSocket.receive(util::makeAsyncSafe(this->shared_from_this())); }
 
     // Operator to handle incoming messages on the interface
     template <typename It>
-    void operator()(
-      const discovery::UdpEndpoint& from, const It messageBegin, const It messageEnd)
+    void operator()(const discovery::UdpEndpoint& from,
+                    const It messageBegin,
+                    const It messageEnd)
     {
       using namespace std;
       const auto result = v1::parseMessageHeader(messageBegin, messageEnd);
@@ -147,7 +147,8 @@ struct Measurement
         try
         {
           discovery::parsePayload<SessionMembership, GHostTime, PrevGHostTime, HostTime>(
-            payloadBegin, messageEnd,
+            payloadBegin,
+            messageEnd,
             [&sessionId](const SessionMembership& sms) { sessionId = sms.sessionId; },
             [&ghostTime](GHostTime gt) { ghostTime = std::move(gt.time); },
             [&prevGHostTime](PrevGHostTime gt) { prevGHostTime = std::move(gt.time); },

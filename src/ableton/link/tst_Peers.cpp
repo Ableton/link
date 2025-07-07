@@ -33,10 +33,7 @@ using Random = ableton::platforms::stl::Random;
 
 struct SessionMembershipCallback
 {
-  void operator()()
-  {
-    ++calls;
-  }
+  void operator()() { ++calls; }
 
   std::size_t calls = 0;
 };
@@ -62,9 +59,9 @@ struct SessionStartStopStateCallback
 };
 
 using PeerVector = std::vector<typename Peers<test::serial_io::Context,
-  SessionMembershipCallback,
-  SessionTimelineCallback,
-  SessionStartStopStateCallback>::Peer>;
+                                              SessionMembershipCallback,
+                                              SessionTimelineCallback,
+                                              SessionStartStopStateCallback>::Peer>;
 
 void expectPeers(const PeerVector& expected, const PeerVector& actual)
 {
@@ -72,7 +69,7 @@ void expectPeers(const PeerVector& expected, const PeerVector& actual)
 }
 
 void expectSessionTimelines(const std::vector<std::pair<SessionId, Timeline>>& expected,
-  const SessionTimelineCallback& callback)
+                            const SessionTimelineCallback& callback)
 {
   CHECK(expected == callback.sessionTimelines);
 }
@@ -89,20 +86,25 @@ void expectStartStopStates(
 TEST_CASE("Peers")
 {
   const auto fooPeer =
-    PeerState{{NodeId::random<Random>(), NodeId::random<Random>(),
-                Timeline{Tempo{60.}, Beats{1.}, std::chrono::microseconds{1234}},
-                StartStopState{false, Beats{0.}, std::chrono::microseconds{2345}}},
-      {}};
+    PeerState{{NodeId::random<Random>(),
+               NodeId::random<Random>(),
+               Timeline{Tempo{60.}, Beats{1.}, std::chrono::microseconds{1234}},
+               StartStopState{false, Beats{0.}, std::chrono::microseconds{2345}}},
+              {}};
 
   const auto barPeer =
-    PeerState{{NodeId::random<Random>(), NodeId::random<Random>(),
-                Timeline{Tempo{120.}, Beats{10.}, std::chrono::microseconds{500}}, {}},
-      {}};
+    PeerState{{NodeId::random<Random>(),
+               NodeId::random<Random>(),
+               Timeline{Tempo{120.}, Beats{10.}, std::chrono::microseconds{500}},
+               {}},
+              {}};
 
   const auto bazPeer =
-    PeerState{{NodeId::random<Random>(), NodeId::random<Random>(),
-                Timeline{Tempo{100.}, Beats{4.}, std::chrono::microseconds{100}}, {}},
-      {}};
+    PeerState{{NodeId::random<Random>(),
+               NodeId::random<Random>(),
+               Timeline{Tempo{100.}, Beats{4.}, std::chrono::microseconds{100}},
+               {}},
+              {}};
 
   const auto gateway1 = discovery::makeAddress("123.123.123.123");
   const auto gateway2 = discovery::makeAddress("210.210.210.210");
@@ -113,8 +115,10 @@ TEST_CASE("Peers")
 
   test::serial_io::Fixture io;
 
-  auto peers = makePeers(util::injectVal(io.makeIoContext()), std::ref(membership),
-    std::ref(sessions), std::ref(startStops));
+  auto peers = makePeers(util::injectVal(io.makeIoContext()),
+                         std::ref(membership),
+                         std::ref(sessions),
+                         std::ref(startStops));
 
   SECTION("EmptySessionPeersAfterInit")
   {
@@ -176,7 +180,7 @@ TEST_CASE("Peers")
     io.flush();
 
     expectPeers({{fooPeer, gateway1}, {fooPeer, gateway2}},
-      peers.sessionPeers(fooPeer.sessionId()));
+                peers.sessionPeers(fooPeer.sessionId()));
     CHECK(3 == membership.calls);
   }
 

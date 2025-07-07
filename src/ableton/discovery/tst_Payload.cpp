@@ -103,7 +103,9 @@ TEST_CASE("Payload")
 
     test::Foo actualFoo{};
     test::Bar actualBar{};
-    parsePayload<test::Foo, test::Bar>(begin(bytes), end,
+    parsePayload<test::Foo, test::Bar>(
+      begin(bytes),
+      end,
       [&actualFoo](const test::Foo& foo) { actualFoo = foo; },
       [&actualBar](const test::Bar& bar) { actualBar = bar; });
 
@@ -119,8 +121,10 @@ TEST_CASE("Payload")
     const auto end = toNetworkByteStream(payload, begin(bytes));
 
     test::Foobar actualFoobar{};
-    parsePayload<test::Foobar>(begin(bytes), end,
-      [&actualFoobar](const test::Foobar& foobar) { actualFoobar = foobar; });
+    parsePayload<test::Foobar>(begin(bytes),
+                               end,
+                               [&actualFoobar](const test::Foobar& foobar)
+                               { actualFoobar = foobar; });
 
     CHECK(expectedFoobar.asTuple() == actualFoobar.asTuple());
   }
@@ -154,10 +158,12 @@ TEST_CASE("Payload")
     test::Bar actualBar{};
 
     REQUIRE_THROWS_AS(( // We truncate the buffer by one byte
-                        parsePayload<test::Foo, test::Bar>(begin(bytes), end - 1,
+                        parsePayload<test::Foo, test::Bar>(
+                          begin(bytes),
+                          end - 1,
                           [&actualFoo](const test::Foo& foo) { actualFoo = foo; },
                           [&actualBar](const test::Bar& bar) { actualBar = bar; })),
-      std::runtime_error);
+                      std::runtime_error);
 
     // We expect that bar should be properly parsed but foo not
     CHECK(0 == actualFoo.fooVal);

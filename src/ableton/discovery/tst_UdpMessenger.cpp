@@ -35,10 +35,7 @@ struct TestNodeState
 {
   using IdType = uint8_t;
 
-  IdType ident() const
-  {
-    return nodeId;
-  }
+  IdType ident() const { return nodeId; }
 
   friend auto toPayload(const TestNodeState& state) -> decltype(makePayload(test::Foo{}))
   {
@@ -190,8 +187,11 @@ TEST_CASE("UdpMessenger")
   SECTION("SendByeByeOnDestruction")
   {
     {
-      auto messenger = makeUdpMessenger(util::injectRef(iface), TestNodeState{5, 10},
-        util::injectVal(io.makeIoContext()), 1, 1);
+      auto messenger = makeUdpMessenger(util::injectRef(iface),
+                                        TestNodeState{5, 10},
+                                        util::injectVal(io.makeIoContext()),
+                                        1,
+                                        1);
     }
     REQUIRE(2 == iface.sentMessages.size());
     const auto messageBuffer = iface.sentMessages[1].first;
@@ -207,8 +207,11 @@ TEST_CASE("UdpMessenger")
     // The destructor for the messenger is written so that if an
     // instance is moved from, it won't send the bye bye message.
     {
-      auto messenger = makeUdpMessenger(util::injectRef(iface), TestNodeState{5, 10},
-        util::injectVal(io.makeIoContext()), 1, 1);
+      auto messenger = makeUdpMessenger(util::injectRef(iface),
+                                        TestNodeState{5, 10},
+                                        util::injectVal(io.makeIoContext()),
+                                        1,
+                                        1);
       auto wrapper = wrapMessenger(std::move(messenger));
     }
     // We should have an initial Alive and then a single ByeBye

@@ -38,8 +38,9 @@ public:
   {
   }
 
-  void send(
-    const uint8_t* const bytes, const size_t numBytes, const UdpEndpoint& endpoint)
+  void send(const uint8_t* const bytes,
+            const size_t numBytes,
+            const UdpEndpoint& endpoint)
   {
     sentMessages.push_back(
       std::make_pair(std::vector<uint8_t>{bytes, bytes + numBytes}, endpoint));
@@ -49,9 +50,8 @@ public:
   void receive(Callback callback, Tag tag)
   {
     mCallback = [callback, tag](
-                  const UdpEndpoint& from, const std::vector<uint8_t>& buffer) {
-      callback(tag, from, begin(buffer), end(buffer));
-    };
+                  const UdpEndpoint& from, const std::vector<uint8_t>& buffer)
+    { callback(tag, from, begin(buffer), end(buffer)); };
   }
 
   template <typename It>
@@ -61,10 +61,7 @@ public:
     mCallback(from, buffer);
   }
 
-  UdpEndpoint endpoint() const
-  {
-    return mEndpoint;
-  }
+  UdpEndpoint endpoint() const { return mEndpoint; }
 
   using SentMessage = std::pair<std::vector<uint8_t>, UdpEndpoint>;
   std::vector<SentMessage> sentMessages;

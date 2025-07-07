@@ -36,10 +36,7 @@ struct Random
   {
   }
 
-  uint8_t operator()()
-  {
-    return static_cast<uint8_t>(dist(gen));
-  }
+  uint8_t operator()() { return static_cast<uint8_t>(dist(gen)); }
 
   std::random_device rd;
   std::mt19937 gen;
