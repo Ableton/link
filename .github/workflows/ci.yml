@@ -142,5 +142,13 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: recursive
+      - name: Install clang-format 19
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget lsb-release gnupg
+          wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
+          sudo bash -c 'echo "deb http://apt.llvm.org/$(lsb_release -cs)/ llvm-toolchain-$(lsb_release -cs) main" > /etc/apt/sources.list.d/llvm.list'
+          sudo apt-get update
+          sudo apt-get install -y clang-format-19 python3
       - name: Check Formatting
-        run: docker run -v ${{ github.workspace }}:/link dalg24/clang-format:18.04.0 python /link/ci/check-formatting.py -c /usr/bin/clang-format-6.0
+        run: python3 ci/check-formatting.py -c /usr/bin/clang-format-19
