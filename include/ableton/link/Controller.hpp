@@ -144,7 +144,6 @@ public:
     , mEnabled(false)
     , mStartStopSyncEnabled(false)
     , mIo(IoContext{UdpSendExceptionHandler{this}})
-    , mRtClientStateSetter(*this)
     , mPeers(util::injectRef(*mIo),
              std::ref(mSessionPeerCounter),
              SessionTimelineCallback{*this},
@@ -163,6 +162,7 @@ public:
           mSessionState.ghostXForm),
         GatewayFactory{*this},
         util::injectRef(*mIo))
+    , mRtClientStateSetter(*this)
   {
   }
 
@@ -791,8 +791,6 @@ private:
 
   util::Injected<IoContext> mIo;
 
-  RtClientStateSetter mRtClientStateSetter;
-
   ControllerPeers mPeers;
 
   using ControllerSessions = Sessions<ControllerPeers&,
@@ -806,6 +804,8 @@ private:
                                        GatewayFactory,
                                        typename util::Injected<IoContext>::type&>;
   Discovery mDiscovery;
+
+  RtClientStateSetter mRtClientStateSetter;
 };
 
 } // namespace link
