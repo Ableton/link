@@ -23,6 +23,7 @@
 #include <algorithm>
 #include <array>
 #include <cstdint>
+#include <iomanip>
 #include <string>
 
 namespace ableton
@@ -55,7 +56,18 @@ struct NodeId : NodeIdArray
 
   friend std::ostream& operator<<(std::ostream& stream, const NodeId& id)
   {
-    return stream << std::string{id.cbegin(), id.cend()};
+    const auto flags = stream.flags();
+    const auto fill = stream.fill();
+
+    stream << "0x" << std::hex << std::setfill('0');
+    for (const auto byte : id)
+    {
+      stream << std::setw(2) << static_cast<int>(byte);
+    }
+
+    stream.flags(flags);
+    stream.fill(fill);
+    return stream;
   }
 
   template <typename It>
