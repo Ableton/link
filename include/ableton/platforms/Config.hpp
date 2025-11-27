@@ -47,6 +47,7 @@
 #elif defined(ESP_PLATFORM)
 #include <ableton/platforms/esp32/Clock.hpp>
 #include <ableton/platforms/esp32/Context.hpp>
+#include <ableton/platforms/esp32/Log.hpp>
 #include <ableton/platforms/esp32/Random.hpp>
 #include <ableton/platforms/esp32/ScanIpIfAddrs.hpp>
 #endif
