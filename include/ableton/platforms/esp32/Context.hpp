@@ -24,7 +24,6 @@
 #include <ableton/platforms/asio/AsioTimer.hpp>
 #include <ableton/platforms/asio/Socket.hpp>
 #include <ableton/platforms/esp32/LockFreeCallbackDispatcher.hpp>
-#include <driver/gptimer.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 
@@ -40,6 +39,10 @@ class Context
 {
   class ServiceRunner
   {
+    // This task used to exclusively poll ASIO with `poll_one()`, with an
+    // interval of 100 microseconds. Since ASIO uses `select()` internally to
+    // implement `poll_one()`, we might as well use an event based approach and
+    // save some CPU cycles by using `io_service::run()` instead.
     static void run(void* userParams)
     {
       auto runner = static_cast<ServiceRunner*>(userParams);
@@ -47,22 +50,11 @@ class Context
       {
         try
         {
-          ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
-          runner->mpService->poll_one();
+          runner->mpService->run();
         }
         catch (...)
         {
         }
-      }
-    }
-
-    static void IRAM_ATTR timerIsr(void* userParam)
-    {
-      static BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-      vTaskNotifyGiveFromISR(*((TaskHandle_t*)userParam), &xHigherPriorityTaskWoken);
-      if (xHigherPriorityTaskWoken)
-      {
-        portYIELD_FROM_ISR();
       }
     }
 
@@ -78,24 +70,9 @@ class Context
                               2 | portPRIVILEGE_BIT,
                               &mTaskHandle,
                               LINK_ESP_TASK_CORE_ID);
-
-      const esp_timer_create_args_t timerArgs = {
-        .callback = &timerIsr,
-        .arg = (void*)&mTaskHandle,
-        .dispatch_method = ESP_TIMER_TASK,
-        .name = "link",
-        .skip_unhandled_events = true,
-      };
-
-      ESP_ERROR_CHECK(esp_timer_create(&timerArgs, &mTimer));
-      ESP_ERROR_CHECK(esp_timer_start_periodic(mTimer, 100));
     }
 
-    ~ServiceRunner()
-    {
-      esp_timer_delete(mTimer);
-      vTaskDelete(mTaskHandle);
-    }
+    ~ServiceRunner() { vTaskDelete(mTaskHandle); }
 
     template <typename Handler>
     void async(Handler handler)
@@ -107,7 +84,6 @@ class Context
 
   private:
     TaskHandle_t mTaskHandle;
-    esp_timer_handle_t mTimer;
     std::unique_ptr<::asio::io_service> mpService;
     std::unique_ptr<::asio::io_service::work> mpWork;
   };
