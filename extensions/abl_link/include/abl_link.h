@@ -92,13 +92,13 @@ extern "C"
 
   /*! @brief: Is start/stop synchronization enabled?
    *  Thread-safe: yes
-   *  Realtime-safe: no
+   *  Realtime-safe: yes
    */
   bool abl_link_is_start_stop_sync_enabled(abl_link link);
 
   /*! @brief: Enable start/stop synchronization.
    *  Thread-safe: yes
-   *  Realtime-safe: no
+   *  Realtime-safe: yes
    */
   void abl_link_enable_start_stop_sync(abl_link link, bool enabled);
 
@@ -209,8 +209,8 @@ extern "C"
     abl_link link, abl_link_session_state session_state);
 
   /*! @brief Capture the current Link Session State from an application thread.
-   *  Thread-safe: no
-   *  Realtime-safe: yes
+   *  Thread-safe: yes
+   *  Realtime-safe: no
    *
    *  @discussion Provides a mechanism for capturing the Link Session State from an
    *  application thread (other than the audio thread). After capturing the session_state

@@ -103,13 +103,13 @@ public:
 
   /*! @brief: Is start/stop synchronization enabled?
    *  Thread-safe: yes
-   *  Realtime-safe: no
+   *  Realtime-safe: yes
    */
   bool isStartStopSyncEnabled() const;
 
   /*! @brief: Enable start/stop synchronization.
    *  Thread-safe: yes
-   *  Realtime-safe: no
+   *  Realtime-safe: yes
    */
   void enableStartStopSync(bool bEnable);
 
