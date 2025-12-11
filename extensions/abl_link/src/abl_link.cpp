@@ -166,14 +166,14 @@ extern "C"
   }
 
   void abl_link_force_beat_at_time(
-    abl_link_session_state session_state, double beat, uint64_t time, double quantum)
+    abl_link_session_state session_state, double beat, int64_t time, double quantum)
   {
     reinterpret_cast<ableton::Link::SessionState *>(session_state.impl)
       ->forceBeatAtTime(beat, std::chrono::microseconds{time}, quantum);
   }
 
   void abl_link_set_is_playing(
-    abl_link_session_state session_state, bool is_playing, uint64_t time)
+    abl_link_session_state session_state, bool is_playing, int64_t time)
   {
     reinterpret_cast<ableton::Link::SessionState *>(session_state.impl)
       ->setIsPlaying(is_playing, std::chrono::microseconds(time));
@@ -185,9 +185,9 @@ extern "C"
       ->isPlaying();
   }
 
-  uint64_t abl_link_time_for_is_playing(abl_link_session_state session_state)
+  int64_t abl_link_time_for_is_playing(abl_link_session_state session_state)
   {
-    return static_cast<uint64_t>(
+    return static_cast<int64_t>(
       reinterpret_cast<ableton::Link::SessionState *>(session_state.impl)
         ->timeForIsPlaying()
         .count());
@@ -203,7 +203,7 @@ extern "C"
   void abl_link_set_is_playing_and_request_beat_at_time(
     abl_link_session_state session_state,
     bool is_playing,
-    uint64_t time,
+    int64_t time,
     double beat,
     double quantum)
   {

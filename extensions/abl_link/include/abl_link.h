@@ -317,19 +317,19 @@ extern "C"
    *  join.
    */
   void abl_link_force_beat_at_time(
-    abl_link_session_state session_state, double beat, uint64_t time, double quantum);
+    abl_link_session_state session_state, double beat, int64_t time, double quantum);
 
   /*! @brief: Set if transport should be playing or stopped, taking effect at the given
    *  time.
    */
   void abl_link_set_is_playing(
-    abl_link_session_state session_state, bool is_playing, uint64_t time);
+    abl_link_session_state session_state, bool is_playing, int64_t time);
 
   /*! @brief: Is transport playing? */
   bool abl_link_is_playing(abl_link_session_state session_state);
 
   /*! @brief: Get the time at which a transport start/stop occurs */
-  uint64_t abl_link_time_for_is_playing(abl_link_session_state session_state);
+  int64_t abl_link_time_for_is_playing(abl_link_session_state session_state);
 
   /*! @brief: Convenience function to attempt to map the given beat to the time
    *  when transport is starting to play in context of the given quantum.
@@ -343,7 +343,7 @@ extern "C"
   void abl_link_set_is_playing_and_request_beat_at_time(
     abl_link_session_state session_state,
     bool is_playing,
-    uint64_t time,
+    int64_t time,
     double beat,
     double quantum);
 
