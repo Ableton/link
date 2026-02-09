@@ -26,9 +26,11 @@
 #include <ableton/util/Injected.hpp>
 #include <algorithm>
 #include <cassert>
+#include <chrono>
 #include <memory>
 #include <optional>
 #include <string>
+#include <tuple>
 #include <vector>
 
 namespace ableton
@@ -56,6 +58,26 @@ public:
   {
     Channel channel;
     discovery::IpAddress gatewayAddr;
+  };
+
+  struct ChannelInfoCompare
+  {
+    bool operator()(const ChannelInfo& lhs, const ChannelInfo& rhs) const
+    {
+      if (lhs.channel.sessionId == rhs.channel.sessionId)
+      {
+        if (lhs.channel.peerId == rhs.channel.peerId)
+        {
+          if (lhs.channel.id == rhs.channel.id)
+          {
+            return lhs.gatewayAddr < rhs.gatewayAddr;
+          }
+          return lhs.channel.channelId < rhs.channel.channelId;
+        }
+        return lhs.channel.peerId < rhs.channel.peerId;
+      }
+      return lhs.channel.sessionId < rhs.channel.sessionId;
+    }
   };
 
   Channels(util::Injected<IoContext> io, Callback callback)
@@ -121,11 +143,25 @@ public:
   }
 
 private:
+  using Timer = typename util::Injected<IoContext>::type::Timer;
+  using TimerError = typename Timer::ErrorCode;
+  using TimePoint = typename Timer::TimePoint;
+
+  struct TimeoutCompare
+  {
+    bool operator()(const std::tuple<TimePoint, discovery::IpAddress, Id>& lhs,
+                    const std::tuple<TimePoint, discovery::IpAddress, Id>& rhs) const
+    {
+      return std::get<TimePoint>(lhs) < std::get<TimePoint>(rhs);
+    }
+  };
+
   struct Impl
   {
     Impl(util::Injected<IoContext> io, Callback callback)
       : mIo(std::move(io))
       , mCallback(std::move(callback))
+      , mPruneTimer(mIo->makeTimer())
     {
     }
 
@@ -138,6 +174,7 @@ private:
       const auto nodeId = incoming.announcement.nodeId;
       const auto peerInfo = incoming.announcement.peerInfo;
       const auto peerAudioChannels = incoming.announcement.channels.channels;
+      const auto ttl = incoming.ttl;
       bool didChannelsChange = false;
 
       for (const auto& peerChannel : peerAudioChannels)
@@ -145,6 +182,29 @@ private:
         const auto channelInfo = ChannelInfo{
           {peerChannel.name, peerChannel.id, peerInfo.name, nodeId, peerSession},
           gatewayAddr};
+
+        {
+          const auto timeout =
+            std::find_if(begin(mChannelTimeouts),
+                         end(mChannelTimeouts),
+                         [&](const auto& timeout)
+                         {
+                           return std::get<discovery::IpAddress>(timeout) == gatewayAddr
+                                  && std::get<Id>(timeout) == channelInfo.channel.id;
+                         });
+          if (timeout != end(mChannelTimeouts))
+          {
+            mChannelTimeouts.erase(timeout);
+          }
+
+          auto newTo = std::make_tuple(mPruneTimer.now() + std::chrono::seconds(ttl),
+                                       gatewayAddr,
+                                       channelInfo.channel.id);
+          mChannelTimeouts.insert(
+            upper_bound(
+              begin(mChannelTimeouts), end(mChannelTimeouts), newTo, TimeoutCompare{}),
+            newTo);
+        }
 
         const auto idRange = equal_range(begin(mChannels),
                                          end(mChannels),
@@ -196,6 +256,8 @@ private:
       {
         mCallback();
       }
+
+      scheduleNextPruning();
     }
 
     template <typename It>
@@ -218,7 +280,19 @@ private:
           { return info.gatewayAddr == gatewayAddr && bye == info.channel.id; });
         channelsChanged = it != end(mChannels);
         mChannels.erase(it, end(mChannels));
+
+        mChannelTimeouts.erase(remove_if(begin(mChannelTimeouts),
+                                         end(mChannelTimeouts),
+                                         [&](const auto& timeout)
+                                         {
+                                           return std::get<discovery::IpAddress>(timeout)
+                                                    == gatewayAddr
+                                                  && std::get<Id>(timeout) == bye;
+                                         }),
+                               end(mChannelTimeouts));
       }
+
+      scheduleNextPruning();
 
       if (channelsChanged)
       {
@@ -238,15 +312,91 @@ private:
 
       mChannels.erase(it, end(mChannels));
 
+      mChannelTimeouts.erase(
+        std::remove_if(
+          begin(mChannelTimeouts),
+          end(mChannelTimeouts),
+          [&](const auto& timeout)
+          { return std::get<discovery::IpAddress>(timeout) == gatewayAddr; }),
+        end(mChannelTimeouts));
+
+      scheduleNextPruning();
+
       if (channelsChanged)
       {
         mCallback();
       }
     }
 
+    void pruneExpiredChannels()
+    {
+      using namespace std;
+
+      const auto test = make_tuple(mPruneTimer.now(), discovery::IpAddress{}, Id{});
+
+      const auto endExpired = lower_bound(
+        begin(mChannelTimeouts), end(mChannelTimeouts), test, TimeoutCompare{});
+
+      auto channelsChanged = false;
+      if (endExpired != begin(mChannelTimeouts))
+      {
+        channelsChanged = true;
+
+        for_each(
+          begin(mChannelTimeouts),
+          endExpired,
+          [&](const auto& timeout)
+          {
+            const auto& id = std::get<Id>(timeout);
+            const auto& gatewayAddr = std::get<discovery::IpAddress>(timeout);
+
+            auto it = remove_if(
+              begin(mChannels),
+              end(mChannels),
+              [&](const auto& info)
+              { return info.channel.id == id && info.gatewayAddr == gatewayAddr; });
+
+            mChannels.erase(it, end(mChannels));
+          });
+      }
+
+      mChannelTimeouts.erase(begin(mChannelTimeouts), endExpired);
+
+      scheduleNextPruning();
+
+      if (channelsChanged)
+      {
+        mCallback();
+      }
+    }
+
+    void scheduleNextPruning()
+    {
+      if (!mChannelTimeouts.empty())
+      {
+        // Add a second of padding to the timer to avoid over-eager timeouts
+        const auto t =
+          std::get<TimePoint>(mChannelTimeouts.front()) + std::chrono::seconds(1);
+        mPruneTimer.expires_at(t);
+        mPruneTimer.async_wait(
+          [this](const TimerError e)
+          {
+            if (!e)
+            {
+              pruneExpiredChannels();
+            }
+          });
+      }
+    }
+
     util::Injected<IoContext> mIo;
     Callback mCallback;
     std::vector<ChannelInfo> mChannels;
+
+    using ChannelTimeout = std::tuple<TimePoint, discovery::IpAddress, Id>;
+    using ChannelTimeouts = std::vector<ChannelTimeout>;
+    ChannelTimeouts mChannelTimeouts;
+    Timer mPruneTimer;
   };
 
   std::shared_ptr<Impl> mpImpl;

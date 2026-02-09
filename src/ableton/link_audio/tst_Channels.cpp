@@ -112,6 +112,13 @@ TEST_CASE("Channels")
 
       CHECK(2 == callback.mNumCalls);
     }
+
+    SECTION("Timeout")
+    {
+      io.advanceTime(std::chrono::seconds(5));
+
+      CHECK(2 == callback.mNumCalls);
+    }
   }
 }
 

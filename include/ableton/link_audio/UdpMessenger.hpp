@@ -80,6 +80,7 @@ public:
     link::NodeId ident() const { return announcement.ident(); }
 
     Announcement announcement;
+    int ttl;
   };
 
   UdpMessenger(util::Injected<Interface> iface,
@@ -373,7 +374,8 @@ private:
           auto announcement = Announcement::fromPayload(
             std::move(header.ident), std::move(payloadBegin), std::move(payloadEnd));
 
-          sawAnnouncement(*mObserver, ExtendedAnnouncement{std::move(announcement)});
+          sawAnnouncement(
+            *mObserver, ExtendedAnnouncement{std::move(announcement), mTtl});
         }
         catch (const std::runtime_error& err)
         {
