@@ -35,15 +35,16 @@ class PeerGateways
 {
 public:
   using IoType = typename util::Injected<IoContext>::type;
-  using Gateway =
-    decltype(std::declval<GatewayFactory>()(std::declval<NodeState>(),
-                                            std::declval<util::Injected<IoType&>>(),
-                                            std::declval<IpAddress>()));
+  using FactoryType = typename util::Injected<GatewayFactory>::type;
+  using Gateway = std::invoke_result_t<FactoryType,
+                                       NodeState,
+                                       util::Injected<IoType&>,
+                                       const discovery::IpAddress&>;
   using GatewayMap = std::map<IpAddress, Gateway>;
 
   PeerGateways(const std::chrono::seconds rescanPeriod,
                NodeState state,
-               GatewayFactory factory,
+               util::Injected<GatewayFactory> factory,
                util::Injected<IoContext> io)
     : mIo(std::move(io))
   {
@@ -68,6 +69,7 @@ public:
   void enable(const bool bEnable)
   {
     mpScannerCallback->mGateways.clear();
+    mpScannerCallback->mFactory->gatewaysChanged();
     mpScanner->enable(bEnable);
   }
 
@@ -92,6 +94,7 @@ public:
   {
     if (mpScannerCallback->mGateways.erase(gatewayAddr))
     {
+      mpScannerCallback->mFactory->gatewaysChanged();
       // If we erased a gateway, rescan again immediately so that
       // we will re-initialize it if it's still present
       mpScanner->scan();
@@ -101,7 +104,7 @@ public:
 private:
   struct Callback
   {
-    Callback(NodeState state, GatewayFactory factory, IoType& io)
+    Callback(NodeState state, util::Injected<GatewayFactory> factory, IoType& io)
       : mState(std::move(state))
       , mFactory(std::move(factory))
       , mIo(io)
@@ -148,7 +151,7 @@ private:
         try
         {
           info(mIo.log()) << "initializing peer gateway on interface " << addr;
-          mGateways.emplace(addr, mFactory(mState, util::injectRef(mIo), addr));
+          mGateways.emplace(addr, (*mFactory)(mState, util::injectRef(mIo), addr));
         }
         catch (const runtime_error& e)
         {
@@ -156,10 +159,15 @@ private:
                              << " reason: " << e.what();
         }
       }
+
+      if (!staleAddrs.empty() || !newAddrs.empty())
+      {
+        mFactory->gatewaysChanged();
+      }
     }
 
     NodeState mState;
-    GatewayFactory mFactory;
+    util::Injected<GatewayFactory> mFactory;
     IoType& mIo;
     GatewayMap mGateways;
   };
@@ -175,13 +183,12 @@ template <typename NodeState, typename GatewayFactory, typename IoContext>
 std::unique_ptr<PeerGateways<NodeState, GatewayFactory, IoContext>> makePeerGateways(
   const std::chrono::seconds rescanPeriod,
   NodeState state,
-  GatewayFactory factory,
+  util::Injected<GatewayFactory> factory,
   util::Injected<IoContext> io)
 {
-  using namespace std;
   using Gateways = PeerGateways<NodeState, GatewayFactory, IoContext>;
-  return unique_ptr<Gateways>{
-    new Gateways{rescanPeriod, std::move(state), std::move(factory), std::move(io)}};
+  return std::make_unique<Gateways>(
+    rescanPeriod, std::move(state), std::move(factory), std::move(io));
 }
 
 } // namespace discovery

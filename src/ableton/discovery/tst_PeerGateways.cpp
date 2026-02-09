@@ -45,6 +45,10 @@ struct Factory
   {
     return {addr};
   }
+
+  void gatewaysChanged() { ++changedCount; }
+
+  size_t changedCount{0};
 };
 
 
@@ -81,13 +85,26 @@ TEST_CASE("PeerGateways")
   const IpAddress addr2 = makeAddress("192.192.192.2");
 
   test::serial_io::Fixture io;
-  auto pGateways = makePeerGateways(
-    std::chrono::seconds(2), NodeState{}, Factory{}, util::injectVal(io.makeIoContext()));
+  auto factory = Factory{};
+  auto pGateways = makePeerGateways(std::chrono::seconds(2),
+                                    NodeState{},
+                                    util::injectRef(factory),
+                                    util::injectVal(io.makeIoContext()));
+
+  SECTION("CallGatewaysChangedOnEnable")
+  {
+    pGateways->enable(true);
+    CHECK(factory.changedCount == 1);
+
+    pGateways->enable(false);
+    CHECK(factory.changedCount == 2);
+  }
 
   SECTION("EmptyIfNoInterfaces")
   {
     pGateways->enable(true);
     expectGateways(*pGateways, io, {});
+    CHECK(factory.changedCount == 1);
   }
 
   SECTION("MatchesAfterInitialScan")
@@ -95,6 +112,7 @@ TEST_CASE("PeerGateways")
     io.setNetworkInterfaces({addr1, addr2});
     pGateways->enable(true);
     expectGateways(*pGateways, io, {addr1, addr2});
+    CHECK(factory.changedCount == 2);
   }
 
   SECTION("GatewayAppears")
@@ -102,10 +120,12 @@ TEST_CASE("PeerGateways")
     io.setNetworkInterfaces({addr1});
     pGateways->enable(true);
     expectGateways(*pGateways, io, {addr1});
+    CHECK(factory.changedCount == 2);
 
     io.setNetworkInterfaces({addr1, addr2});
     io.advanceTime(std::chrono::seconds(3));
     expectGateways(*pGateways, io, {addr1, addr2});
+    CHECK(factory.changedCount == 3);
   }
 
   SECTION("GatewayDisappears")
@@ -113,10 +133,12 @@ TEST_CASE("PeerGateways")
     io.setNetworkInterfaces({addr1, addr2});
     pGateways->enable(true);
     expectGateways(*pGateways, io, {addr1, addr2});
+    CHECK(factory.changedCount == 2);
 
     io.setNetworkInterfaces({addr1});
     io.advanceTime(std::chrono::seconds(3));
     expectGateways(*pGateways, io, {addr1});
+    CHECK(factory.changedCount == 3);
   }
 
   SECTION("GatewayChangesAddress")
@@ -124,10 +146,12 @@ TEST_CASE("PeerGateways")
     io.setNetworkInterfaces({addr1});
     pGateways->enable(true);
     expectGateways(*pGateways, io, {addr1});
+    CHECK(factory.changedCount == 2);
 
     io.setNetworkInterfaces({addr2});
     io.advanceTime(std::chrono::seconds(3));
     expectGateways(*pGateways, io, {addr2});
+    CHECK(factory.changedCount == 3);
   }
 }
 

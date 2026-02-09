@@ -32,7 +32,9 @@ class Service
 public:
   using ServicePeerGateways = PeerGateways<NodeState, GatewayFactory, IoContext>;
 
-  Service(NodeState state, GatewayFactory factory, util::Injected<IoContext> io)
+  Service(NodeState state,
+          util::Injected<GatewayFactory> factory,
+          util::Injected<IoContext> io)
     : mEnabled(false)
     , mGateways(
         std::chrono::seconds(5), std::move(state), std::move(factory), std::move(io))

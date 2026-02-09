@@ -168,7 +168,7 @@ public:
           NodeState{
             mNodeId, mSessionId, mSessionState.timeline, mSessionState.startStopState},
           mSessionState.ghostXForm),
-        GatewayFactory{this},
+        util::injectVal(GatewayFactory{this}),
         util::injectRef(*mIo))
     , mRtClientStateSetter(*this)
   {
@@ -804,6 +804,14 @@ protected:
         mpController->mClock}};
     }
 
+    void gatewaysChanged()
+    {
+      if (mpController->mpSessionController)
+      {
+        mpController->mpSessionController->gatewaysChangedCallback();
+      }
+    }
+
     Controller* mpController;
   };
 
@@ -856,7 +864,7 @@ protected:
   ControllerSessions mSessions;
 
   using Discovery = discovery::Service<std::pair<NodeState, GhostXForm>,
-                                       GatewayFactory,
+                                       typename util::Injected<GatewayFactory>::type,
                                        typename util::Injected<IoContext>::type&>;
   Discovery mDiscovery;
 
