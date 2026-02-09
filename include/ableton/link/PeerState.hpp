@@ -20,8 +20,8 @@
 #pragma once
 
 #include <ableton/discovery/Payload.hpp>
-#include <ableton/link/MeasurementEndpointV4.hpp>
-#include <ableton/link/MeasurementEndpointV6.hpp>
+#include <ableton/link/EndpointV4.hpp>
+#include <ableton/link/EndpointV6.hpp>
 #include <ableton/link/NodeState.hpp>
 
 namespace ableton
@@ -35,6 +35,15 @@ namespace link
 
 struct PeerState
 {
+  static constexpr std::int32_t kMep4Key = 'mep4';
+  using MeasurementEndpointV4 = EndpointV4<kMep4Key>;
+  static_assert(MeasurementEndpointV4::key == 0x6d657034, "Unexpected byte order");
+
+  static constexpr std::int32_t kMep6Key = 'mep6';
+  using MeasurementEndpointV6 = EndpointV6<kMep6Key>;
+  static_assert(MeasurementEndpointV6::key == 0x6d657036, "Unexpected byte order");
+
+
   using IdType = NodeId;
 
   IdType ident() const { return nodeState.ident(); }

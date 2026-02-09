@@ -13,13 +13,13 @@ set(link_core_HEADERS
   ${link_core_DIR}/Beats.hpp
   ${link_core_DIR}/ClientSessionTimelines.hpp
   ${link_core_DIR}/Controller.hpp
+  ${link_core_DIR}/EndpointV4.hpp
+  ${link_core_DIR}/EndpointV6.hpp
   ${link_core_DIR}/Gateway.hpp
   ${link_core_DIR}/GhostXForm.hpp
   ${link_core_DIR}/HostTimeFilter.hpp
   ${link_core_DIR}/LinearRegression.hpp
   ${link_core_DIR}/Measurement.hpp
-  ${link_core_DIR}/MeasurementEndpointV4.hpp
-  ${link_core_DIR}/MeasurementEndpointV6.hpp
   ${link_core_DIR}/MeasurementService.hpp
   ${link_core_DIR}/Median.hpp
   ${link_core_DIR}/NodeId.hpp

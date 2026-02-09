@@ -28,13 +28,13 @@ namespace ableton
 namespace link
 {
 
-struct MeasurementEndpointV6
+template <std::int32_t Key>
+struct EndpointV6
 {
-  static const std::int32_t key = 'mep6';
-  static_assert(key == 0x6d657036, "Unexpected byte order");
+  static constexpr std::int32_t key = Key;
 
   // Model the NetworkByteStreamSerializable concept
-  friend std::uint32_t sizeInByteStream(const MeasurementEndpointV6 mep)
+  friend std::uint32_t sizeInByteStream(const EndpointV6<Key> mep)
   {
     if (mep.ep.address().is_v4())
     {
@@ -45,7 +45,7 @@ struct MeasurementEndpointV6
   }
 
   template <typename It>
-  friend It toNetworkByteStream(const MeasurementEndpointV6 mep, It out)
+  friend It toNetworkByteStream(const EndpointV6<Key> mep, It out)
   {
     assert(mep.ep.address().is_v6());
     return discovery::toNetworkByteStream(
@@ -55,7 +55,7 @@ struct MeasurementEndpointV6
   }
 
   template <typename It>
-  static std::pair<MeasurementEndpointV6, It> fromNetworkByteStream(It begin, It end)
+  static std::pair<EndpointV6<Key>, It> fromNetworkByteStream(It begin, It end)
   {
     using namespace std;
     auto addrRes =
@@ -63,10 +63,9 @@ struct MeasurementEndpointV6
         std::move(begin), end);
     auto portRes = discovery::Deserialize<std::uint16_t>::fromNetworkByteStream(
       std::move(addrRes.second), end);
-    return make_pair(
-      MeasurementEndpointV6{
-        {discovery::IpAddressV6{std::move(addrRes.first)}, std::move(portRes.first)}},
-      std::move(portRes.second));
+    return make_pair(EndpointV6<Key>{{discovery::IpAddressV6{std::move(addrRes.first)},
+                                      std::move(portRes.first)}},
+                     std::move(portRes.second));
   }
 
   discovery::UdpEndpoint ep;
