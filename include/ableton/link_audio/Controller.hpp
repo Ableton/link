@@ -22,6 +22,7 @@
 #include <ableton/discovery/AsioTypes.hpp>
 #include <ableton/link/Controller.hpp>
 #include <ableton/link_audio/Channels.hpp>
+#include <ableton/link_audio/Id.hpp>
 #include <ableton/link_audio/MainProcessor.hpp>
 #include <ableton/link_audio/PeerGateways.hpp>
 #include <ableton/link_audio/PeerInfo.hpp>
@@ -139,6 +140,15 @@ public:
       });
 
     return sink;
+  }
+
+  SharedSource addSource(Id channelId)
+  {
+    auto source = std::make_shared<Source>(std::move(channelId));
+
+    this->mIo->async([this, source]() { mProcessor.addSource(source); });
+
+    return source;
   }
 
   void setChannelsChangedCallback(ChannelsChangedCallback callback)

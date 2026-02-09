@@ -77,6 +77,7 @@ public:
 
 private:
   friend class LinkAudioSink;
+  friend class LinkAudioSource;
 };
 
 class LinkAudioSink
@@ -95,6 +96,23 @@ public:
 
 private:
   std::shared_ptr<link_audio::Sink> mpImpl;
+};
+
+class LinkAudioSource
+{
+public:
+  template <typename LinkAudio>
+  LinkAudioSource(LinkAudio& link, ChannelId id);
+
+  LinkAudioSource(const LinkAudioSource&) = default;
+  LinkAudioSource& operator=(const LinkAudioSource&) = default;
+  LinkAudioSource(LinkAudioSource&&) = default;
+  LinkAudioSource& operator=(LinkAudioSource&&) = default;
+
+  ChannelId id() const;
+
+private:
+  std::shared_ptr<link_audio::Source> mpImpl;
 };
 
 } // namespace ableton

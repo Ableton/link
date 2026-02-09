@@ -60,6 +60,8 @@ set(link_audio_HEADERS
   ${link_audio_DIR}/SessionController.hpp
   ${link_audio_DIR}/Sink.hpp
   ${link_audio_DIR}/SinkProcessor.hpp
+  ${link_audio_DIR}/Source.hpp
+  ${link_audio_DIR}/SourceProcessor.hpp
   ${link_audio_DIR}/UdpMessenger.hpp
   ${link_audio_DIR}/v1/Messages.hpp
   PARENT_SCOPE

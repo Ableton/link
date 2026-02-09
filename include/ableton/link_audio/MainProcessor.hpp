@@ -22,6 +22,8 @@
 #include <ableton/link_audio/ChannelAnnouncements.hpp>
 #include <ableton/link_audio/Sink.hpp>
 #include <ableton/link_audio/SinkProcessor.hpp>
+#include <ableton/link_audio/Source.hpp>
+#include <ableton/link_audio/SourceProcessor.hpp>
 #include <ableton/util/Injected.hpp>
 #include <ableton/util/SafeAsyncHandler.hpp>
 
@@ -31,6 +33,7 @@ namespace link_audio
 {
 
 using SharedSink = std::shared_ptr<Sink>;
+using SharedSource = std::shared_ptr<Source>;
 
 template <typename ChannelsChangedCallback, typename Random, typename IoContext>
 struct MainProcessor
@@ -50,6 +53,8 @@ struct MainProcessor
 
   void addSink(SharedSink pSink) { mpImpl->addSink(pSink); }
 
+  void addSource(SharedSource pSource) { mpImpl->addSource(pSource); }
+
   ChannelAnnouncements channelAnnouncements() const
   {
     return mpImpl->channelAnnouncements();
@@ -59,6 +64,7 @@ private:
   struct Impl : std::enable_shared_from_this<Impl>
   {
     using Timer = typename util::Injected<IoContext>::type::Timer;
+    using MainSourceProcessor = SourceProcessor<IoContext&>;
 
     Impl(util::Injected<IoContext> io, ChannelsChangedCallback callback)
       : mIo{std::move(io)}
@@ -74,6 +80,14 @@ private:
       start();
     }
 
+    void addSource(SharedSource pSource)
+    {
+      auto pProcessor =
+        std::make_unique<MainSourceProcessor>(util::injectRef(*mIo), pSource);
+      mSources.push_back(std::move(pProcessor));
+      start();
+    }
+
     void start() { (*this)(); }
 
     void stop() { mProcessTimer.cancel(); }
@@ -81,7 +95,8 @@ private:
     void operator()()
     {
       processSinks();
-      if (!mSinks.empty())
+      processSources();
+      if (!mSinks.empty() || !mSources.empty())
       {
         mProcessTimer.expires_from_now(kProcessTimerPeriod);
         mProcessTimer.async_wait(
@@ -123,6 +138,23 @@ private:
       }
     }
 
+    void processSources()
+    {
+      auto channelsChanged = false;
+
+      for (auto it = mSources.begin(); it != mSources.end();)
+      {
+        if ((*it)->process())
+        {
+          ++it;
+        }
+        else
+        {
+          it = mSources.erase(it);
+        }
+      }
+    }
+
     ChannelAnnouncements channelAnnouncements() const
     {
       auto announcements = ChannelAnnouncements{};
@@ -137,6 +169,7 @@ private:
     util::Injected<IoContext> mIo;
     ChannelsChangedCallback mChannelsChangedCallback;
     std::vector<std::unique_ptr<SinkProcessor>> mSinks;
+    std::vector<std::unique_ptr<MainSourceProcessor>> mSources;
     Timer mProcessTimer;
   };
 

@@ -107,4 +107,15 @@ inline void LinkAudioSink::setName(std::string name)
   mpImpl->setName(std::move(name));
 }
 
+template <typename LinkAudio>
+inline LinkAudioSource::LinkAudioSource(LinkAudio& link, ChannelId id)
+  : mpImpl{link.mController.addSource(std::move(id))}
+{
+}
+
+inline ChannelId LinkAudioSource::id() const
+{
+  return mpImpl->id();
+}
+
 } // namespace ableton

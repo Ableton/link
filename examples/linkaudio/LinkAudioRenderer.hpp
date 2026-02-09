@@ -38,6 +38,8 @@ public:
   {
   }
 
+  ~LinkAudioRenderer() { mpSource.reset(); }
+
   void operator()(double* pLeftSamples,
                   double* pRightSamples,
                   size_t numFrames,
@@ -49,8 +51,25 @@ public:
     std::copy_n(pLeftSamples, numFrames, pRightSamples);
   }
 
+  void toggleSource()
+  {
+    if (mpSource)
+    {
+      mpSource.reset();
+    }
+    else
+    {
+      const auto channels = mLink.channels();
+      if (!channels.empty())
+      {
+        mpSource = std::make_unique<LinkAudioSource>(mLink, channels.front().id);
+      }
+    }
+  }
+
   Link& mLink;
   LinkAudioSink mSink;
+  std::unique_ptr<LinkAudioSource> mpSource;
 };
 
 } // namespace linkaudio

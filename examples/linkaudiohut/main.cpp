@@ -83,14 +83,15 @@ void printHelp()
   std::cout << "  decrease / increase tempo: w / e" << std::endl;
   std::cout << "  decrease / increase quantum: r / t" << std::endl;
   std::cout << "  enable / disable start stop sync: s" << std::endl;
-  std::cout << "  enable / disable Link Audio: c" << std::endl;
+  std::cout << "  enable / disable LinkAudio: c" << std::endl;
+  std::cout << "  enable / disable LinkAudio source: o" << std::endl;
   std::cout << "  quit: q" << std::endl << std::endl;
 }
 
 void printStateHeader()
 {
   std::cout
-    << "enabled [au] | num peers | quantum | start stop sync | tempo   | beats   | metro"
+    << "enabled [au] | num peers | start stop sync | source | tempo  | beats   | metro"
     << std::endl;
 }
 
@@ -107,10 +108,12 @@ void printState(const std::chrono::microseconds time,
   const auto beats = sessionState.beatAtTime(time, quantum);
   const auto phase = sessionState.phaseAtTime(time, quantum);
   const auto startStop = state.link.isStartStopSyncEnabled() ? "yes" : "no";
+  const auto source =
+    state.audioPlatform.mEngine.mLinkAudioRenderer.mpSource ? "yes" : "no";
   const auto isPlaying = sessionState.isPlaying() ? "[playing]" : "[stopped]";
   cout << defaultfloat << left << setw(12) << enabled << " | " << setw(9) << numPeers
-       << " | " << setw(7) << quantum << " | " << setw(3) << startStop << " " << setw(11)
-       << isPlaying << " | " << fixed << setw(7) << sessionState.tempo() << " | " << fixed
+       << " | " << setw(3) << startStop << " " << setw(11) << isPlaying << " | " << fixed
+       << setw(6) << source << " | " << sessionState.tempo() << " | " << fixed
        << setprecision(2) << setw(7) << beats << " | ";
   for (int i = 0; i < ceil(quantum); ++i)
   {
@@ -186,6 +189,9 @@ void input(State& state)
       break;
     case 'c':
       state.link.enableLinkAudio(!state.link.isLinkAudioEnabled());
+      break;
+    case 'o':
+      state.audioPlatform.mEngine.mLinkAudioRenderer.toggleSource();
       break;
     case ' ':
       if (engine.isPlaying())
