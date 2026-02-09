@@ -59,7 +59,7 @@ class LinkAudioRenderer
 {
   struct Buffer
   {
-    std::array<int16_t, 2048> mSamples; // TODO size
+    std::array<double, 512> mSamples; // Should at least hold max network buffer size
     LinkAudioSource::BufferHandle::Info mInfo;
   };
   using Queue = link_audio::Queue<Buffer>;
@@ -70,12 +70,216 @@ public:
     , mSink(mLink, "A Sink", 4096)
     , mSampleRate(sampleRate)
   {
-    auto queue = Queue(2084, {});
+    auto queue = Queue(2048, {});
     mpQueueWriter = std::make_shared<typename Queue::Writer>(std::move(queue.writer()));
     mpQueueReader = std::make_shared<typename Queue::Reader>(std::move(queue.reader()));
   }
 
   ~LinkAudioRenderer() { mpSource.reset(); }
+
+  void send(double* pSamples,
+            size_t numFrames,
+            typename Link::SessionState sessionState,
+            double sampleRate,
+            const std::chrono::microseconds hostTime,
+            double quantum)
+  {
+    // We can only send audio if the sink can provide a buffer to write to
+    auto buffer = LinkAudioSink::BufferHandle(mSink);
+    if (buffer)
+    {
+      // The sink expects 16 bit integers so the doubles have to be converted
+      for (auto i = 0u; i < numFrames; ++i)
+      {
+        buffer.samples[i] = ableton::util::floatToInt16(pSamples[i]);
+      }
+
+      // The buffer is commited to Link Audio with the required timing information
+      const auto beatsAtBufferBegin = sessionState.beatAtTime(hostTime, quantum);
+      buffer.commit(sessionState,
+                    beatsAtBufferBegin,
+                    quantum,
+                    static_cast<uint32_t>(numFrames),
+                    1, // mono
+                    static_cast<uint32_t>(sampleRate));
+    }
+  }
+
+  void receive(double* pRightSamples,
+               size_t numFrames,
+               typename Link::SessionState sessionState,
+               double sampleRate,
+               const std::chrono::microseconds hostTime,
+               double quantum)
+  {
+    // Get all slots from the queue
+    while (mpQueueReader->retainSlot())
+    {
+    }
+
+    // Calculate the beat range we want to render to the output buffer
+    constexpr auto kLatencyInBeats = 4;
+    const auto targetBeatsAtBufferBegin =
+      sessionState.beatAtTime(hostTime, quantum) - kLatencyInBeats;
+    const auto targetBeatsAtBufferEnd =
+      sessionState.beatAtTime(
+        hostTime
+          + std::chrono::duration_cast<std::chrono::microseconds>(
+            std::chrono::duration<double>((double(numFrames)) / sampleRate)),
+        quantum)
+      - kLatencyInBeats;
+
+    // Drop slots that are too old while we are not rendering
+    while (!moStartReadPos && mpQueueReader->numRetainedSlots() > 0)
+    {
+      if ((*mpQueueReader)[0]->mInfo.endBeats(sessionState, quantum)
+          < targetBeatsAtBufferBegin)
+      {
+        mpQueueReader->releaseSlot();
+      }
+      else
+      {
+        break;
+      }
+    }
+
+    // Return early if there is no audio buffer to read from
+    if (mpQueueReader->numRetainedSlots() == 0)
+    {
+      moLastFrameIdx = std::nullopt;
+      moStartReadPos = std::nullopt;
+      return;
+    }
+
+    // Return early if the next buffer is too new and we are not rendering
+    if (!moStartReadPos
+        && (*mpQueueReader)[0]->mInfo.beginBeats(sessionState, quantum)
+             > targetBeatsAtBufferBegin)
+    {
+      moLastFrameIdx = std::nullopt;
+      moStartReadPos = std::nullopt;
+      return;
+    }
+
+    // Initialize start read position if not set
+    if (!moStartReadPos)
+    {
+      const auto& info = (*mpQueueReader)[0]->mInfo;
+      const auto startBufferBegin = *info.beginBeats(sessionState, quantum);
+      const auto startBufferEnd = *info.endBeats(sessionState, quantum);
+
+      // Calculate initial position from target beat
+      moStartReadPos = linearInterpolate(targetBeatsAtBufferBegin,
+                                         startBufferBegin,
+                                         startBufferEnd,
+                                         0.0,
+                                         double(info.numFrames));
+    }
+
+    const auto startFramePos = *moStartReadPos;
+
+    // Loop through queue to find end beat and collect total frames
+    auto totalFrames = 0.0;
+    auto foundEnd = false;
+
+    for (auto i = 0u; i < mpQueueReader->numRetainedSlots(); ++i)
+    {
+      const auto& info = (*mpQueueReader)[i]->mInfo;
+      const auto bufferBegin = *info.beginBeats(sessionState, quantum);
+      const auto bufferEnd = *info.endBeats(sessionState, quantum);
+
+      if (targetBeatsAtBufferEnd >= bufferBegin && targetBeatsAtBufferEnd < bufferEnd)
+      {
+        const auto targetBeatsFrame = linearInterpolate(
+          targetBeatsAtBufferEnd, bufferBegin, bufferEnd, 0.0, double(info.numFrames));
+
+        totalFrames += targetBeatsFrame;
+        foundEnd = true;
+        break;
+      }
+      else
+      {
+        totalFrames += double(info.numFrames);
+      }
+    }
+
+    // We don't have enough frames buffered
+    if (!foundEnd)
+    {
+      moLastFrameIdx = std::nullopt;
+      moStartReadPos = std::nullopt;
+      return;
+    }
+
+    // Take the frames we have already rendered into account
+    totalFrames -= startFramePos;
+
+    // Beat time jump, we can't continue rendering
+    if (totalFrames <= 0.0)
+    {
+      moLastFrameIdx = std::nullopt;
+      moStartReadPos = std::nullopt;
+      return;
+    }
+
+    // The increment is how many source frames to advance per output frame
+    // This automatically handles both tempo changes and sample rate differences by
+    // re-pitching the audio
+    const auto frameIncrement = totalFrames / double(numFrames);
+    auto readPos = startFramePos;
+
+    // Helper to get sample at index, handling buffer boundaries
+    auto getSample = [&](size_t idx) -> double
+    {
+      size_t bufferIdx = 0;
+      size_t currentIdx = idx;
+
+      while (bufferIdx < mpQueueReader->numRetainedSlots())
+      {
+        auto& currentBuffer = *((*mpQueueReader)[bufferIdx]);
+        if (currentIdx < currentBuffer.mInfo.numFrames)
+        {
+          return currentBuffer.mSamples[currentIdx];
+        }
+        currentIdx -= currentBuffer.mInfo.numFrames;
+        ++bufferIdx;
+      }
+
+      return 0.0;
+    };
+
+    for (auto frame = 0u; frame < numFrames; ++frame)
+    {
+      const auto framePos = readPos + frame * frameIncrement;
+      const auto frameIdx = static_cast<size_t>(std::floor(framePos));
+      const auto t = framePos - std::floor(framePos);
+
+      // Update the interpolator cache
+      while (!moLastFrameIdx || (moLastFrameIdx && frameIdx > *moLastFrameIdx))
+      {
+        mReceiverSampleCache[3] = mReceiverSampleCache[2];
+        mReceiverSampleCache[2] = mReceiverSampleCache[1];
+        mReceiverSampleCache[1] = mReceiverSampleCache[0];
+        mReceiverSampleCache[0] = (frameIdx > 0) ? getSample(frameIdx - 1) : getSample(0);
+        moLastFrameIdx = moLastFrameIdx ? (*moLastFrameIdx + 1) : frameIdx;
+      }
+
+      // Write the output frame
+      pRightSamples[frame] = cubicInterpolate(mReceiverSampleCache, t);
+
+      // Drop buffer if we've moved past it
+      const auto& currentInfo = (*mpQueueReader)[0]->mInfo;
+      if (frameIdx >= currentInfo.numFrames)
+      {
+        readPos -= double(currentInfo.numFrames);
+        moLastFrameIdx = frameIdx - currentInfo.numFrames;
+        mpQueueReader->releaseSlot();
+      }
+    }
+
+    // Update the read position for the next buffer
+    *moStartReadPos = readPos + double(numFrames) * frameIncrement;
+  }
 
   void operator()(double* pLeftSamples,
                   double* pRightSamples,
@@ -86,108 +290,12 @@ public:
                   double quantum)
   {
     // Send the left channel to Link
-    // We can only send audo if the sink can provide a buffer to write to
-    auto buffer = LinkAudioSink::BufferHandle(mSink);
-    if (buffer)
-    {
-      // The sink expects 16 bit integers so the doubles have to be converted
-      for (auto i = 0u; i < numFrames; ++i)
-      {
-        buffer.samples[i] = ableton::util::floatToInt16(pLeftSamples[i]);
-      }
+    send(pLeftSamples, numFrames, sessionState, sampleRate, hostTime, quantum);
 
-      // The buffer is commited to Link Audio with the required timing information
-      const auto beatsAtBufferBegin = sessionState.beatAtTime(hostTime, quantum);
-      buffer.commit(sessionState,
-                    beatsAtBufferBegin,
-                    quantum,
-                    static_cast<uint32_t>(numFrames),
-                    1,
-                    static_cast<uint32_t>(sampleRate));
-    }
-
-    // Receive audio to the right channel. This is a simplified example that does not
-    // handle tempo changes or clock drift.
-    {
-      // Get all slots from the queue
-      while (mpQueueReader->retainSlot())
-      {
-      }
-
-      // Calc the beat position we want to play back
-      constexpr auto kLatencyInBeats = 4;
-      const auto targetBeatsAtBufferBegin =
-        sessionState.beatAtTime(hostTime, quantum) - kLatencyInBeats;
-
-      // Drop slots that are too old
-      while (mpQueueReader->numRetainedSlots() > 0)
-      {
-        if ((*mpQueueReader)[0]->mInfo.endBeats(sessionState, quantum)
-            < targetBeatsAtBufferBegin)
-        {
-          mpQueueReader->releaseSlot();
-          sourceReadFrame = std::nullopt;
-        }
-        else
-        {
-          break;
-        }
-      }
-
-      // Return early if there is no audio buffer to read from
-      if (mpQueueReader->numRetainedSlots() == 0)
-      {
-        return;
-      }
-
-      // Return early if the next buffer is too new
-      if ((*mpQueueReader)[0]->mInfo.beginBeats(sessionState, quantum)
-          > targetBeatsAtBufferBegin)
-      {
-        return;
-      }
-
-      // Calc the frame in the buffer that corresponds to the target beat position if we
-      // are not rendering from a buffer already
-      if (!sourceReadFrame)
-      {
-        sourceReadFrame = static_cast<size_t>(linearInterpolate(
-          targetBeatsAtBufferBegin,
-          *(*mpQueueReader)[0]->mInfo.beginBeats(sessionState, quantum),
-          *(*mpQueueReader)[0]->mInfo.endBeats(sessionState, quantum),
-          0.0,
-          static_cast<double>(((*mpQueueReader)[0])->mInfo.numFrames - 1)));
-      }
-
-      // Fill the output buffer with audio from the queue
-      auto frame = 0u;
-      while (frame < numFrames)
-      {
-        // The incoming audio is formated as 16 bit integers so we have to convert it
-        auto& sourceBuffer = *((*mpQueueReader)[0]);
-        while (frame < numFrames && *sourceReadFrame < sourceBuffer.mInfo.numFrames)
-        {
-          pRightSamples[frame] = util::int16ToFloat<double>(
-            sourceBuffer.mSamples[*sourceReadFrame * sourceBuffer.mInfo.numChannels]);
-          ++frame;
-          ++(*sourceReadFrame);
-        }
-
-        if (*sourceReadFrame == sourceBuffer.mInfo.numFrames)
-        {
-          // We have reached the end of the current buffer, move to the next one
-          mpQueueReader->releaseSlot();
-          *sourceReadFrame = 0;
-          if (mpQueueReader->numRetainedSlots() == 0)
-          {
-            // No more buffers available, abort
-            sourceReadFrame = std::nullopt;
-            return;
-          }
-        }
-      }
-    }
+    // Write the received audio to the right channel
+    receive(pRightSamples, numFrames, sessionState, sampleRate, hostTime, quantum);
   }
+
 
   bool hasSource() const { return mpSource != nullptr; }
 
@@ -205,6 +313,9 @@ public:
       {
         mpQueueReader->releaseSlot();
       }
+
+      moLastFrameIdx = std::nullopt;
+      moStartReadPos = std::nullopt;
     }
   }
 
@@ -219,37 +330,18 @@ public:
 
   void onSourceBuffer(const LinkAudioSource::BufferHandle bufferHandle)
   {
+    // When we receive a buffer from Link, we prime it for the audio rendering callback.
+    // This runs on the main Link thread, so we should not block it for too long.
     if (mpQueueWriter->retainSlot())
     {
       auto& buffer = *((*mpQueueWriter)[0]);
       buffer.mInfo = bufferHandle.info;
       buffer.mInfo.numChannels = 1;
-      buffer.mInfo.numFrames = 0;
-      buffer.mInfo.sampleRate = static_cast<uint32_t>(mSampleRate);
 
-      { // Rudimentarily deal with different sample rates
-        const auto ratio =
-          static_cast<double>(bufferHandle.info.sampleRate) / mSampleRate;
-        while (mInterpolatorPos < static_cast<double>(bufferHandle.info.numFrames))
-        {
-          const double weight = mInterpolatorPos - floor(mInterpolatorPos);
-          buffer.mSamples[buffer.mInfo.numFrames] =
-            cubicInterpolate(mInterpolatorCache, weight);
-          ++buffer.mInfo.numFrames;
-
-          if (floor(mInterpolatorPos) != floor(mInterpolatorPos + ratio))
-          {
-            mInterpolatorCache[0] = mInterpolatorCache[1];
-            mInterpolatorCache[1] = mInterpolatorCache[2];
-            mInterpolatorCache[2] = mInterpolatorCache[3];
-            mInterpolatorCache[3] =
-              bufferHandle.samples[static_cast<size_t>(floor(mInterpolatorPos))
-                                   * bufferHandle.info.numChannels];
-          }
-          mInterpolatorPos += ratio;
-        }
-
-        mInterpolatorPos = std::fmod(mInterpolatorPos, 1);
+      for (auto i = 0u; i < bufferHandle.info.numFrames; ++i)
+      {
+        buffer.mSamples[i] = util::int16ToFloat<double>(
+          bufferHandle.samples[i * bufferHandle.info.numChannels]);
       }
 
       mpQueueWriter->releaseSlot();
@@ -261,14 +353,14 @@ public:
   std::unique_ptr<LinkAudioSource> mpSource;
   double& mSampleRate;
 
-  std::optional<size_t> sourceReadFrame;
+  std::optional<double> moStartReadPos;
 
 private:
   std::shared_ptr<typename Queue::Writer> mpQueueWriter;
   std::shared_ptr<typename Queue::Reader> mpQueueReader;
 
-  double mInterpolatorPos = 0.;
-  std::array<int16_t, 4> mInterpolatorCache;
+  std::array<double, 4> mReceiverSampleCache = {{0.0, 0.0, 0.0, 0.0}};
+  std::optional<size_t> moLastFrameIdx = std::nullopt;
 };
 
 } // namespace linkaudio
