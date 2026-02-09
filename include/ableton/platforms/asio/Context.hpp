@@ -126,19 +126,21 @@ public:
 
 
   template <std::size_t BufferSize>
-  Socket<BufferSize> openUnicastSocket(const discovery::IpAddress addr)
+  Socket<BufferSize> openUnicastSocket(const discovery::IpAddress addr, uint16_t port = 0)
   {
     auto socket =
       addr.is_v4() ? Socket<BufferSize>{*mpService, ::LINK_ASIO_NAMESPACE::ip::udp::v4()}
                    : Socket<BufferSize>{*mpService, ::LINK_ASIO_NAMESPACE::ip::udp::v6()};
     socket.mpImpl->mSocket.set_option(
       ::LINK_ASIO_NAMESPACE::ip::multicast::enable_loopback(addr.is_loopback()));
+    socket.mpImpl->mSocket.set_option(
+      ::LINK_ASIO_NAMESPACE::ip::udp::socket::reuse_address(true));
     if (addr.is_v4())
     {
       socket.mpImpl->mSocket.set_option(
         ::LINK_ASIO_NAMESPACE::ip::multicast::outbound_interface(addr.to_v4()));
       socket.mpImpl->mSocket.bind(
-        ::LINK_ASIO_NAMESPACE::ip::udp::endpoint{addr.to_v4(), 0});
+        ::LINK_ASIO_NAMESPACE::ip::udp::endpoint{addr.to_v4(), port});
     }
     else if (addr.is_v6())
     {
@@ -147,7 +149,7 @@ public:
         ::LINK_ASIO_NAMESPACE::ip::multicast::outbound_interface(
           static_cast<unsigned int>(scopeId)));
       socket.mpImpl->mSocket.bind(
-        ::LINK_ASIO_NAMESPACE::ip::udp::endpoint{addr.to_v6(), 0});
+        ::LINK_ASIO_NAMESPACE::ip::udp::endpoint{addr.to_v6(), port});
     }
     else
     {
