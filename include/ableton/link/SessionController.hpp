@@ -67,6 +67,30 @@ public:
     : LinkController(tempo, peerCallback, tempoCallback, startStopStateCallback, clock)
   {
   }
+
+  ~SessionController() { this->mpSessionController = nullptr; }
+
+  void sessionMembershipCallback() { this->mSessionPeerCounter(); }
+
+  void joinSessionCallback(const Session& session) { this->joinSession(session); }
+
+  template <typename Peer, typename Handler>
+  void measurePeerCallback(Peer peer, Handler handler)
+  {
+    this->measurePeer(std::move(peer), std::move(handler));
+  }
+
+  void updateDiscoveryCallback() { this->updateDiscovery(); }
+
+  void gatewaysChangedCallback() {}
+
+  void updateRtStatesCallback()
+  {
+    // Process the pending client states first to make sure we don't push one
+    // after we have joined a running session when enabling
+    this->mRtClientStateSetter.processPendingClientStates();
+    this->mRtClientStateSetter.updateEnabled();
+  }
 };
 
 } // namespace link

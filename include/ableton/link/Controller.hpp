@@ -147,19 +147,20 @@ public:
     , mLastIsPlayingForStartStopStateCallback(false)
     , mRtClientState(detail::initRtClientState(mClientState.get()))
     , mHasPendingRtClientStates(false)
+    , mpSessionController{static_cast<SessionController*>(this)}
     , mSessionPeerCounter(*this, std::move(peerCallback))
     , mEnabled(false)
     , mStartStopSyncEnabled(false)
     , mIo(IoContext{UdpSendExceptionHandler{this}})
     , mPeers(util::injectRef(*mIo),
-             std::ref(mSessionPeerCounter),
+             SessionMembershipCallback{this},
              SessionTimelineCallback{*this},
              SessionStartStopStateCallback{*this})
     , mSessions(
         {mSessionId, mSessionState.timeline, {mSessionState.ghostXForm, mClock.micros()}},
         util::injectRef(mPeers),
-        MeasurePeer{*this},
-        JoinSessionCallback{*this},
+        MeasurePeer{this},
+        JoinSessionCallback{this},
         util::injectRef(*mIo),
         mClock)
     , mDiscovery(
@@ -167,7 +168,7 @@ public:
           NodeState{
             mNodeId, mSessionId, mSessionState.timeline, mSessionState.startStopState},
           mSessionState.ghostXForm),
-        GatewayFactory{*this},
+        GatewayFactory{this},
         util::injectRef(*mIo))
     , mRtClientStateSetter(*this)
   {
@@ -323,7 +324,7 @@ public:
     }
   }
 
-private:
+protected:
   std::chrono::microseconds makeRtTimestamp(const std::chrono::microseconds now) const
   {
     return isEnabled() ? now : std::chrono::microseconds(0);
@@ -407,7 +408,10 @@ private:
                       << " for session: " << id;
     updateSessionTiming(mSessions.sawSessionTimeline(std::move(id), std::move(timeline)),
                         mSessionState.ghostXForm);
-    updateDiscovery();
+    if (mpSessionController)
+    {
+      mpSessionController->updateDiscoveryCallback();
+    }
   }
 
   void resetSessionStartStopState() { mSessionState.startStopState = StartStopState{}; }
@@ -426,7 +430,10 @@ private:
 
       // Always propagate the session start stop state so even a client that doesn't have
       // the feature enabled can function as a relay.
-      updateDiscovery();
+      if (mpSessionController)
+      {
+        mpSessionController->updateDiscoveryCallback();
+      }
 
       if (mStartStopSyncEnabled)
       {
@@ -481,9 +488,9 @@ private:
       }
     }
 
-    if (mustUpdateDiscovery)
+    if (mustUpdateDiscovery && mpSessionController)
     {
-      updateDiscovery();
+      mpSessionController->updateDiscoveryCallback();
     }
 
     invokeStartStopStateCallbackIfChanged();
@@ -524,13 +531,19 @@ private:
     }
 
     updateSessionTiming(session.timeline, session.measurement.xform);
-    updateDiscovery();
+    if (mpSessionController)
+    {
+      mpSessionController->updateDiscoveryCallback();
+    }
 
     if (sessionIdChanged)
     {
       debug(mIo->log()) << "Joining session " << session.sessionId << " with tempo "
                         << session.timeline.tempo.bpm();
-      mSessionPeerCounter();
+      if (mpSessionController)
+      {
+        mpSessionController->sessionMembershipCallback();
+      }
     }
   }
 
@@ -553,7 +566,10 @@ private:
     resetSessionStartStopState();
 
     updateSessionTiming(newTl, xform);
-    updateDiscovery();
+    if (mpSessionController)
+    {
+      mpSessionController->updateDiscoveryCallback();
+    }
 
     mSessions.resetSession({mNodeId, newTl, {xform, hostTime}});
     mPeers.resetPeers();
@@ -583,10 +599,10 @@ private:
             mController.mIo->async(
               [this]()
               {
-                // Process the pending client states first to make sure we don't push one
-                // after we have joined a running session when enabling
-                processPendingClientStates();
-                updateEnabled();
+                if (mController.mpSessionController)
+                {
+                  mController.mpSessionController->updateRtStatesCallback();
+                }
               });
           },
           detail::kRtHandlerFallbackPeriod)
@@ -668,6 +684,19 @@ private:
     Controller& mController;
   };
 
+  struct SessionMembershipCallback
+  {
+    void operator()()
+    {
+      if (mpController->mpSessionController)
+      {
+        mpController->mpSessionController->sessionMembershipCallback();
+      }
+    }
+
+    Controller* mpController;
+  };
+
   struct SessionPeerCounter
   {
     SessionPeerCounter(Controller& controller, PeerCountCallback callback)
@@ -704,41 +733,55 @@ private:
     template <typename Peer, typename Handler>
     void operator()(Peer peer, Handler handler)
     {
-      using It = typename Discovery::ServicePeerGateways::GatewayMap::iterator;
-      using ValueType = typename Discovery::ServicePeerGateways::GatewayMap::value_type;
-      mController.mDiscovery.withGateways(
-        [peer, handler](It begin, const It end)
-        {
-          const auto addr = peer.second;
-          const auto it = std::find_if(
-            begin, end, [&addr](const ValueType& vt) { return vt.first == addr; });
-          if (it != end)
-          {
-            it->second->measurePeer(std::move(peer.first), std::move(handler));
-          }
-          else
-          {
-            // invoke the handler with an empty result if we couldn't
-            // find the peer's gateway
-            handler(GhostXForm{});
-          }
-        });
+      if (mpController->mpSessionController)
+      {
+        mpController->mpSessionController->measurePeerCallback(
+          std::move(peer), std::move(handler));
+      }
     }
 
-    Controller& mController;
+    Controller* mpController;
   };
+
+  template <typename Peer, typename Handler>
+  void measurePeer(Peer peer, Handler handler)
+  {
+    mDiscovery.withGateways(
+      [peer, handler](auto begin, const auto end)
+      {
+        const auto addr = peer.second;
+        const auto it =
+          std::find_if(begin, end, [&addr](const auto& vt) { return vt.first == addr; });
+        if (it != end)
+        {
+          it->second->measurePeer(std::move(peer.first), std::move(handler));
+        }
+        else
+        {
+          // invoke the handler with an empty result if we couldn't
+          // find the peer's gateway
+          handler(GhostXForm{});
+        }
+      });
+  }
 
   struct JoinSessionCallback
   {
-    void operator()(Session session) { mController.joinSession(std::move(session)); }
+    void operator()(Session session)
+    {
+      if (mpController->mpSessionController)
+      {
+        mpController->mpSessionController->joinSessionCallback(std::move(session));
+      }
+    }
 
-    Controller& mController;
+    Controller* mpController;
   };
 
   using IoType = typename util::Injected<IoContext>::type;
 
   using ControllerPeers = Peers<IoType&,
-                                std::reference_wrapper<SessionPeerCounter>,
+                                SessionMembershipCallback,
                                 SessionTimelineCallback,
                                 SessionStartStopStateCallback>;
 
@@ -755,13 +798,13 @@ private:
       return GatewayPtr{new ControllerGateway{
         std::move(io),
         addr,
-        util::injectVal(makeGatewayObserver(mController.mPeers, addr)),
+        util::injectVal(makeGatewayObserver(mpController->mPeers, addr)),
         std::move(state.first),
         std::move(state.second),
-        mController.mClock}};
+        mpController->mClock}};
     }
 
-    Controller& mController;
+    Controller* mpController;
   };
 
   struct UdpSendExceptionHandler
@@ -792,6 +835,8 @@ private:
 
   mutable RtClientState mRtClientState;
   std::atomic<bool> mHasPendingRtClientStates;
+
+  SessionController* mpSessionController;
 
   SessionPeerCounter mSessionPeerCounter;
 
