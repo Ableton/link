@@ -35,7 +35,11 @@ namespace link_audio
 using SharedSink = std::shared_ptr<Sink>;
 using SharedSource = std::shared_ptr<Source>;
 
-template <typename ChannelsChangedCallback, typename Random, typename IoContext>
+template <typename ChannelsChangedCallback,
+          typename GetSender,
+          typename GetNodeId,
+          typename Random,
+          typename IoContext>
 struct MainProcessor
 {
   using IoType = typename util::Injected<IoContext>::type;
@@ -53,7 +57,12 @@ struct MainProcessor
 
   void addSink(SharedSink pSink) { mpImpl->addSink(pSink); }
 
-  void addSource(SharedSource pSource) { mpImpl->addSource(pSource); }
+  void addSource(SharedSource pSource,
+                 util::Injected<GetSender> getSender,
+                 util::Injected<GetNodeId> getNodeId)
+  {
+    mpImpl->addSource(pSource, std::move(getSender), std::move(getNodeId));
+  }
 
   ChannelAnnouncements channelAnnouncements() const
   {
@@ -64,7 +73,7 @@ private:
   struct Impl : std::enable_shared_from_this<Impl>
   {
     using Timer = typename util::Injected<IoContext>::type::Timer;
-    using MainSourceProcessor = SourceProcessor<IoContext&>;
+    using MainSourceProcessor = SourceProcessor<GetSender, GetNodeId, IoContext&>;
 
     Impl(util::Injected<IoContext> io, ChannelsChangedCallback callback)
       : mIo{std::move(io)}
@@ -80,10 +89,12 @@ private:
       start();
     }
 
-    void addSource(SharedSource pSource)
+    void addSource(SharedSource pSource,
+                   util::Injected<GetSender> getSender,
+                   util::Injected<GetNodeId> getNodeId)
     {
-      auto pProcessor =
-        std::make_unique<MainSourceProcessor>(util::injectRef(*mIo), pSource);
+      auto pProcessor = std::make_unique<MainSourceProcessor>(
+        util::injectRef(*mIo), pSource, std::move(getSender), std::move(getNodeId));
       mSources.push_back(std::move(pProcessor));
       start();
     }

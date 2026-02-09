@@ -20,6 +20,7 @@
 #pragma once
 
 #include <ableton/link_audio/ChannelAnnouncements.hpp>
+#include <ableton/link_audio/ChannelRequests.hpp>
 #include <ableton/link_audio/Id.hpp>
 #include <ableton/link_audio/Source.hpp>
 #include <ableton/link_audio/v1/Messages.hpp>
@@ -32,15 +33,28 @@ namespace ableton
 namespace link_audio
 {
 
-template <typename IoContext>
+template <typename GetSender, typename GetNodeId, typename IoContext>
 struct SourceProcessor
 {
   using Timer = typename util::Injected<IoContext>::type::Timer;
   static constexpr uint8_t kTtl = 5;
 
-  SourceProcessor(util::Injected<IoContext> io, std::shared_ptr<Source> pSource)
-    : mpImpl(std::make_shared<Impl>(std::move(io), pSource))
+  SourceProcessor(util::Injected<IoContext> io,
+                  std::shared_ptr<Source> pSource,
+                  util::Injected<GetSender> getSender,
+                  util::Injected<GetNodeId> getNodeId)
+    : mpImpl(std::make_shared<Impl>(
+        std::move(io), pSource, std::move(getSender), std::move(getNodeId)))
   {
+    mpImpl->sendAudioRequest();
+  }
+
+  ~SourceProcessor()
+  {
+    if (mpImpl != nullptr)
+    {
+      mpImpl->sendChannelStopRequest();
+    }
   }
 
   bool process() { return mpImpl->process(); }
@@ -49,10 +63,60 @@ struct SourceProcessor
 
   struct Impl : public std::enable_shared_from_this<Impl>
   {
-    Impl(util::Injected<IoContext> io, std::shared_ptr<Source> pSource)
+    Impl(util::Injected<IoContext> io,
+         std::shared_ptr<Source> pSource,
+         util::Injected<GetSender> getSender,
+         util::Injected<GetNodeId> getNodeId)
       : mTimer(io->makeTimer())
       , mpSource(pSource)
+      , mGetSender(std::move(getSender))
+      , mGetNodeId(std::move(getNodeId))
     {
+    }
+
+    template <typename Payload>
+    void sendMessage(const Payload& payload,
+                     const v1::MessageType messageType,
+                     const uint8_t ttl)
+    {
+      v1::MessageBuffer buffer;
+      const auto messageBegin = buffer.begin();
+      const auto messageEnd = v1::detail::encodeMessage(
+        (*mGetNodeId)(), ttl, messageType, payload, messageBegin);
+      const auto numBytes = static_cast<size_t>(std::distance(messageBegin, messageEnd));
+      auto oSender = mGetSender->forChannel(mpSource->id());
+      if (oSender)
+      {
+        try
+        {
+          (*oSender)(buffer.data(), numBytes);
+        }
+        catch (const std::runtime_error&)
+        {
+        }
+      }
+    }
+
+    void sendAudioRequest()
+    {
+      mTimer.expires_from_now(std::chrono::seconds(kTtl));
+      mTimer.async_wait(
+        [this](const auto e)
+        {
+          if (!e)
+          {
+            sendAudioRequest();
+          }
+        });
+
+      const auto request = ChannelRequest{(*mGetNodeId)(), mpSource->id()};
+      sendMessage(toPayload(request), v1::kChannelRequest, kTtl);
+    }
+
+    void sendChannelStopRequest()
+    {
+      const auto stopRequest = ChannelStopRequest{(*mGetNodeId)(), mpSource->id()};
+      sendMessage(toPayload(stopRequest), v1::kStopChannelRequest, 0);
     }
 
     bool process() { return mpSource.use_count() > 1; }
@@ -62,6 +126,8 @@ struct SourceProcessor
   private:
     Timer mTimer;
     std::shared_ptr<Source> mpSource;
+    util::Injected<GetSender> mGetSender;
+    util::Injected<GetNodeId> mGetNodeId;
   };
 
   std::shared_ptr<Impl> mpImpl;

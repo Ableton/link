@@ -146,7 +146,12 @@ public:
   {
     auto source = std::make_shared<Source>(std::move(channelId));
 
-    this->mIo->async([this, source]() { mProcessor.addSource(source); });
+    this->mIo->async(
+      [this, source]()
+      {
+        mProcessor.addSource(
+          source, util::injectVal(GetSender{this}), util::injectVal(GetNodeId{this}));
+      });
 
     return source;
   }
@@ -288,6 +293,29 @@ protected:
 
   using Interface = MessengerInterface<typename util::Injected<IoContext>::type&>;
   using ControllerChannels = Channels<IoContext&, ChannelsChanged, Interface>;
+  using SendHandler = typename ControllerChannels::SendHandler;
+
+  struct GetSender
+  {
+    std::optional<SendHandler> forChannel(const Id& id)
+    {
+      return mpController->mChannels.channelSendHandler(id);
+    }
+
+    std::optional<SendHandler> forPeer(const Id& id)
+    {
+      return mpController->mChannels.peerSendHandler(id);
+    }
+
+    Controller* mpController;
+  };
+
+  struct GetNodeId
+  {
+    const link::NodeId& operator()() const { return mpController->mNodeId; }
+
+    Controller* mpController;
+  };
 
   struct ChannelsCallback
   {
@@ -302,7 +330,8 @@ protected:
     Controller* mpController;
   };
 
-  using ControllerMainProcessor = MainProcessor<ChannelsCallback, Random, IoContext&>;
+  using ControllerMainProcessor =
+    MainProcessor<ChannelsCallback, GetSender, GetNodeId, Random, IoContext&>;
   using ControllerMessengerPtr =
     MessengerPtr<typename ControllerChannels::GatewayObserver,
                  typename util::Injected<IoContext>::type&>;
