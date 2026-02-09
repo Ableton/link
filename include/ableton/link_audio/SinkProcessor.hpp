@@ -126,6 +126,8 @@ struct SinkProcessor
     void receiveChannelRequest(Request request, uint8_t ttl)
     {
       mReceivers.receiveChannelRequest(std::move(request), ttl);
+
+      mpSink->setIsConnected(!mReceivers.empty());
     }
 
   private:

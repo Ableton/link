@@ -39,6 +39,7 @@ struct Sink
     , mId{std::move(id)}
     , mMaxNumSamples{maxNumSamples}
     , mQueue(128, {static_cast<uint32_t>(maxNumSamples)})
+    , mIsConnected(false)
   {
   }
 
@@ -58,7 +59,7 @@ struct Sink
   {
     auto queueWriter = mQueue.writer();
 
-    if (queueWriter.numRetainedSlots() > 0)
+    if (!mIsConnected || queueWriter.numRetainedSlots() > 0)
     {
       return nullptr;
     }
@@ -128,12 +129,15 @@ struct Sink
 
   Queue<Buffer<int16_t>>::Reader reader() { return mQueue.reader(); }
 
+  void setIsConnected(bool isConnected) { mIsConnected = isConnected; }
+
 private:
   util::Locked<std::string> mName;
   std::atomic_flag mNameIsUpToDate;
   Id mId;
   std::atomic<size_t> mMaxNumSamples;
   Queue<Buffer<int16_t>> mQueue;
+  std::atomic<bool> mIsConnected;
 };
 
 } // namespace link_audio
