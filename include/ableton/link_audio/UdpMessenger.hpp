@@ -167,7 +167,7 @@ public:
                      [&](const auto& receiver) { return receiver.endpoint == endpoint; });
       if (it == mpImpl->mReceivers.end())
       {
-        mpImpl->mReceivers.push_back({peerId, *endpoint, {}, {}});
+        mpImpl->mReceivers.push_back({peerId, *endpoint, {}});
       }
     }
     else
@@ -185,7 +185,6 @@ private:
   {
     link::NodeId id;
     discovery::UdpEndpoint endpoint;
-    std::chrono::microseconds lastPingTime;
     NetworkMetricsFilter metricsFilter;
   };
 
@@ -447,11 +446,10 @@ private:
                                                 [&sendTime](link::HostTime ht)
                                                 { sendTime = std::move(ht.time); });
 
-        auto it = std::find_if(
-          mReceivers.begin(),
-          mReceivers.end(),
-          [&](const auto& receiver)
-          { return receiver.endpoint == from && receiver.lastPingTime == sendTime; });
+        auto it =
+          std::find_if(mReceivers.begin(),
+                       mReceivers.end(),
+                       [&](const auto& receiver) { return receiver.endpoint == from; });
         if (it != mReceivers.end())
         {
           it->metricsFilter(receiveTime - sendTime);
