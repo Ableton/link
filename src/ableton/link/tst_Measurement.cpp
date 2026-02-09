@@ -91,7 +91,8 @@ struct TFixture
     {
       using Random = ableton::platforms::stl::Random;
       mState.nodeState.sessionId = NodeId::random<Random>();
-      mState.endpoint = discovery::UdpEndpoint(discovery::makeAddress("127.0.0.1"), 9999);
+      mState.measurementEndpoint =
+        discovery::UdpEndpoint(discovery::makeAddress("127.0.0.1"), 9999);
     }
 
     PeerState operator()() { return mState; }

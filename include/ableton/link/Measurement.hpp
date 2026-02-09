@@ -94,15 +94,15 @@ struct Measurement
       , mLog(channel(mIo->log(), "Measurement on gateway@" + address.to_string()))
       , mSuccess(false)
     {
-      if (state.endpoint.address().is_v4())
+      if (state.measurementEndpoint.address().is_v4())
       {
-        mEndpoint = state.endpoint;
+        mEndpoint = state.measurementEndpoint;
       }
       else
       {
-        auto v6Address = state.endpoint.address().to_v6();
+        auto v6Address = state.measurementEndpoint.address().to_v6();
         v6Address.scope_id(address.to_v6().scope_id());
-        mEndpoint = {v6Address, state.endpoint.port()};
+        mEndpoint = {v6Address, state.measurementEndpoint.port()};
       }
 
       const auto ht = HostTime{mClock.micros()};

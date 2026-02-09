@@ -56,7 +56,8 @@ struct PeerState
 
   friend bool operator==(const PeerState& lhs, const PeerState& rhs)
   {
-    return lhs.nodeState == rhs.nodeState && lhs.endpoint == rhs.endpoint;
+    return lhs.nodeState == rhs.nodeState
+           && lhs.measurementEndpoint == rhs.measurementEndpoint;
   }
 
   friend auto toPayload(const PeerState& state)
@@ -68,8 +69,8 @@ struct PeerState
     // MeasurementEndpoints that contain an endpoint that does not match the IP protocol
     // version return a sizeInByteStream() of zero and won't be serialized.
     return toPayload(state.nodeState)
-           + discovery::makePayload(MeasurementEndpointV4{state.endpoint})
-           + discovery::makePayload(MeasurementEndpointV6{state.endpoint});
+           + discovery::makePayload(MeasurementEndpointV4{state.measurementEndpoint})
+           + discovery::makePayload(MeasurementEndpointV6{state.measurementEndpoint});
   }
 
   template <typename It>
@@ -81,14 +82,15 @@ struct PeerState
     discovery::parsePayload<MeasurementEndpointV4, MeasurementEndpointV6>(
       std::move(begin),
       std::move(end),
-      [&peerState](MeasurementEndpointV4 me4) { peerState.endpoint = std::move(me4.ep); },
+      [&peerState](MeasurementEndpointV4 me4)
+      { peerState.measurementEndpoint = std::move(me4.ep); },
       [&peerState](MeasurementEndpointV6 me6)
-      { peerState.endpoint = std::move(me6.ep); });
+      { peerState.measurementEndpoint = std::move(me6.ep); });
     return peerState;
   }
 
   NodeState nodeState;
-  discovery::UdpEndpoint endpoint;
+  discovery::UdpEndpoint measurementEndpoint;
 };
 
 } // namespace link
