@@ -90,6 +90,7 @@ TEST_CASE("Peers")
                NodeId::random<Random>(),
                Timeline{Tempo{60.}, Beats{1.}, std::chrono::microseconds{1234}},
                StartStopState{false, Beats{0.}, std::chrono::microseconds{2345}}},
+              {},
               {}};
 
   const auto barPeer =
@@ -97,6 +98,7 @@ TEST_CASE("Peers")
                NodeId::random<Random>(),
                Timeline{Tempo{120.}, Beats{10.}, std::chrono::microseconds{500}},
                {}},
+              {},
               {}};
 
   const auto bazPeer =
@@ -104,6 +106,7 @@ TEST_CASE("Peers")
                NodeId::random<Random>(),
                Timeline{Tempo{100.}, Beats{4.}, std::chrono::microseconds{100}},
                {}},
+              {},
               {}};
 
   const auto gateway1 = discovery::makeAddress("123.123.123.123");

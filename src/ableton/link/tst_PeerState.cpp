@@ -40,8 +40,9 @@ TEST_CASE("PeerState")
 
   SECTION("V4RoundtripByteStreamEncoding")
   {
-    PeerState state{
-      nodeState, discovery::UdpEndpoint({discovery::makeAddress("123.123.1.2"), 6780})};
+    PeerState state{nodeState,
+                    discovery::UdpEndpoint({discovery::makeAddress("123.123.1.2"), 6780}),
+                    {}};
 
     const auto payload = toPayload(state);
     std::vector<std::uint8_t> bytes(sizeInByteStream(payload));
@@ -53,8 +54,9 @@ TEST_CASE("PeerState")
 
   SECTION("V6RoundtripByteStreamEncoding")
   {
-    PeerState state{
-      nodeState, discovery::UdpEndpoint({discovery::makeAddress("fe80::8080"), 6780})};
+    PeerState state{nodeState,
+                    discovery::UdpEndpoint({discovery::makeAddress("fe80::8080"), 6780}),
+                    {}};
 
     const auto payload = toPayload(state);
     std::vector<std::uint8_t> bytes(sizeInByteStream(payload));
