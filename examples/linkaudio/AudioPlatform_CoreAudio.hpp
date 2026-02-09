@@ -43,6 +43,12 @@ private:
                                 UInt32 inNumberFrames,
                                 AudioBufferList* ioData);
 
+  static void streamFormatCallback(void* inRefCon,
+                                   AudioUnit inUnit,
+                                   AudioUnitPropertyID inID,
+                                   AudioUnitScope inScope,
+                                   AudioUnitElement inElement);
+
   void initialize();
   void uninitialize();
   void start();

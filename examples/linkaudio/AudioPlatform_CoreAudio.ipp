@@ -71,6 +71,43 @@ OSStatus AudioPlatform<Link>::audioCallback(void* inRefCon,
 }
 
 template <typename Link>
+void AudioPlatform<Link>::streamFormatCallback(void* inRefCon,
+                                               AudioUnit inUnit,
+                                               AudioUnitPropertyID inID,
+                                               AudioUnitScope inScope,
+                                               AudioUnitElement inElement)
+{
+#pragma unused(inID)
+  if (inScope == kAudioUnitScope_Output && inElement == 0)
+  {
+    AudioStreamBasicDescription asbd;
+    UInt32 dataSize = sizeof(asbd);
+    OSStatus result = AudioUnitGetProperty(inUnit,
+                                           kAudioUnitProperty_StreamFormat,
+                                           kAudioUnitScope_Output,
+                                           0,
+                                           &asbd,
+                                           &dataSize);
+    if (result)
+    {
+      std::cerr << "Could not get Audio Unit stream format. " << result << std::endl;
+    }
+
+    AudioPlatform<Link>* pPlatform = static_cast<AudioPlatform<Link>*>(inRefCon);
+    const Float64 oldSampleRate = pPlatform->mEngine.mSampleRate;
+    if (fabs(oldSampleRate - asbd.mSampleRate) > 1.)
+    {
+      std::cout << "CORE AUDIO STREAM FORMAT CHANGED: " << asbd.mSampleRate << std::endl;
+      pPlatform->stop();
+      pPlatform->uninitialize();
+      pPlatform->mEngine.setSampleRate(asbd.mSampleRate);
+      pPlatform->initialize();
+      pPlatform->start();
+    }
+  }
+}
+
+template <typename Link>
 void AudioPlatform<Link>::initialize()
 {
   AudioComponentDescription cd = {};
@@ -122,6 +159,14 @@ void AudioPlatform<Link>::initialize()
   if (result)
   {
     std::cerr << "Could not set stream format. " << result << std::endl;
+  }
+
+  result = AudioUnitAddPropertyListener(
+    mIoUnit, kAudioUnitProperty_StreamFormat, streamFormatCallback, this);
+  if (result)
+  {
+    std::cerr << "Could not add listener to stream format changes. " << result
+              << std::endl;
   }
 
   char deviceName[512];
