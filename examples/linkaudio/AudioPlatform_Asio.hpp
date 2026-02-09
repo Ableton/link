@@ -21,7 +21,6 @@
 
 #include "AudioEngine.hpp"
 
-#include <ableton/Link.hpp>
 #include <ableton/link/HostTimeFilter.hpp>
 
 #include "asiosys.h" // Should be included before asio.h
@@ -67,9 +66,13 @@ struct DriverInfo
 void fatalError(const ASIOError result, const std::string& function);
 double asioSamplesToDouble(const ASIOSamples& samples);
 
+template <typename Link>
 ASIOTime* bufferSwitchTimeInfo(ASIOTime* timeInfo, long index, ASIOBool);
+
+template <typename Link>
 void bufferSwitch(long index, ASIOBool processNow);
 
+template <typename Link>
 class AudioPlatform
 {
 public:
@@ -78,12 +81,7 @@ public:
 
   void audioCallback(ASIOTime* timeInfo, long index);
 
-  AudioEngine mEngine;
-
-  // Unfortunately, the ASIO SDK does not allow passing void* user data to callback
-  // functions, so we need to keep a singleton instance of the audio engine
-  static AudioPlatform* singleton();
-  static void setSingleton(AudioPlatform* platform);
+  AudioEngine<Link> mEngine;
 
 private:
   void createAsioBuffers();
@@ -94,10 +92,13 @@ private:
 
   DriverInfo mDriverInfo;
   ASIOCallbacks mAsioCallbacks;
-  link::HostTimeFilter<platforms::windows::Clock> mHostTimeFilter;
+  link::HostTimeFilter<typename Link::Clock> mHostTimeFilter;
 
-  static AudioPlatform* _singleton;
+public:
+  static AudioPlatform<Link>* _singleton;
 };
 
 } // namespace linkaudio
 } // namespace ableton
+
+#include "AudioPlatform_Asio.ipp"

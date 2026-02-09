@@ -21,7 +21,6 @@
 
 #include "AudioEngine.hpp"
 #include <ableton/link/HostTimeFilter.hpp>
-#include <ableton/platforms/Config.hpp>
 #include <jack/jack.h>
 
 namespace ableton
@@ -29,13 +28,14 @@ namespace ableton
 namespace linkaudio
 {
 
+template <typename Link>
 class AudioPlatform
 {
 public:
   AudioPlatform(Link& link);
   ~AudioPlatform();
 
-  AudioEngine mEngine;
+  AudioEngine<Link> mEngine;
 
 private:
   static int audioCallback(jack_nframes_t nframes, void* pvUserData);
@@ -48,7 +48,7 @@ private:
   void start();
   void stop();
 
-  link::HostTimeFilter<link::platform::Clock> mHostTimeFilter;
+  link::HostTimeFilter<typename Link::Clock> mHostTimeFilter;
   double mSampleTime;
   jack_client_t* mpJackClient;
   jack_port_t** mpJackPorts;
@@ -56,3 +56,5 @@ private:
 
 } // namespace linkaudio
 } // namespace ableton
+
+#include "AudioPlatform_Jack.ipp"

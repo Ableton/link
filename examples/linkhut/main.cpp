@@ -17,6 +17,8 @@
  *  please contact <link-devs@ableton.com>.
  */
 
+#include <ableton/Link.hpp>
+
 #include "AudioPlatform.hpp"
 
 #include <algorithm>
@@ -36,7 +38,7 @@ struct State
 {
   std::atomic<bool> running;
   ableton::Link link;
-  ableton::linkaudio::AudioPlatform audioPlatform;
+  ableton::linkaudio::AudioPlatform<ableton::Link> audioPlatform;
 
   State()
     : running(true)

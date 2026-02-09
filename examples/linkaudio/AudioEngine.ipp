@@ -17,9 +17,10 @@
  *  please contact <link-devs@ableton.com>.
  */
 
-#include "AudioEngine.hpp"
+#pragma once
 
-// Make sure to define this before <cmath> is included for Windows
+// Make sure to define this before <cmath> is included for
+// Wihttps://github.com/AbletonAppDev/link/pull/664ndows
 #ifdef LINK_PLATFORM_WINDOWS
 #define _USE_MATH_DEFINES
 #endif
@@ -31,7 +32,8 @@ namespace ableton
 namespace linkaudio
 {
 
-AudioEngine::AudioEngine(Link& link)
+template <typename Link>
+AudioEngine<Link>::AudioEngine(Link& link)
   : mLink(link)
   , mSampleRate(44100.)
   , mOutputLatency(std::chrono::microseconds{0})
@@ -46,67 +48,79 @@ AudioEngine::AudioEngine(Link& link)
   }
 }
 
-void AudioEngine::startPlaying()
+template <typename Link>
+void AudioEngine<Link>::startPlaying()
 {
   std::lock_guard<std::mutex> lock(mEngineDataGuard);
   mSharedEngineData.requestStart = true;
 }
 
-void AudioEngine::stopPlaying()
+template <typename Link>
+void AudioEngine<Link>::stopPlaying()
 {
   std::lock_guard<std::mutex> lock(mEngineDataGuard);
   mSharedEngineData.requestStop = true;
 }
 
-bool AudioEngine::isPlaying() const
+template <typename Link>
+bool AudioEngine<Link>::isPlaying() const
 {
   return mLink.captureAppSessionState().isPlaying();
 }
 
-double AudioEngine::beatTime() const
+template <typename Link>
+double AudioEngine<Link>::beatTime() const
 {
   const auto sessionState = mLink.captureAppSessionState();
   return sessionState.beatAtTime(mLink.clock().micros(), mSharedEngineData.quantum);
 }
 
-void AudioEngine::setTempo(double tempo)
+template <typename Link>
+void AudioEngine<Link>::setTempo(double tempo)
 {
   std::lock_guard<std::mutex> lock(mEngineDataGuard);
   mSharedEngineData.requestedTempo = tempo;
 }
 
-double AudioEngine::quantum() const
+template <typename Link>
+double AudioEngine<Link>::quantum() const
 {
   return mSharedEngineData.quantum;
 }
 
-void AudioEngine::setQuantum(double quantum)
+template <typename Link>
+void AudioEngine<Link>::setQuantum(double quantum)
 {
   std::lock_guard<std::mutex> lock(mEngineDataGuard);
   mSharedEngineData.quantum = quantum;
 }
 
-bool AudioEngine::isStartStopSyncEnabled() const
+template <typename Link>
+bool AudioEngine<Link>::isStartStopSyncEnabled() const
 {
   return mLink.isStartStopSyncEnabled();
 }
 
-void AudioEngine::setStartStopSyncEnabled(const bool enabled)
+template <typename Link>
+void AudioEngine<Link>::setStartStopSyncEnabled(const bool enabled)
 {
   mLink.enableStartStopSync(enabled);
 }
 
-void AudioEngine::setBufferSize(std::size_t size)
+template <typename Link>
+void AudioEngine<Link>::setBufferSize(std::size_t size)
 {
   mBuffer = std::vector<double>(size, 0.);
 }
 
-void AudioEngine::setSampleRate(double sampleRate)
+template <typename Link>
+void AudioEngine<Link>::setSampleRate(double sampleRate)
 {
   mSampleRate = sampleRate;
 }
 
-AudioEngine::EngineData AudioEngine::pullEngineData()
+template <typename Link>
+typename AudioEngine<Link>::EngineData AudioEngine<Link>::pullEngineData()
 {
   auto engineData = EngineData{};
   if (mEngineDataGuard.try_lock())
@@ -128,10 +142,12 @@ AudioEngine::EngineData AudioEngine::pullEngineData()
   return engineData;
 }
 
-void AudioEngine::renderMetronomeIntoBuffer(const Link::SessionState sessionState,
-                                            const double quantum,
-                                            const std::chrono::microseconds beginHostTime,
-                                            const std::size_t numSamples)
+template <typename Link>
+void AudioEngine<Link>::renderMetronomeIntoBuffer(
+  const typename Link::SessionState sessionState,
+  const double quantum,
+  const std::chrono::microseconds beginHostTime,
+  const std::size_t numSamples)
 {
   using namespace std::chrono;
 
@@ -188,8 +204,9 @@ void AudioEngine::renderMetronomeIntoBuffer(const Link::SessionState sessionStat
   }
 }
 
-void AudioEngine::audioCallback(const std::chrono::microseconds hostTime,
-                                const std::size_t numSamples)
+template <typename Link>
+void AudioEngine<Link>::audioCallback(
+  const std::chrono::microseconds hostTime, const std::size_t numSamples)
 {
   const auto engineData = pullEngineData();
 

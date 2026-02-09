@@ -21,15 +21,20 @@
 
 // Make sure to define this before <cmath> is included for Windows
 #define _USE_MATH_DEFINES
-#include <ableton/Link.hpp>
 #include <atomic>
+#include <iostream>
+#include <math.h>
 #include <mutex>
+#include <vector>
+
+#include "AudioPlatform.hpp"
 
 namespace ableton
 {
 namespace linkaudio
 {
 
+template <typename Link>
 class AudioEngine
 {
 public:
@@ -44,7 +49,6 @@ public:
   bool isStartStopSyncEnabled() const;
   void setStartStopSyncEnabled(bool enabled);
 
-private:
   struct EngineData
   {
     double requestedTempo;
@@ -57,7 +61,7 @@ private:
   void setBufferSize(std::size_t size);
   void setSampleRate(double sampleRate);
   EngineData pullEngineData();
-  void renderMetronomeIntoBuffer(Link::SessionState sessionState,
+  void renderMetronomeIntoBuffer(typename Link::SessionState sessionState,
                                  double quantum,
                                  std::chrono::microseconds beginHostTime,
                                  std::size_t numSamples);
@@ -72,10 +76,9 @@ private:
   std::chrono::microseconds mTimeAtLastClick;
   bool mIsPlaying;
   std::mutex mEngineDataGuard;
-
-  friend class AudioPlatform;
 };
-
 
 } // namespace linkaudio
 } // namespace ableton
+
+#include "AudioEngine.ipp"

@@ -19,13 +19,14 @@
 
 #pragma once
 
-#include <ableton/Link.hpp>
+#include <chrono>
 
 namespace ableton
 {
 namespace linkaudio
 {
 
+template <typename Link>
 class AudioPlatform
 {
   class AudioEngine

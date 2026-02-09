@@ -27,12 +27,13 @@ namespace ableton
 namespace linkaudio
 {
 
+template <typename Link>
 class AudioPlatform
 {
 public:
   AudioPlatform(Link& link);
   ~AudioPlatform();
-  AudioEngine mEngine;
+  AudioEngine<Link> mEngine;
 
 private:
   static OSStatus audioCallback(void* inRefCon,
@@ -52,3 +53,5 @@ private:
 
 } // namespace linkaudio
 } // namespace ableton
+
+#include "AudioPlatform_CoreAudio.ipp"

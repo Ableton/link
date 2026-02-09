@@ -17,7 +17,6 @@
  *  please contact <link-devs@ableton.com>.
  */
 
-#include "AudioPlatform_Portaudio.hpp"
 #include <chrono>
 #include <iostream>
 
@@ -26,7 +25,8 @@ namespace ableton
 namespace linkaudio
 {
 
-AudioPlatform::AudioPlatform(Link& link)
+template <typename Link>
+AudioPlatform<Link>::AudioPlatform(Link& link)
   : mEngine(link)
   , mSampleTime(0.)
 {
@@ -36,23 +36,25 @@ AudioPlatform::AudioPlatform(Link& link)
   start();
 }
 
-AudioPlatform::~AudioPlatform()
+template <typename Link>
+AudioPlatform<Link>::~AudioPlatform()
 {
   stop();
   uninitialize();
 }
 
-int AudioPlatform::audioCallback(const void* /*inputBuffer*/,
-                                 void* outputBuffer,
-                                 unsigned long inNumFrames,
-                                 const PaStreamCallbackTimeInfo* /*timeInfo*/,
-                                 PaStreamCallbackFlags /*statusFlags*/,
-                                 void* userData)
+template <typename Link>
+int AudioPlatform<Link>::audioCallback(const void* /*inputBuffer*/,
+  void* outputBuffer,
+  unsigned long inNumFrames,
+  const PaStreamCallbackTimeInfo* /*timeInfo*/,
+  PaStreamCallbackFlags /*statusFlags*/,
+  void* userData)
 {
   using namespace std::chrono;
   float* buffer = static_cast<float*>(outputBuffer);
   AudioPlatform& platform = *static_cast<AudioPlatform*>(userData);
-  AudioEngine& engine = platform.mEngine;
+  AudioEngine<Link>& engine = platform.mEngine;
 
   const auto hostTime =
     platform.mHostTimeFilter.sampleTimeToHostTime(platform.mSampleTime);
@@ -72,7 +74,8 @@ int AudioPlatform::audioCallback(const void* /*inputBuffer*/,
   return paContinue;
 }
 
-void AudioPlatform::initialize()
+template <typename Link>
+void AudioPlatform<Link>::initialize()
 {
   PaError result = Pa_Initialize();
   if (result)
@@ -96,14 +99,8 @@ void AudioPlatform::initialize()
   outputParameters.hostApiSpecificStreamInfo = nullptr;
   mEngine.mOutputLatency.store(
     std::chrono::microseconds(llround(outputParameters.suggestedLatency * 1.0e6)));
-  result = Pa_OpenStream(&pStream,
-                         nullptr,
-                         &outputParameters,
-                         mEngine.mSampleRate,
-                         mEngine.mBuffer.size(),
-                         paClipOff,
-                         &audioCallback,
-                         this);
+  result = Pa_OpenStream(&pStream, nullptr, &outputParameters, mEngine.mSampleRate,
+    mEngine.mBuffer.size(), paClipOff, &audioCallback, this);
 
   if (result)
   {
@@ -118,7 +115,8 @@ void AudioPlatform::initialize()
   }
 }
 
-void AudioPlatform::uninitialize()
+template <typename Link>
+void AudioPlatform<Link>::uninitialize()
 {
   PaError result = Pa_CloseStream(pStream);
   if (result)
@@ -134,7 +132,8 @@ void AudioPlatform::uninitialize()
   }
 }
 
-void AudioPlatform::start()
+template <typename Link>
+void AudioPlatform<Link>::start()
 {
   PaError result = Pa_StartStream(pStream);
   if (result)
@@ -143,7 +142,8 @@ void AudioPlatform::start()
   }
 }
 
-void AudioPlatform::stop()
+template <typename Link>
+void AudioPlatform<Link>::stop()
 {
   if (pStream == nullptr)
   {

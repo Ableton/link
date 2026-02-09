@@ -45,7 +45,7 @@ set(linkhut_audio_SOURCES)
 if(APPLE)
   set(linkhut_audio_SOURCES
     linkaudio/AudioPlatform_CoreAudio.hpp
-    linkaudio/AudioPlatform_CoreAudio.cpp
+    linkaudio/AudioPlatform_CoreAudio.ipp
   )
 elseif(WIN32)
   if(LINK_BUILD_ASIO)
@@ -60,7 +60,7 @@ elseif(WIN32)
       ${asio_sdk_path}/host/asiodrivers.cpp
       ${asio_sdk_path}/host/pc/asiolist.cpp
       linkaudio/AudioPlatform_Asio.hpp
-      linkaudio/AudioPlatform_Asio.cpp
+      linkaudio/AudioPlatform_Asio.ipp
     )
   else()
     message(WARNING "LinkHut has been configured to be built with the WASAPI audio "
@@ -68,19 +68,19 @@ elseif(WIN32)
       "playback. Please consider using the ASIO driver instead.")
     set(linkhut_audio_SOURCES
       linkaudio/AudioPlatform_Wasapi.hpp
-      linkaudio/AudioPlatform_Wasapi.cpp
+      linkaudio/AudioPlatform_Wasapi.ipp
     )
   endif()
 elseif(CMAKE_SYSTEM_NAME MATCHES "Linux|kFreeBSD|GNU")
   if(LINK_BUILD_JACK)
     set(linkhut_audio_SOURCES
       linkaudio/AudioPlatform_Jack.hpp
-      linkaudio/AudioPlatform_Jack.cpp
+      linkaudio/AudioPlatform_Jack.ipp
     )
   else()
     set(linkhut_audio_SOURCES
       linkaudio/AudioPlatform_Portaudio.hpp
-      linkaudio/AudioPlatform_Portaudio.cpp
+      linkaudio/AudioPlatform_Portaudio.ipp
     )
   endif()
 endif()
@@ -175,7 +175,6 @@ set(linkhut_HEADERS
 )
 
 set(linkhut_SOURCES
-  linkaudio/AudioEngine.cpp
   linkhut/main.cpp
 )
 
@@ -202,7 +201,6 @@ set(linkhutsilent_HEADERS
 )
 
 set(linkhutsilent_SOURCES
-  linkaudio/AudioEngine.cpp
   linkhut/main.cpp
 )
 

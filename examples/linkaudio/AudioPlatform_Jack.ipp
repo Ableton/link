@@ -17,7 +17,6 @@
  *  please contact <link-devs@ableton.com>.
  */
 
-#include "AudioPlatform_Jack.hpp"
 #include <chrono>
 #include <iostream>
 #include <string>
@@ -27,7 +26,8 @@ namespace ableton
 namespace linkaudio
 {
 
-AudioPlatform::AudioPlatform(Link& link)
+template <typename Link>
+AudioPlatform<Link>::AudioPlatform(Link& link)
   : mEngine(link)
   , mSampleTime(0.)
   , mpJackClient(nullptr)
@@ -37,25 +37,29 @@ AudioPlatform::AudioPlatform(Link& link)
   start();
 }
 
-AudioPlatform::~AudioPlatform()
+template <typename Link>
+AudioPlatform<Link>::~AudioPlatform<Link>()
 {
   stop();
   uninitialize();
 }
 
-int AudioPlatform::audioCallback(jack_nframes_t nframes, void* pvUserData)
+template <typename Link>
+int AudioPlatform<Link>::audioCallback(jack_nframes_t nframes, void* pvUserData)
 {
   AudioPlatform* pAudioPlatform = static_cast<AudioPlatform*>(pvUserData);
   return pAudioPlatform->audioCallback(nframes);
 }
 
-void AudioPlatform::latencyCallback(jack_latency_callback_mode_t, void* pvUserData)
+template <typename Link>
+void AudioPlatform<Link>::latencyCallback(jack_latency_callback_mode_t, void* pvUserData)
 {
   AudioPlatform* pAudioPlatform = static_cast<AudioPlatform*>(pvUserData);
   pAudioPlatform->updateLatency();
 }
 
-void AudioPlatform::updateLatency()
+template <typename Link>
+void AudioPlatform<Link>::updateLatency()
 {
   jack_latency_range_t latencyRange;
   jack_port_get_latency_range(mpJackPorts[0], JackPlaybackLatency, &latencyRange);
@@ -63,10 +67,11 @@ void AudioPlatform::updateLatency()
     std::chrono::microseconds(llround(1.0e6 * latencyRange.max / mEngine.mSampleRate)));
 }
 
-int AudioPlatform::audioCallback(jack_nframes_t nframes)
+template <typename Link>
+int AudioPlatform<Link>::audioCallback(jack_nframes_t nframes)
 {
   using namespace std::chrono;
-  AudioEngine& engine = mEngine;
+  AudioEngine<Link>& engine = mEngine;
 
   const auto hostTime = mHostTimeFilter.sampleTimeToHostTime(mSampleTime);
 
@@ -86,7 +91,8 @@ int AudioPlatform::audioCallback(jack_nframes_t nframes)
   return 0;
 }
 
-void AudioPlatform::initialize()
+template <typename Link>
+void AudioPlatform<Link>::initialize()
 {
   jack_status_t status = JackFailure;
   mpJackClient = jack_client_open("LinkHut", JackNullOption, &status);
@@ -145,7 +151,8 @@ void AudioPlatform::initialize()
   jack_set_process_callback(mpJackClient, AudioPlatform::audioCallback, this);
 }
 
-void AudioPlatform::uninitialize()
+template <typename Link>
+void AudioPlatform<Link>::uninitialize()
 {
   for (int k = 0; k < 2; ++k)
   {
@@ -159,7 +166,8 @@ void AudioPlatform::uninitialize()
   mpJackClient = nullptr;
 }
 
-void AudioPlatform::start()
+template <typename Link>
+void AudioPlatform<Link>::start()
 {
   jack_activate(mpJackClient);
 
@@ -179,7 +187,8 @@ void AudioPlatform::start()
   }
 }
 
-void AudioPlatform::stop()
+template <typename Link>
+void AudioPlatform<Link>::stop()
 {
   jack_deactivate(mpJackClient);
 }

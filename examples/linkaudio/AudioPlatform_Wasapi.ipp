@@ -17,7 +17,6 @@
  *  please contact <link-devs@ableton.com>.
  */
 
-#include "AudioPlatform_Wasapi.hpp"
 #include <Comdef.h>
 #include <chrono>
 
@@ -59,13 +58,15 @@ void fatalError(HRESULT result, LPCTSTR context)
   std::terminate();
 }
 
+template <typename Link>
 DWORD renderAudioRunloop(LPVOID lpParam)
 {
-  AudioPlatform* platform = static_cast<AudioPlatform*>(lpParam);
+  AudioPlatform<Link>* platform = static_cast<AudioPlatform<Link>*>(lpParam);
   return platform->audioRunloop();
 }
 
-AudioPlatform::AudioPlatform(Link& link)
+template <typename Link>
+AudioPlatform<Link>::AudioPlatform(Link& link)
   : mEngine(link)
   , mSampleTime(0)
   , mDevice(nullptr)
@@ -82,7 +83,8 @@ AudioPlatform::AudioPlatform(Link& link)
   start();
 }
 
-AudioPlatform::~AudioPlatform()
+template <typename Link>
+AudioPlatform<Link>::~AudioPlatform()
 {
   // WARNING: Here be dragons!
   // The WASAPI driver is not thread-safe, and crashes may occur when shutting down due
@@ -105,7 +107,8 @@ AudioPlatform::~AudioPlatform()
   CoTaskMemFree(mStreamFormat);
 }
 
-UINT32 AudioPlatform::bufferSize()
+template <typename Link>
+UINT32 AudioPlatform<Link>::bufferSize()
 {
   UINT32 bufferSize;
   HRESULT result = mAudioClient->GetBufferSize(&bufferSize);
@@ -118,7 +121,8 @@ UINT32 AudioPlatform::bufferSize()
   return bufferSize;
 }
 
-void AudioPlatform::initialize()
+template <typename Link>
+void AudioPlatform<Link>::initialize()
 {
   HRESULT result = CoInitialize(nullptr);
   if (FAILED(result))
@@ -200,7 +204,7 @@ void AudioPlatform::initialize()
 
   mIsRunning = true;
   LPTHREAD_START_ROUTINE threadEntryPoint =
-    reinterpret_cast<LPTHREAD_START_ROUTINE>(renderAudioRunloop);
+    reinterpret_cast<LPTHREAD_START_ROUTINE>(renderAudioRunloop<Link>);
   mAudioThreadHandle = CreateThread(nullptr, 0, threadEntryPoint, this, 0, nullptr);
   if (mAudioThreadHandle == nullptr)
   {
@@ -208,7 +212,8 @@ void AudioPlatform::initialize()
   }
 }
 
-void AudioPlatform::start()
+template <typename Link>
+void AudioPlatform<Link>::start()
 {
   UINT32 bufSize = bufferSize();
   BYTE* buffer;
@@ -244,7 +249,8 @@ void AudioPlatform::start()
   }
 }
 
-DWORD AudioPlatform::audioRunloop()
+template <typename Link>
+DWORD AudioPlatform<Link>::audioRunloop()
 {
   while (mIsRunning)
   {

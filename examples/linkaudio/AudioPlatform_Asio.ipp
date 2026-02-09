@@ -17,12 +17,14 @@
  *  please contact <link-devs@ableton.com>.
  */
 
-#include "AudioPlatform_Asio.hpp"
+#pragma once
 
 namespace ableton
 {
 namespace linkaudio
 {
+
+static void* SINGLETON = nullptr;
 
 void fatalError(const ASIOError result, const std::string& function)
 {
@@ -41,9 +43,11 @@ double asioSamplesToDouble(const ASIOSamples& samples)
 }
 
 // ASIO processing callbacks
+template <typename Link>
 ASIOTime* bufferSwitchTimeInfo(ASIOTime* timeInfo, long index, ASIOBool)
 {
-  AudioPlatform* platform = AudioPlatform::singleton();
+  AudioPlatform<Link>* platform =
+    static_cast<AudioPlatform<Link>*>(SINGLETON); // AudioPlatform<Link>::_singleton;
   if (platform)
   {
     platform->audioCallback(timeInfo, index);
@@ -51,6 +55,7 @@ ASIOTime* bufferSwitchTimeInfo(ASIOTime* timeInfo, long index, ASIOBool)
   return nullptr;
 }
 
+template <typename Link>
 void bufferSwitch(long index, ASIOBool processNow)
 {
   ASIOTime timeInfo{};
@@ -65,32 +70,22 @@ void bufferSwitch(long index, ASIOBool processNow)
     timeInfo.timeInfo.flags = kSystemTimeValid | kSamplePositionValid;
   }
 
-  bufferSwitchTimeInfo(&timeInfo, index, processNow);
+  bufferSwitchTimeInfo<Link>(&timeInfo, index, processNow);
 }
 
-AudioPlatform* AudioPlatform::_singleton = nullptr;
-
-AudioPlatform* AudioPlatform::singleton()
-{
-  return _singleton;
-}
-
-void AudioPlatform::setSingleton(AudioPlatform* platform)
-{
-  _singleton = platform;
-}
-
-AudioPlatform::AudioPlatform(Link& link)
+template <typename Link>
+AudioPlatform<Link>::AudioPlatform(Link& link)
   : mEngine(link)
 {
   initialize();
   mEngine.setBufferSize(mDriverInfo.preferredSize);
   mEngine.setSampleRate(mDriverInfo.sampleRate);
-  setSingleton(this);
+  SINGLETON = this;
   start();
 }
 
-AudioPlatform::~AudioPlatform()
+template <typename Link>
+AudioPlatform<Link>::~AudioPlatform()
 {
   stop();
   ASIODisposeBuffers();
@@ -100,10 +95,11 @@ AudioPlatform::~AudioPlatform()
     asioDrivers->removeCurrentDriver();
   }
 
-  setSingleton(nullptr);
+  SINGLETON = nullptr;
 }
 
-void AudioPlatform::audioCallback(ASIOTime* timeInfo, long index)
+template <typename Link>
+void AudioPlatform<Link>::audioCallback(ASIOTime* timeInfo, long index)
 {
   auto hostTime = std::chrono::microseconds(0);
   if (timeInfo->timeInfo.flags & kSystemTimeValid)
@@ -113,6 +109,7 @@ void AudioPlatform::audioCallback(ASIOTime* timeInfo, long index)
   }
 
   const auto bufferBeginAtOutput = hostTime + mEngine.mOutputLatency.load();
+
 
   ASIOBufferInfo* bufferInfos = mDriverInfo.bufferInfos;
   const long numSamples = mDriverInfo.preferredSize;
@@ -136,7 +133,8 @@ void AudioPlatform::audioCallback(ASIOTime* timeInfo, long index)
   }
 }
 
-void AudioPlatform::createAsioBuffers()
+template <typename Link>
+void AudioPlatform<Link>::createAsioBuffers()
 {
   DriverInfo& driverInfo = mDriverInfo;
   ASIOBufferInfo* bufferInfo = driverInfo.bufferInfos;
@@ -231,7 +229,8 @@ void AudioPlatform::createAsioBuffers()
   std::clog << "Total latency: " << outputLatencyMicros.count() << "usec" << std::endl;
 }
 
-void AudioPlatform::initializeDriverInfo()
+template <typename Link>
+void AudioPlatform<Link>::initializeDriverInfo()
 {
   ASIOError result =
     ASIOGetChannels(&mDriverInfo.inputChannels, &mDriverInfo.outputChannels);
@@ -268,7 +267,8 @@ void AudioPlatform::initializeDriverInfo()
             << (mDriverInfo.outputReady ? "enabled" : "disabled") << std::endl;
 }
 
-void AudioPlatform::initialize()
+template <typename Link>
+void AudioPlatform<Link>::initialize()
 {
   if (!loadAsioDriver(LINK_ASIO_DRIVER_NAME))
   {
@@ -290,12 +290,13 @@ void AudioPlatform::initialize()
   initializeDriverInfo();
 
   ASIOCallbacks* callbacks = &(mAsioCallbacks);
-  callbacks->bufferSwitch = &bufferSwitch;
-  callbacks->bufferSwitchTimeInfo = &bufferSwitchTimeInfo;
+  callbacks->bufferSwitch = &bufferSwitch<Link>;
+  callbacks->bufferSwitchTimeInfo = &bufferSwitchTimeInfo<Link>;
   createAsioBuffers();
 }
 
-void AudioPlatform::start()
+template <typename Link>
+void AudioPlatform<Link>::start()
 {
   ASIOError result = ASIOStart();
   if (result != ASE_OK)
@@ -304,7 +305,8 @@ void AudioPlatform::start()
   }
 }
 
-void AudioPlatform::stop()
+template <typename Link>
+void AudioPlatform<Link>::stop()
 {
   ASIOError result = ASIOStop();
   if (result != ASE_OK)

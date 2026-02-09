@@ -38,8 +38,10 @@ namespace linkaudio
 // and then terminate the application.
 void fatalError(HRESULT result, LPCTSTR context);
 
+template <typename Link>
 DWORD renderAudioRunloop(LPVOID);
 
+template <typename Link>
 class AudioPlatform
 {
 public:
@@ -48,7 +50,7 @@ public:
 
   DWORD audioRunloop();
 
-  AudioEngine mEngine;
+  AudioEngine<Link> mEngine;
 
 private:
   UINT32 bufferSize();
@@ -56,7 +58,7 @@ private:
   void initialize();
   void start();
 
-  link::HostTimeFilter<platforms::windows::Clock> mHostTimeFilter;
+  link::HostTimeFilter<typename Link::Clock> mHostTimeFilter;
   double mSampleTime;
 
   IMMDevice* mDevice;
@@ -70,3 +72,5 @@ private:
 
 } // namespace linkaudio
 } // namespace ableton
+
+#include "AudioPlatform_Wasapi.ipp"
