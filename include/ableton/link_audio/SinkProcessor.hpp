@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include <ableton/link_audio/Encoder.hpp>
 #include <ableton/link_audio/Id.hpp>
 #include <ableton/link_audio/Receivers.hpp>
 #include <ableton/link_audio/Sink.hpp>
@@ -31,13 +32,15 @@ namespace ableton
 namespace link_audio
 {
 
-template <typename GetSender, typename IoContext>
+template <typename GetSender, typename GetNodeId, typename IoContext>
 struct SinkProcessor
 {
   SinkProcessor(util::Injected<IoContext> io,
                 std::shared_ptr<Sink> pSink,
-                util::Injected<GetSender> getSender)
-    : mpImpl(std::make_shared<Impl>(std::move(io), pSink, std::move(getSender)))
+                util::Injected<GetSender> getSender,
+                util::Injected<GetNodeId> getNodeId)
+    : mpImpl(std::make_shared<Impl>(
+        std::move(io), pSink, std::move(getSender), std::move(getNodeId)))
   {
   }
 
@@ -57,13 +60,36 @@ struct SinkProcessor
 
   struct Impl : public std::enable_shared_from_this<Impl>
   {
+    struct Sender
+    {
+      void operator()(const AudioBuffer& buffer)
+      {
+        auto end =
+          v1::audioBufferMessage((*mpImpl->mGetNodeId)(), buffer, mBuffer.begin());
+        try
+        {
+          mpImpl->mReceivers(mBuffer.data(), std::distance(mBuffer.begin(), end));
+        }
+        catch (const std::runtime_error& err)
+        {
+          debug(mpImpl->mIo->log()) << "Failed to send message: " << err.what();
+        }
+      }
+
+      Impl* mpImpl;
+      std::array<uint8_t, v1::kMaxMessageSize> mBuffer{};
+    };
+
     Impl(util::Injected<IoContext> io,
          std::shared_ptr<Sink> pSink,
-         util::Injected<GetSender> getSender)
+         util::Injected<GetSender> getSender,
+         util::Injected<GetNodeId> getNodeId)
       : mIo(std::move(io))
       , mpSink(pSink)
       , mQueueReader(pSink->reader())
+      , mEncoder(util::injectVal(Sender{this}), mpSink->id())
       , mReceivers(util::injectRef(*mIo), std::move(getSender))
+      , mGetNodeId(std::move(getNodeId))
     {
     }
 
@@ -76,6 +102,10 @@ struct SinkProcessor
 
       while (mQueueReader.retainSlot())
       {
+        if (!mReceivers.empty() && mQueueReader[0]->mTempo > link::Tempo{0})
+        {
+          mEncoder(*mQueueReader[0]);
+        }
         mQueueReader.releaseSlot();
       }
 
@@ -98,7 +128,9 @@ struct SinkProcessor
     util::Injected<IoContext> mIo;
     std::shared_ptr<Sink> mpSink;
     Queue<Buffer<int16_t>>::Reader mQueueReader;
+    Encoder<Sender, int16_t> mEncoder;
     Receivers<GetSender, IoContext> mReceivers;
+    util::Injected<GetNodeId> mGetNodeId;
   };
 
   std::shared_ptr<Impl> mpImpl;

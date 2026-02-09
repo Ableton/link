@@ -55,9 +55,11 @@ struct MainProcessor
 
   void stop() { mpImpl->stop(); }
 
-  void addSink(SharedSink pSink, util::Injected<GetSender> getSender)
+  void addSink(SharedSink pSink,
+               util::Injected<GetSender> getSender,
+               util::Injected<GetNodeId> getNodeId)
   {
-    mpImpl->addSink(pSink, std::move(getSender));
+    mpImpl->addSink(pSink, std::move(getSender), std::move(getNodeId));
   }
 
   void addSource(SharedSource pSource,
@@ -83,7 +85,7 @@ private:
   struct Impl : std::enable_shared_from_this<Impl>
   {
     using Timer = typename util::Injected<IoContext>::type::Timer;
-    using MainSinkProcessor = SinkProcessor<GetSender, IoContext&>;
+    using MainSinkProcessor = SinkProcessor<GetSender, GetNodeId, IoContext&>;
     using MainSourceProcessor = SourceProcessor<GetSender, GetNodeId, IoContext&>;
 
     Impl(util::Injected<IoContext> io, ChannelsChangedCallback callback)
@@ -93,10 +95,12 @@ private:
     {
     }
 
-    void addSink(SharedSink pSink, util::Injected<GetSender> getSender)
+    void addSink(SharedSink pSink,
+                 util::Injected<GetSender> getSender,
+                 util::Injected<GetNodeId> getNodeId)
     {
       auto processor = std::make_unique<MainSinkProcessor>(
-        util::injectRef(*mIo), pSink, std::move(getSender));
+        util::injectRef(*mIo), pSink, std::move(getSender), std::move(getNodeId));
       mSinks.push_back(std::move(processor));
       start();
     }
