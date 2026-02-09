@@ -58,7 +58,7 @@ public:
     bool startStopSyncOn;
   };
 
-  void setBufferSize(std::size_t size);
+  void setNumFrames(std::size_t size);
   void setSampleRate(double sampleRate);
   EngineData pullEngineData();
   void renderMetronomeIntoBuffer(typename Link::SessionState sessionState,
@@ -70,7 +70,7 @@ public:
   Link& mLink;
   double mSampleRate;
   std::atomic<std::chrono::microseconds> mOutputLatency;
-  std::vector<double> mBuffer;
+  std::array<std::vector<double>, 2> mBuffers;
   EngineData mSharedEngineData;
   EngineData mLockfreeEngineData;
   std::chrono::microseconds mTimeAtLastClick;

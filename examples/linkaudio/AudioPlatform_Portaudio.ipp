@@ -31,7 +31,7 @@ AudioPlatform<Link>::AudioPlatform(Link& link)
   , mSampleTime(0.)
 {
   mEngine.setSampleRate(44100.);
-  mEngine.setBufferSize(512);
+  mEngine.setNumFrames(512);
   initialize();
   start();
 }
@@ -45,11 +45,11 @@ AudioPlatform<Link>::~AudioPlatform()
 
 template <typename Link>
 int AudioPlatform<Link>::audioCallback(const void* /*inputBuffer*/,
-  void* outputBuffer,
-  unsigned long inNumFrames,
-  const PaStreamCallbackTimeInfo* /*timeInfo*/,
-  PaStreamCallbackFlags /*statusFlags*/,
-  void* userData)
+                                       void* outputBuffer,
+                                       unsigned long inNumFrames,
+                                       const PaStreamCallbackTimeInfo* /*timeInfo*/,
+                                       PaStreamCallbackFlags /*statusFlags*/,
+                                       void* userData)
 {
   using namespace std::chrono;
   float* buffer = static_cast<float*>(outputBuffer);
@@ -67,8 +67,8 @@ int AudioPlatform<Link>::audioCallback(const void* /*inputBuffer*/,
 
   for (unsigned long i = 0; i < inNumFrames; ++i)
   {
-    buffer[i * 2] = static_cast<float>(engine.mBuffer[i]);
-    buffer[i * 2 + 1] = static_cast<float>(engine.mBuffer[i]);
+    buffer[i * 2] = static_cast<float>(engine.mBuffers[0][i]);
+    buffer[i * 2 + 1] = static_cast<float>(engine.mBuffers[1][i]);
   }
 
   return paContinue;
@@ -99,8 +99,14 @@ void AudioPlatform<Link>::initialize()
   outputParameters.hostApiSpecificStreamInfo = nullptr;
   mEngine.mOutputLatency.store(
     std::chrono::microseconds(llround(outputParameters.suggestedLatency * 1.0e6)));
-  result = Pa_OpenStream(&pStream, nullptr, &outputParameters, mEngine.mSampleRate,
-    mEngine.mBuffer.size(), paClipOff, &audioCallback, this);
+  result = Pa_OpenStream(&pStream,
+                         nullptr,
+                         &outputParameters,
+                         mEngine.mSampleRate,
+                         mEngine.mBuffers[0].size(),
+                         paClipOff,
+                         &audioCallback,
+                         this);
 
   if (result)
   {

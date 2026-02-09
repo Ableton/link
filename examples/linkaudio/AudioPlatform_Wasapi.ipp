@@ -78,7 +78,7 @@ AudioPlatform<Link>::AudioPlatform(Link& link)
   , mIsRunning(false)
 {
   initialize();
-  mEngine.setBufferSize(bufferSize());
+  mEngine.setNumFrames(bufferSize());
   mEngine.setSampleRate(mStreamFormat->nSamplesPerSec);
   start();
 }
@@ -298,14 +298,14 @@ DWORD AudioPlatform<Link>::audioRunloop()
     float* floatBuffer = reinterpret_cast<float*>(buffer);
     for (WORD i = 0; i < numSamples; ++i)
     {
-      if (i >= mEngine.mBuffer.size())
+      if (i >= mEngine.mBuffers[0].size())
       {
         break;
       }
       for (WORD j = 0; j < mStreamFormat->nChannels; ++j)
       {
         floatBuffer[j + (i * mStreamFormat->nChannels)] =
-          static_cast<float>(mEngine.mBuffer[i]);
+          static_cast<float>(mEngine.mBuffers[j][i]);
       }
     }
 

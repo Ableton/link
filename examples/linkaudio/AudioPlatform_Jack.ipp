@@ -81,11 +81,11 @@ int AudioPlatform<Link>::audioCallback(jack_nframes_t nframes)
 
   engine.audioCallback(bufferBeginAtOutput, nframes);
 
-  for (int k = 0; k < 2; ++k)
+  for (std::size_t k = 0; k < 2; ++k)
   {
     float* buffer = static_cast<float*>(jack_port_get_buffer(mpJackPorts[k], nframes));
-    for (unsigned long i = 0; i < nframes; ++i)
-      buffer[i] = static_cast<float>(engine.mBuffer[i]);
+    for (std::size_t i = 0; i < nframes; ++i)
+      buffer[i] = static_cast<float>(engine.mBuffers[k][i]);
   }
 
   return 0;
@@ -128,7 +128,7 @@ void AudioPlatform<Link>::initialize()
 
   const double bufferSize = jack_get_buffer_size(mpJackClient);
   const double sampleRate = jack_get_sample_rate(mpJackClient);
-  mEngine.setBufferSize(static_cast<std::size_t>(bufferSize));
+  mEngine.setNumFrames(static_cast<std::size_t>(bufferSize));
   mEngine.setSampleRate(sampleRate);
 
   jack_set_latency_callback(mpJackClient, AudioPlatform::latencyCallback, this);

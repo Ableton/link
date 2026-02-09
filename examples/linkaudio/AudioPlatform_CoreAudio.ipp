@@ -44,11 +44,11 @@ AudioPlatform<Link>::~AudioPlatform()
 
 template <typename Link>
 OSStatus AudioPlatform<Link>::audioCallback(void* inRefCon,
-  AudioUnitRenderActionFlags*,
-  const AudioTimeStamp* inTimeStamp,
-  UInt32,
-  UInt32 inNumberFrames,
-  AudioBufferList* ioData)
+                                            AudioUnitRenderActionFlags*,
+                                            const AudioTimeStamp* inTimeStamp,
+                                            UInt32,
+                                            UInt32 inNumberFrames,
+                                            AudioBufferList* ioData)
 {
   AudioEngine<Link>* engine = static_cast<AudioEngine<Link>*>(inRefCon);
 
@@ -63,7 +63,7 @@ OSStatus AudioPlatform<Link>::audioCallback(void* inRefCon,
     for (UInt32 j = 0; j < ioData->mNumberBuffers; ++j)
     {
       SInt16* bufData = static_cast<SInt16*>(ioData->mBuffers[j].mData);
-      bufData[i] = static_cast<SInt16>(32761. * engine->mBuffer[i]);
+      bufData[i] = static_cast<SInt16>(32761. * engine->mBuffers[j][i]);
     }
   }
 
@@ -89,8 +89,12 @@ void AudioPlatform<Link>::initialize()
   }
 
   UInt32 size = sizeof(mEngine.mSampleRate);
-  result = AudioUnitGetProperty(mIoUnit, kAudioUnitProperty_SampleRate,
-    kAudioUnitScope_Output, 0, &mEngine.mSampleRate, &size);
+  result = AudioUnitGetProperty(mIoUnit,
+                                kAudioUnitProperty_SampleRate,
+                                kAudioUnitScope_Output,
+                                0,
+                                &mEngine.mSampleRate,
+                                &size);
   if (result)
   {
     std::cerr << "Could not get sample rate. " << result << std::endl;
@@ -109,8 +113,12 @@ void AudioPlatform<Link>::initialize()
   asbd.mBitsPerChannel = 8 * sizeof(SInt16);
   asbd.mSampleRate = mEngine.mSampleRate;
 
-  result = AudioUnitSetProperty(mIoUnit, kAudioUnitProperty_StreamFormat,
-    kAudioUnitScope_Input, 0, &asbd, sizeof(asbd));
+  result = AudioUnitSetProperty(mIoUnit,
+                                kAudioUnitProperty_StreamFormat,
+                                kAudioUnitScope_Input,
+                                0,
+                                &asbd,
+                                sizeof(asbd));
   if (result)
   {
     std::cerr << "Could not set stream format. " << result << std::endl;
@@ -118,8 +126,12 @@ void AudioPlatform<Link>::initialize()
 
   char deviceName[512];
   size = sizeof(deviceName);
-  result = AudioUnitGetProperty(mIoUnit, kAudioDevicePropertyDeviceName,
-    kAudioUnitScope_Global, 0, &deviceName, &size);
+  result = AudioUnitGetProperty(mIoUnit,
+                                kAudioDevicePropertyDeviceName,
+                                kAudioUnitScope_Global,
+                                0,
+                                &deviceName,
+                                &size);
   if (result)
   {
     std::cerr << "Could not get device name. " << result << std::endl;
@@ -127,21 +139,29 @@ void AudioPlatform<Link>::initialize()
   }
   std::clog << "DEVICE NAME: " << deviceName << std::endl;
 
-  UInt32 bufferSize = 512;
-  size = sizeof(bufferSize);
-  result = AudioUnitSetProperty(mIoUnit, kAudioDevicePropertyBufferFrameSize,
-    kAudioUnitScope_Global, 0, &bufferSize, size);
+  UInt32 numFrames = 512;
+  size = sizeof(numFrames);
+  result = AudioUnitSetProperty(mIoUnit,
+                                kAudioDevicePropertyBufferFrameSize,
+                                kAudioUnitScope_Global,
+                                0,
+                                &numFrames,
+                                size);
   if (result)
   {
-    std::cerr << "Could not set buffer size. " << result << std::endl;
+    std::cerr << "Could not set num frames. " << result << std::endl;
     std::terminate();
   }
-  mEngine.setBufferSize(bufferSize);
+  mEngine.setNumFrames(numFrames);
 
   UInt32 propertyResult = 0;
   size = sizeof(propertyResult);
-  result = AudioUnitGetProperty(mIoUnit, kAudioDevicePropertyBufferFrameSize,
-    kAudioUnitScope_Global, 0, &propertyResult, &size);
+  result = AudioUnitGetProperty(mIoUnit,
+                                kAudioDevicePropertyBufferFrameSize,
+                                kAudioUnitScope_Global,
+                                0,
+                                &propertyResult,
+                                &size);
   if (result)
   {
     std::cerr << "Could not get buffer size. " << result << std::endl;
@@ -154,8 +174,12 @@ void AudioPlatform<Link>::initialize()
   // within the audio callback.
   UInt32 deviceLatency = 0;
   size = sizeof(deviceLatency);
-  result = AudioUnitGetProperty(mIoUnit, kAudioDevicePropertyLatency,
-    kAudioUnitScope_Output, 0, &deviceLatency, &size);
+  result = AudioUnitGetProperty(mIoUnit,
+                                kAudioDevicePropertyLatency,
+                                kAudioUnitScope_Output,
+                                0,
+                                &deviceLatency,
+                                &size);
   if (result)
   {
     std::cerr << "Could not get output device latency. " << result << std::endl;
@@ -172,8 +196,12 @@ void AudioPlatform<Link>::initialize()
   ioRemoteInput.inputProc = audioCallback;
   ioRemoteInput.inputProcRefCon = &mEngine;
 
-  result = AudioUnitSetProperty(mIoUnit, kAudioUnitProperty_SetRenderCallback,
-    kAudioUnitScope_Input, 0, &ioRemoteInput, sizeof(ioRemoteInput));
+  result = AudioUnitSetProperty(mIoUnit,
+                                kAudioUnitProperty_SetRenderCallback,
+                                kAudioUnitScope_Input,
+                                0,
+                                &ioRemoteInput,
+                                sizeof(ioRemoteInput));
   if (result)
   {
     std::cerr << "Could not set render callback. " << result << std::endl;

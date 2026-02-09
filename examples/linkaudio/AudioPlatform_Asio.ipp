@@ -78,7 +78,7 @@ AudioPlatform<Link>::AudioPlatform(Link& link)
   : mEngine(link)
 {
   initialize();
-  mEngine.setBufferSize(mDriverInfo.preferredSize);
+  mEngine.setNumFrames(mDriverInfo.preferredSize);
   mEngine.setSampleRate(mDriverInfo.sampleRate);
   SINGLETON = this;
   start();
@@ -123,7 +123,7 @@ void AudioPlatform<Link>::audioCallback(ASIOTime* timeInfo, long index)
     for (long j = 0; j < numChannels; ++j)
     {
       int* buffer = static_cast<int*>(bufferInfos[j].buffers[index]);
-      buffer[i] = static_cast<int>(mEngine.mBuffer[i] * maxAmp);
+      buffer[i] = static_cast<int>(mEngine.mBuffers[j][i] * maxAmp);
     }
   }
 

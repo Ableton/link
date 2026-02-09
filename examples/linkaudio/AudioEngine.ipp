@@ -108,9 +108,10 @@ void AudioEngine<Link>::setStartStopSyncEnabled(const bool enabled)
 }
 
 template <typename Link>
-void AudioEngine<Link>::setBufferSize(std::size_t size)
+void AudioEngine<Link>::setNumFrames(std::size_t size)
 {
-  mBuffer = std::vector<double>(size, 0.);
+  mBuffers[0] = std::vector<double>(size, 0.);
+  mBuffers[1] = std::vector<double>(size, 0.);
 }
 
 template <typename Link>
@@ -200,20 +201,23 @@ void AudioEngine<Link>::renderMetronomeIntoBuffer(
                     * (1 - sin(5 * M_PI * secondsAfterClick.count()));
       }
     }
-    mBuffer[i] = amplitude;
+    mBuffers[0][i] = amplitude;
   }
 }
 
 template <typename Link>
-void AudioEngine<Link>::audioCallback(
-  const std::chrono::microseconds hostTime, const std::size_t numSamples)
+void AudioEngine<Link>::audioCallback(const std::chrono::microseconds hostTime,
+                                      const std::size_t numSamples)
 {
   const auto engineData = pullEngineData();
 
   auto sessionState = mLink.captureAudioSessionState();
 
   // Clear the buffer
-  std::fill(mBuffer.begin(), mBuffer.end(), 0);
+  for (auto& buffer : mBuffers)
+  {
+    std::fill(buffer.begin(), buffer.end(), 0);
+  }
 
   if (engineData.requestStart)
   {
@@ -251,6 +255,8 @@ void AudioEngine<Link>::audioCallback(
     // the buffer at the appropriate beats.
     renderMetronomeIntoBuffer(sessionState, engineData.quantum, hostTime, numSamples);
   }
+
+  std::copy(mBuffers[0].begin(), mBuffers[0].end(), mBuffers[1].begin());
 }
 
 } // namespace linkaudio
