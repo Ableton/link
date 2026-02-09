@@ -9,6 +9,7 @@ project(LinkTest)
 #
 
 set(link_audio_test_SOURCES
+  ableton/link_audio/tst_AudioBuffer.cpp
   ableton/link_audio/tst_BeatTimeMapping.cpp
   ableton/link_audio/tst_ChannelAnnouncements.cpp
   ableton/link_audio/tst_ChannelId.cpp

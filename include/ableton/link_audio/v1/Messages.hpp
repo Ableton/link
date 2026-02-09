@@ -50,6 +50,7 @@ const MessageType kChannelByes = 2;
 const MessageType kPong = 3;
 const MessageType kChannelRequest = 4;
 const MessageType kStopChannelRequest = 5;
+const MessageType kAudioBuffer = 6;
 
 struct MessageHeader
 {
@@ -133,6 +134,12 @@ It encodeMessage(link::NodeId from,
 }
 
 } // namespace detail
+
+template <typename Payload, typename It>
+It audioBufferMessage(link::NodeId from, const Payload& payload, It out)
+{
+  return detail::encodeMessage(std::move(from), 0, kAudioBuffer, payload, std::move(out));
+}
 
 template <typename It>
 std::pair<MessageHeader, It> parseMessageHeader(It bytesBegin, const It bytesEnd)
