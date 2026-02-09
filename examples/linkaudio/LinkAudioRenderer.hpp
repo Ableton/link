@@ -148,6 +148,7 @@ public:
     {
       moLastFrameIdx = std::nullopt;
       moStartReadPos = std::nullopt;
+      mBuffered = 0;
       return;
     }
 
@@ -158,6 +159,7 @@ public:
     {
       moLastFrameIdx = std::nullopt;
       moStartReadPos = std::nullopt;
+      mBuffered = 0;
       return;
     }
 
@@ -208,6 +210,7 @@ public:
     {
       moLastFrameIdx = std::nullopt;
       moStartReadPos = std::nullopt;
+      mBuffered = 0;
       return;
     }
 
@@ -219,6 +222,7 @@ public:
     {
       moLastFrameIdx = std::nullopt;
       moStartReadPos = std::nullopt;
+      mBuffered = 0;
       return;
     }
 
@@ -279,6 +283,19 @@ public:
 
     // Update the read position for the next buffer
     *moStartReadPos = readPos + double(numFrames) * frameIncrement;
+
+    // Calculate buffered time
+    auto buffered =
+      -static_cast<float>(*moStartReadPos) / float((*mpQueueReader)[0]->mInfo.sampleRate);
+    if (mpQueueReader->numRetainedSlots() > 0)
+    {
+      for (auto i = 1u; i < mpQueueReader->numRetainedSlots(); ++i)
+      {
+        const auto& info = (*mpQueueReader)[i]->mInfo;
+        buffered += float(info.numFrames) / float(info.sampleRate);
+      }
+    }
+    mBuffered = buffered;
   }
 
   void operator()(double* pLeftSamples,
@@ -319,6 +336,8 @@ public:
     }
   }
 
+  float buffered() const { return mBuffered; }
+
   void createSource(const ChannelId& channelId)
   {
     mpSource = std::make_unique<LinkAudioSource>(
@@ -354,6 +373,7 @@ public:
   double& mSampleRate;
 
   std::optional<double> moStartReadPos;
+  std::atomic<float> mBuffered = 0;
 
 private:
   std::shared_ptr<typename Queue::Writer> mpQueueWriter;

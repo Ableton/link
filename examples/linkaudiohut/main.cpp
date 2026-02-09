@@ -94,9 +94,9 @@ void printHelp()
 
 void printStateHeader()
 {
-  std::cout
-    << "enabled [au] | num peers | start stop sync | source | tempo  | beats   | metro"
-    << std::endl;
+  std::cout << "enabled [au] | num peers | start stop sync | source (buffered)| tempo  | "
+               "beats   | metro"
+            << std::endl;
 }
 
 void printState(const std::chrono::microseconds time,
@@ -115,10 +115,12 @@ void printState(const std::chrono::microseconds time,
   const auto source =
     state.audioPlatform.mEngine.mLinkAudioRenderer.mpSource ? "yes" : "no";
   const auto isPlaying = sessionState.isPlaying() ? "[playing]" : "[stopped]";
+  const auto buffered = state.audioPlatform.mEngine.mLinkAudioRenderer.buffered();
   cout << defaultfloat << left << setw(12) << enabled << " | " << setw(9) << numPeers
        << " | " << setw(3) << startStop << " " << setw(11) << isPlaying << " | " << fixed
-       << setw(6) << source << " | " << sessionState.tempo() << " | " << fixed
-       << setprecision(2) << setw(7) << beats << " | ";
+       << setw(6) << source << " (" << setw(3) << " " << buffered << "s)| " << setw(6)
+       << sessionState.tempo() << " | " << fixed << setprecision(2) << setw(7) << beats
+       << " | ";
   for (int i = 0; i < ceil(quantum); ++i)
   {
     if (i < phase)
