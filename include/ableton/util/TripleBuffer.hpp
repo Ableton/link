@@ -28,7 +28,7 @@
 
 namespace ableton
 {
-namespace link
+namespace util
 {
 
 template <typename T>
@@ -113,5 +113,5 @@ private:
   std::array<T, 3> mBuffers{};
 };
 
-} // namespace link
+} // namespace util
 } // namespace ableton

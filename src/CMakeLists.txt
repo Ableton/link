@@ -33,13 +33,17 @@ set(link_core_test_SOURCES
   ableton/link/tst_StartStopState.cpp
   ableton/link/tst_Tempo.cpp
   ableton/link/tst_Timeline.cpp
-  ableton/link/tst_TripleBuffer.cpp
   ableton/tst_Link.cpp
 )
 
 set(link_test_SOURCES
   ableton/test/catch/CatchMain.cpp
   ableton/test/serial_io/SchedulerTree.cpp
+)
+
+set(link_util_test_SOURCES
+  ableton/util/tst_TripleBuffer.cpp
+  ableton/test/catch/CatchMain.cpp
 )
 
 #  ____                              ____
@@ -112,3 +116,12 @@ add_executable(LinkDiscoveryTest
   ${link_test_SOURCES}
 )
 configure_link_test_executable(LinkDiscoveryTest)
+
+add_executable(LinkUtilTest
+  ${link_platform_HEADERS}
+  ${link_util_HEADERS}
+  ${link_test_HEADERS}
+
+  ${link_util_test_SOURCES}
+)
+configure_link_test_executable(LinkUtilTest)

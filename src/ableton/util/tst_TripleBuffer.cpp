@@ -18,8 +18,8 @@
  */
 
 
-#include <ableton/link/TripleBuffer.hpp>
 #include <ableton/test/CatchWrapper.hpp>
+#include <ableton/util/TripleBuffer.hpp>
 
 #include <array>
 #include <cstdint>
@@ -29,7 +29,7 @@
 
 namespace ableton
 {
-namespace link
+namespace util
 {
 namespace
 {
@@ -161,5 +161,5 @@ TEST_CASE("TripleBuffer")
   }
 }
 
-} // namespace link
+} // namespace util
 } // namespace ableton

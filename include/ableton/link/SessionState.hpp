@@ -22,7 +22,7 @@
 #include <ableton/link/SessionId.hpp>
 #include <ableton/link/StartStopState.hpp>
 #include <ableton/link/Timeline.hpp>
-#include <ableton/link/TripleBuffer.hpp>
+#include <ableton/util/TripleBuffer.hpp>
 #include <mutex>
 #include <optional>
 
@@ -87,7 +87,7 @@ struct ControllerClientState
 private:
   mutable std::mutex mMutex;
   ClientState mState;
-  mutable TripleBuffer<ClientState> mRtState;
+  mutable util::TripleBuffer<ClientState> mRtState;
 };
 
 struct RtClientState

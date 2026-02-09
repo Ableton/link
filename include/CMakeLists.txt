@@ -35,7 +35,6 @@ set(link_core_HEADERS
   ${link_core_DIR}/StartStopState.hpp
   ${link_core_DIR}/Tempo.hpp
   ${link_core_DIR}/Timeline.hpp
-  ${link_core_DIR}/TripleBuffer.hpp
   ${link_core_DIR}/v1/Messages.hpp
   PARENT_SCOPE
 )
@@ -146,6 +145,7 @@ set(link_util_HEADERS
   ${link_util_DIR}/Log.hpp
   ${link_util_DIR}/SafeAsyncHandler.hpp
   ${link_util_DIR}/SampleTiming.hpp
+  ${link_util_DIR}/TripleBuffer.hpp
   PARENT_SCOPE
 )
 

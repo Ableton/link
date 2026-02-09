@@ -28,7 +28,7 @@
 #include <ableton/link/SessionState.hpp>
 #include <ableton/link/Sessions.hpp>
 #include <ableton/link/StartStopState.hpp>
-#include <ableton/link/TripleBuffer.hpp>
+#include <ableton/util/TripleBuffer.hpp>
 #include <condition_variable>
 #include <mutex>
 
@@ -650,8 +650,8 @@ private:
     Controller& mController;
     // Use separate TripleBuffers for the Timeline and the StartStopState so we read the
     // latest set value from either optional.
-    TripleBuffer<std::pair<std::chrono::microseconds, Timeline>> mTimelineBuffer;
-    TripleBuffer<ClientStartStopState> mStartStopStateBuffer;
+    util::TripleBuffer<std::pair<std::chrono::microseconds, Timeline>> mTimelineBuffer;
+    util::TripleBuffer<ClientStartStopState> mStartStopStateBuffer;
     CallbackDispatcher mCallbackDispatcher;
   };
 
