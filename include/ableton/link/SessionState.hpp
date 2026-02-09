@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include <ableton/link/SessionId.hpp>
 #include <ableton/link/StartStopState.hpp>
 #include <ableton/link/Timeline.hpp>
 #include <ableton/link/TripleBuffer.hpp>
@@ -55,6 +56,7 @@ struct ClientState
   }
 
   Timeline timeline;
+  SessionId timelineSessionId;
   ClientStartStopState startStopState;
 };
 
@@ -91,6 +93,7 @@ private:
 struct RtClientState
 {
   Timeline timeline;
+  SessionId timelineSessionId;
   ClientStartStopState startStopState;
   std::chrono::microseconds timelineTimestamp;
   std::chrono::microseconds startStopStateTimestamp;
@@ -106,6 +109,7 @@ struct IncomingClientState
 struct ApiState
 {
   Timeline timeline;
+  SessionId timelineSessionId;
   ApiStartStopState startStopState;
 };
 

@@ -30,7 +30,9 @@ template <typename Clock>
 inline typename BasicLink<Clock>::SessionState toSessionState(
   const link::ClientState& state, const bool isConnected)
 {
-  return {{state.timeline, {state.startStopState.isPlaying, state.startStopState.time}},
+  return {{state.timeline,
+           state.timelineSessionId,
+           {state.startStopState.isPlaying, state.startStopState.time}},
           isConnected};
 }
 

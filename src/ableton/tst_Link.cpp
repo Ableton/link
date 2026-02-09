@@ -40,7 +40,7 @@ TEST_CASE("SessionState")
     for (auto tempo = 20.; tempo < 999.; tempo += 0.8)
     {
       const auto tl = Timeline{Tempo{tempo}, Beats{12345678.}, microseconds{1234567}};
-      auto sessionState = SessionState({{tl, {}}, false});
+      auto sessionState = SessionState({{tl, {}, {}}, false});
       sessionState.forceBeatAtTime(beats, time, quantum);
 
       CHECK(beats >= sessionState.beatAtTime(time, quantum));

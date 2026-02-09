@@ -56,19 +56,23 @@ inline SessionState initSessionState(const Tempo tempo, const Clock& clock)
           initXForm(clock)};
 }
 
-inline ClientState initClientState(const SessionState& sessionState)
+inline ClientState initClientState(const SessionState& sessionState, SessionId sessionId)
 {
   const auto hostTime = sessionState.ghostXForm.ghostToHost(std::chrono::microseconds{0});
   return {
     Timeline{sessionState.timeline.tempo, sessionState.timeline.beatOrigin, hostTime},
+    std::move(sessionId),
     ClientStartStopState{sessionState.startStopState.isPlaying, hostTime, hostTime}};
 }
 
 inline RtClientState initRtClientState(const ClientState& clientState)
 {
   using namespace std::chrono;
-  return {
-    clientState.timeline, clientState.startStopState, microseconds{0}, microseconds{0}};
+  return {clientState.timeline,
+          clientState.timelineSessionId,
+          clientState.startStopState,
+          microseconds{0},
+          microseconds{0}};
 }
 
 // The timespan in which local modifications to the timeline will be
@@ -136,7 +140,7 @@ public:
     , mNodeId(NodeId::random<Random>())
     , mSessionId(mNodeId)
     , mSessionState(detail::initSessionState(tempo, mClock))
-    , mClientState(detail::initClientState(mSessionState))
+    , mClientState(detail::initClientState(mSessionState, mSessionId))
     , mLastIsPlayingForStartStopStateCallback(false)
     , mRtClientState(detail::initRtClientState(mClientState.get()))
     , mHasPendingRtClientStates(false)
@@ -259,20 +263,22 @@ public:
       {
         const auto clientState = mClientState.getRt();
 
-        if (timelineGracePeriodOver && clientState.timeline != mRtClientState.timeline)
+        if (timelineGracePeriodOver)
         {
           mRtClientState.timeline = clientState.timeline;
+          mRtClientState.timelineSessionId = clientState.timelineSessionId;
         }
 
-        if (startStopStateGracePeriodOver
-            && clientState.startStopState != mRtClientState.startStopState)
+        if (startStopStateGracePeriodOver)
         {
           mRtClientState.startStopState = clientState.startStopState;
         }
       }
     }
 
-    return {mRtClientState.timeline, mRtClientState.startStopState};
+    return {mRtClientState.timeline,
+            mRtClientState.timelineSessionId,
+            mRtClientState.startStopState};
   }
 
   // should only be called from the audio thread
@@ -372,6 +378,7 @@ private:
                                             mSessionState.timeline,
                                             mClock.micros(),
                                             mSessionState.ghostXForm);
+          clientState.timelineSessionId = mSessionId;
           // Don't pass the start stop state to the client when start stop sync is
           // disabled or when we have a default constructed start stop state
           if (mStartStopSyncEnabled && mSessionState.startStopState != StartStopState{})
