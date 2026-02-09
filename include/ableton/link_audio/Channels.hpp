@@ -101,6 +101,14 @@ public:
       pImpl->sawAnnouncementOnGateway(std::move(announcement), std::move(addr));
     }
 
+    template <typename It>
+    friend void channelsLeft(GatewayObserver& observer, It channelsBegin, It channelsEnd)
+    {
+      auto pImpl = observer.mpImpl;
+      auto addr = observer.mAddr;
+      pImpl->channelsLeftGateway(std::move(addr), channelsBegin, channelsEnd);
+    }
+
     std::shared_ptr<Impl> mpImpl;
     discovery::IpAddress mAddr;
   };
@@ -185,6 +193,34 @@ private:
 
       // Invoke callbacks outside the critical section
       if (didChannelsChange)
+      {
+        mCallback();
+      }
+    }
+
+    template <typename It>
+    void channelsLeftGateway(const discovery::IpAddress& gatewayAddr,
+                             It channelsBegin,
+                             It channelsEnd)
+    {
+      using namespace std;
+
+      auto channelsChanged = false;
+
+      for (auto byeIt = channelsBegin; byeIt != channelsEnd; ++byeIt)
+      {
+        auto bye = *byeIt;
+
+        auto it = remove_if(
+          begin(mChannels),
+          end(mChannels),
+          [&](const auto& info)
+          { return info.gatewayAddr == gatewayAddr && bye == info.channel.id; });
+        channelsChanged = it != end(mChannels);
+        mChannels.erase(it, end(mChannels));
+      }
+
+      if (channelsChanged)
       {
         mCallback();
       }

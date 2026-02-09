@@ -46,6 +46,7 @@ using SessionGroupId = uint16_t;
 
 const MessageType kInvalid = 0;
 const MessageType kPeerAnnouncement = 1;
+const MessageType kChannelByes = 2;
 
 struct MessageHeader
 {

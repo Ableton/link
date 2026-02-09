@@ -109,6 +109,15 @@ public:
   {
   }
 
+  ~UdpMessenger()
+  {
+    if (mpImpl != nullptr)
+    {
+      mpImpl->mTimer.cancel();
+      mpImpl->sendAudioChannelByes({});
+    }
+  }
+
   void updateAnnouncement(Announcement announcement)
   {
     mpImpl->updateAnnouncement(std::move(announcement));
@@ -185,8 +194,61 @@ private:
       updateAnnouncement(std::move(announcement));
     }
 
+    void sendAudioChannelByes(const ChannelAnnouncements& newAnnouncements)
+    {
+      auto channelByes = ChannelByes{};
+      for (const auto& announcement : mAnnouncements)
+      {
+        for (const auto& channel : announcement.channels.channels)
+        {
+          if (std::none_of(newAnnouncements.channels.begin(),
+                           newAnnouncements.channels.end(),
+                           [&](const auto& c) { return c.id == channel.id; }))
+          {
+            channelByes.byes.push_back({channel.id});
+          }
+        }
+      }
+
+      if (channelByes.byes.size() > 0)
+      {
+        auto byesToSend = std::vector<ChannelByes>{{}};
+
+        for (const auto& bye : channelByes.byes)
+        {
+          auto addedSize = sizeInByteStream(bye);
+          if (sizeInByteStream(byesToSend.back()) + addedSize > v1::kMaxPayloadSize)
+          {
+            byesToSend.emplace_back();
+          }
+          byesToSend.back().byes.push_back(bye);
+        }
+
+        for (const auto& receiver : mReceivers)
+        {
+          for (const auto& byes : byesToSend)
+          {
+            try
+            {
+              sendLinkAudioUdpMessage(*mpInterface,
+                                      mAnnouncements.back().ident(),
+                                      mTtl,
+                                      v1::kChannelByes,
+                                      discovery::makePayload(byes),
+                                      receiver.endpoint);
+            }
+            catch (const discovery::UdpSendException&)
+            {
+            }
+          }
+        }
+      }
+    }
+
     void updateAnnouncement(Announcement announcement)
     {
+      sendAudioChannelByes(announcement.channels);
+
       mAnnouncements = {Announcement{
         announcement.nodeId, announcement.sessionId, announcement.peerInfo, {}}};
 
@@ -283,6 +345,9 @@ private:
         case v1::kPeerAnnouncement:
           receiveAnnouncement(std::move(result.first), result.second, messageEnd, from);
           break;
+        case v1::kChannelByes:
+          receiveChannelByes(result.second, messageEnd);
+          break;
         default:
           info(mIo->log()) << "Unknown message received of type: " << header.messageType;
         }
@@ -315,6 +380,20 @@ private:
           info(mIo->log()) << "Ignoring peer announcement message: " << err.what();
         }
       }
+    }
+
+    template <typename It>
+    void receiveChannelByes(It payloadBegin, It payloadEnd)
+    {
+      const auto [byes, _] = ChannelByes::fromNetworkByteStream(
+        std::move(payloadBegin), std::move(payloadEnd));
+      std::vector<NodeId> byesVector;
+      for (const auto& bye : byes.byes)
+      {
+        byesVector.push_back(bye.id);
+      }
+
+      channelsLeft(*mObserver, begin(byesVector), end(byesVector));
     }
 
     util::Injected<IoContext> mIo;

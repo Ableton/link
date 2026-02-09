@@ -29,6 +29,7 @@
 #include <chrono>
 #include <functional>
 #include <memory>
+#include <vector>
 
 namespace ableton
 {
@@ -102,6 +103,14 @@ TEST_CASE("Channels")
       auto changedFoo = foo;
       changedFoo.announcement.nodeId = Id::random<Random>();
       sawAnnouncement(observer, changedFoo);
+    }
+
+    SECTION("RemoveChannel")
+    {
+      auto byes = std::vector<Id>{foo.announcement.channels.channels[0].id};
+      channelsLeft(observer, begin(byes), end(byes));
+
+      CHECK(2 == callback.mNumCalls);
     }
   }
 }
