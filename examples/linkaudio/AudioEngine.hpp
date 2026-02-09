@@ -28,6 +28,7 @@
 #include <vector>
 
 #include "AudioPlatform.hpp"
+#include "LinkAudioRenderer.hpp"
 
 namespace ableton
 {
@@ -76,6 +77,8 @@ public:
   std::chrono::microseconds mTimeAtLastClick;
   bool mIsPlaying;
   std::mutex mEngineDataGuard;
+
+  LinkAudioRenderer<Link> mLinkAudioRenderer;
 };
 
 } // namespace linkaudio

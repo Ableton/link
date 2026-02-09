@@ -22,6 +22,7 @@
 #include <ableton/discovery/AsioTypes.hpp>
 #include <ableton/link/Controller.hpp>
 #include <ableton/link_audio/Channels.hpp>
+#include <ableton/link_audio/MainProcessor.hpp>
 #include <ableton/link_audio/PeerGateways.hpp>
 #include <ableton/link_audio/PeerInfo.hpp>
 #include <ableton/link_audio/UdpMessenger.hpp>
@@ -72,6 +73,7 @@ public:
     , mWasLinkAudioEnabled(false)
     , mPeerInfo{}
     , mChannels(util::injectRef(*(this->mIo)), ChannelsChanged{})
+    , mProcessor{util::injectRef(*(this->mIo)), ChannelsCallback{this}}
     , mGateways{util::injectVal(GatewayFactory{this}), util::injectRef(*(this->mIo))}
   {
   }
@@ -83,6 +85,7 @@ public:
       {
         mIsLinkAudioEnabled = false;
         mGateways.clear();
+        mProcessor.stop();
       });
 
     this->stopIoService();
@@ -114,6 +117,24 @@ public:
     this->mIo->async([func = std::move(func)]() { func(); });
   }
 
+  SharedSink addSink(std::string name)
+  {
+    auto id = Id::random<Random>();
+    auto sink = std::make_shared<Sink>(name, id);
+
+    this->mIo->async(
+      [this, sink]()
+      {
+        this->mProcessor.addSink(sink);
+        if (this->mpSessionController)
+        {
+          this->mpSessionController->updateDiscoveryCallback();
+        }
+      });
+
+    return sink;
+  }
+
 protected:
   void updateIsLinkAudioEnabled()
   {
@@ -132,8 +153,8 @@ protected:
 
   void updateAudioDiscovery()
   {
-    mGateways.updateAnnouncement(
-      PeerAnnouncement{this->mNodeId, this->mSessionId, mPeerInfo});
+    mGateways.updateAnnouncement(PeerAnnouncement{
+      this->mNodeId, this->mSessionId, mPeerInfo, mProcessor.channelAnnouncements()});
   }
 
   void updateLinkAudio()
@@ -208,6 +229,20 @@ protected:
   using ControllerMessengerPtr =
     MessengerPtr<typename ControllerChannels::GatewayObserver,
                  typename util::Injected<IoContext>::type&>;
+  struct ChannelsCallback
+  {
+    void operator()()
+    {
+      if (mpController && mpController->mpSessionController)
+      {
+        mpController->mpSessionController->updateDiscoveryCallback();
+      }
+    }
+
+    Controller* mpController;
+  };
+
+  using ControllerMainProcessor = MainProcessor<ChannelsCallback, Random, IoContext&>;
 
   struct GatewayFactory
   {
@@ -217,8 +252,10 @@ protected:
         util::injectRef(*(mpController->mIo)),
         addr,
         util::injectVal(makeGatewayObserver(mpController->mChannels, addr)),
-        PeerAnnouncement{
-          mpController->mNodeId, mpController->mSessionId, mpController->mPeerInfo});
+        PeerAnnouncement{mpController->mNodeId,
+                         mpController->mSessionId,
+                         mpController->mPeerInfo,
+                         mpController->mProcessor.channelAnnouncements()});
     }
 
     void gatewaysChanged()
@@ -243,6 +280,7 @@ protected:
   bool mWasLinkAudioEnabled;
   PeerInfo mPeerInfo;
   ControllerChannels mChannels;
+  ControllerMainProcessor mProcessor;
   PeerGateways<GatewayFactory, IoContext&> mGateways;
 };
 

@@ -23,6 +23,7 @@
 
 #include <ableton/link_audio/ApiConfig.hpp>
 
+#include <memory>
 #include <string>
 
 namespace ableton
@@ -55,6 +56,27 @@ public:
     : BasicLinkAudio<Clock>(bpm, name)
   {
   }
+
+private:
+  friend class LinkAudioSink;
+};
+
+class LinkAudioSink
+{
+public:
+  template <typename LinkAudio>
+  LinkAudioSink(LinkAudio& link, std::string name);
+
+  LinkAudioSink(const LinkAudioSink&) = default;
+  LinkAudioSink& operator=(const LinkAudioSink&) = default;
+  LinkAudioSink(LinkAudioSink&&) = default;
+  LinkAudioSink& operator=(LinkAudioSink&&) = default;
+
+  std::string name() const;
+  void setName(std::string name);
+
+private:
+  std::shared_ptr<link_audio::Sink> mpImpl;
 };
 
 } // namespace ableton

@@ -171,6 +171,7 @@ endif()
 set(linkhut_HEADERS
   linkaudio/AudioEngine.hpp
   linkaudio/AudioPlatform.hpp
+  linkaudio/LinkAudioRenderer.hpp
   ${link_HEADERS}
 )
 
@@ -218,6 +219,7 @@ source_group("LinkAudioHut" FILES ${linkhut_HEADERS} ${linkaudioshut_SOURCES})
 set(linkhutsilent_HEADERS
   linkaudio/AudioEngine.hpp
   linkaudio/AudioPlatform_Dummy.hpp
+  linkaudio/LinkAudioRenderer.hpp
   ${link_HEADERS}
 )
 

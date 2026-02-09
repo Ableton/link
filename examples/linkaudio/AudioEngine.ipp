@@ -41,6 +41,7 @@ AudioEngine<Link>::AudioEngine(Link& link)
   , mLockfreeEngineData(mSharedEngineData)
   , mTimeAtLastClick{}
   , mIsPlaying(false)
+  , mLinkAudioRenderer(mLink)
 {
   if (!mOutputLatency.is_lock_free())
   {
@@ -256,7 +257,13 @@ void AudioEngine<Link>::audioCallback(const std::chrono::microseconds hostTime,
     renderMetronomeIntoBuffer(sessionState, engineData.quantum, hostTime, numSamples);
   }
 
-  std::copy(mBuffers[0].begin(), mBuffers[0].end(), mBuffers[1].begin());
+  mLinkAudioRenderer(mBuffers[0].data(),
+                     mBuffers[1].data(),
+                     mBuffers[0].size(),
+                     sessionState,
+                     mSampleRate,
+                     hostTime,
+                     engineData.quantum);
 }
 
 } // namespace linkaudio

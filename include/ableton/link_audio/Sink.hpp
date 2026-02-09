@@ -17,33 +17,43 @@
  *  please contact <link-devs@ableton.com>.
  */
 
+#include <ableton/link_audio/Id.hpp>
+#include <ableton/util/Locked.hpp>
+#include <atomic>
+#include <string>
+
 #pragma once
-
-#ifndef LINK_API_CONTROLLER
-
-#include <ableton/platforms/Config.hpp>
-
-#include <ableton/link_audio/SessionController.hpp>
-#include <ableton/link_audio/Sink.hpp>
 
 namespace ableton
 {
-namespace link
+namespace link_audio
 {
 
-template <typename Clock>
-using ApiController = ableton::link_audio::SessionController<PeerCountCallback,
-                                                             TempoCallback,
-                                                             StartStopStateCallback,
-                                                             Clock,
-                                                             platform::Random,
-                                                             platform::IoContext>;
+struct Sink
+{
+  Sink(std::string name, Id id)
+    : mName{std::move(name)}
+    , mId{std::move(id)}
+  {
+  }
 
-} // namespace link
+  void setName(std::string name)
+  {
+    mName.update([name = std::move(name)](auto& n) { n = std::move(name); });
+    mNameIsUpToDate.clear();
+  }
+
+  std::string name() const { return mName.read(); }
+
+  bool nameChanged() { return !mNameIsUpToDate.test_and_set(); }
+
+  const Id& id() const { return mId; }
+
+private:
+  util::Locked<std::string> mName;
+  std::atomic_flag mNameIsUpToDate;
+  Id mId;
+};
+
+} // namespace link_audio
 } // namespace ableton
-
-#define LINK_API_CONTROLLER YES
-
-#endif
-
-#include <ableton/Link.hpp>

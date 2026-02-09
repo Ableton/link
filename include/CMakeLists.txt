@@ -53,10 +53,13 @@ set(link_audio_HEADERS
   ${link_audio_DIR}/Channels.hpp
   ${link_audio_DIR}/Controller.hpp
   ${link_audio_DIR}/Id.hpp
+  ${link_audio_DIR}/MainProcessor.hpp
   ${link_audio_DIR}/PeerAnnouncement.hpp
   ${link_audio_DIR}/PeerGateways.hpp
   ${link_audio_DIR}/PeerInfo.hpp
   ${link_audio_DIR}/SessionController.hpp
+  ${link_audio_DIR}/Sink.hpp
+  ${link_audio_DIR}/SinkProcessor.hpp
   ${link_audio_DIR}/UdpMessenger.hpp
   ${link_audio_DIR}/v1/Messages.hpp
   PARENT_SCOPE

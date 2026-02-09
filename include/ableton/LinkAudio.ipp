@@ -19,6 +19,8 @@
 
 #pragma once
 
+#include <string>
+
 namespace ableton
 {
 
@@ -52,6 +54,22 @@ template <typename Function>
 inline void BasicLinkAudio<Clock>::callOnLinkThread(Function func)
 {
   this->mController.callOnLinkThread(std::move(func));
+}
+
+template <typename LinkAudio>
+inline LinkAudioSink::LinkAudioSink(LinkAudio& link, std::string name)
+  : mpImpl{link.mController.addSink(std::move(name))}
+{
+}
+
+inline std::string LinkAudioSink::name() const
+{
+  return mpImpl->name();
+}
+
+inline void LinkAudioSink::setName(std::string name)
+{
+  mpImpl->setName(std::move(name));
 }
 
 } // namespace ableton
