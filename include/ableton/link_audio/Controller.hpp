@@ -20,6 +20,7 @@
 #pragma once
 
 #include <ableton/link/Controller.hpp>
+#include <ableton/link_audio/Channels.hpp>
 #include <ableton/link_audio/PeerInfo.hpp>
 #include <atomic>
 
@@ -61,6 +62,7 @@ public:
     , mIsLinkAudioEnabled(false)
     , mWasLinkAudioEnabled(false)
     , mPeerInfo{}
+    , mChannels(util::injectRef(*(this->mIo)), ChannelsChanged{})
   {
   }
 
@@ -86,9 +88,17 @@ protected:
     }
   }
 
+  struct ChannelsChanged
+  {
+    void operator()() {}
+  };
+
+  using ControllerChannels = Channels<IoContext&, ChannelsChanged>;
+
   std::atomic_bool mIsLinkAudioEnabled;
   bool mWasLinkAudioEnabled;
   PeerInfo mPeerInfo;
+  ControllerChannels mChannels;
 };
 
 } // namespace link_audio

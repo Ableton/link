@@ -1,0 +1,110 @@
+
+/* Copyright 2025, Ableton AG, Berlin. All rights reserved.
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *  If you would like to incorporate Link into a proprietary software application,
+ *  please contact <link-devs@ableton.com>.
+ */
+
+#include <ableton/discovery/AsioTypes.hpp>
+#include <ableton/link_audio/ChannelAnnouncements.hpp>
+#include <ableton/link_audio/Channels.hpp>
+#include <ableton/link_audio/Id.hpp>
+#include <ableton/link_audio/PeerAnnouncement.hpp>
+#include <ableton/platforms/stl/Random.hpp>
+#include <ableton/test/CatchWrapper.hpp>
+#include <ableton/test/serial_io/Fixture.hpp>
+#include <chrono>
+#include <functional>
+#include <memory>
+
+namespace ableton
+{
+namespace link_audio
+{
+
+TEST_CASE("Channels")
+{
+  struct Callback
+  {
+    void operator()() { ++mNumCalls; }
+    size_t mNumCalls = 0;
+  };
+
+  struct Input
+  {
+    Id ident() const { return announcement.ident(); }
+
+    PeerAnnouncement announcement;
+    double networkQuality;
+    std::shared_ptr<int> interface;
+    discovery::UdpEndpoint from;
+    int ttl;
+  };
+
+  using Random = ableton::platforms::stl::Random;
+  using IoContext = test::serial_io::Context;
+  using TestChannels = Channels<IoContext, std::reference_wrapper<Callback>>;
+
+  const auto sessionId = Id::random<Random>();
+  const auto foo = Input{{Id::random<Random>(),
+                          sessionId,
+                          {"foo"},
+                          {{ChannelAnnouncement{{"fooChannel"}, Id::random<Random>()}}}},
+                         100.,
+                         {},
+                         {discovery::makeAddress("1.1.1.1"), 1},
+                         2};
+
+  const auto bar = Input{{Id::random<Random>(),
+                          sessionId,
+                          {"bar"},
+                          {{ChannelAnnouncement{{"barChannel"}, Id::random<Random>()}}}},
+                         {},
+                         {},
+                         {},
+                         5};
+
+  const auto gateway1 = discovery::makeAddress("123.123.123.123");
+
+  auto callback = Callback{};
+  test::serial_io::Fixture io;
+
+  auto channels = TestChannels(util::injectVal(io.makeIoContext()), std::ref(callback));
+
+  SECTION("EmptyChannelsAfterInit")
+  {
+    CHECK(0 == callback.mNumCalls);
+  }
+
+  SECTION("AddChannel")
+  {
+    auto observer = makeGatewayObserver(channels, gateway1);
+
+    sawAnnouncement(observer, foo);
+
+    CHECK(1 == callback.mNumCalls);
+
+    SECTION("ReAddChannelWithChangedPeerId")
+    {
+      auto changedFoo = foo;
+      changedFoo.announcement.nodeId = Id::random<Random>();
+      sawAnnouncement(observer, changedFoo);
+    }
+  }
+}
+
+} // namespace link_audio
+} // namespace ableton

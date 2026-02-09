@@ -10,6 +10,7 @@ project(LinkTest)
 
 set(link_audio_test_SOURCES
   ableton/link_audio/tst_ChannelAnnouncements.cpp
+  ableton/link_audio/tst_Channels.cpp
 )
 
 set(link_discovery_test_SOURCES
