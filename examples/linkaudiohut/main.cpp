@@ -26,6 +26,7 @@
 #include <chrono>
 #include <iomanip>
 #include <iostream>
+#include <optional>
 #include <thread>
 #if defined(LINK_PLATFORM_UNIX)
 #include <termios.h>
@@ -37,12 +38,14 @@ namespace
 struct State
 {
   std::atomic<bool> running;
+  std::atomic<bool> printing;
   ableton::LinkAudio link;
   ableton::linkaudio::AudioPlatform<ableton::LinkAudio> audioPlatform;
   ableton::link::platform::ThreadPriority threadPriority;
 
   State(std::string name)
     : running(true)
+    , printing(true)
     , link(120., name)
     , audioPlatform(link)
   {
@@ -142,6 +145,52 @@ void printChannels(const State& state)
   printStateHeader();
 }
 
+void selectChannel(State& state)
+{
+  state.printing = false;
+  std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  clearLine();
+  std::cout << "\n\nSelect channel index:" << std::endl;
+
+  const auto channels = state.link.channels();
+  for (auto i = 0u; i < channels.size(); ++i)
+  {
+    std::cout << i << ": " << (i < 10 ? " " : "") << channels[i].peerName << " | "
+              << channels[i].name << std::endl;
+  }
+
+  std::cout << "Enter channel index (0-" << channels.size() - 1 << "): " << std::flush;
+
+  std::string line;
+  if (std::getline(std::cin, line))
+  {
+    std::optional<size_t> oIndex = std::nullopt;
+    try
+    {
+      oIndex = static_cast<size_t>(std::stoul(line));
+    }
+    catch (...)
+    {
+    }
+
+    clearLine();
+    if (oIndex.has_value() && *oIndex < channels.size())
+    {
+      state.audioPlatform.mEngine.mLinkAudioRenderer.createSource(channels[*oIndex].id);
+      std::cout << "\nSelected channel: " << channels[*oIndex].peerName << " | "
+                << channels[*oIndex].name << std::endl;
+    }
+    else
+    {
+      std::cout << "Invalid input." << std::endl;
+    }
+  }
+
+  std::cout << std::endl;
+  printStateHeader();
+  state.printing = true;
+}
+
 void input(State& state)
 {
   char in;
@@ -203,7 +252,14 @@ void input(State& state)
       break;
     }
     case 'o':
-      state.audioPlatform.mEngine.mLinkAudioRenderer.toggleSource();
+      if (state.audioPlatform.mEngine.mLinkAudioRenderer.hasSource())
+      {
+        state.audioPlatform.mEngine.mLinkAudioRenderer.removeSource();
+      }
+      else
+      {
+        selectChannel(state);
+      }
       break;
     case ' ':
       if (engine.isPlaying())
@@ -242,9 +298,12 @@ int main(int nargs, char** args)
 
   while (state.running)
   {
-    const auto time = state.link.clock().micros();
-    auto sessionState = state.link.captureAppSessionState();
-    printState(time, sessionState, state);
+    if (state.printing)
+    {
+      const auto time = state.link.clock().micros();
+      auto sessionState = state.link.captureAppSessionState();
+      printState(time, sessionState, state);
+    }
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
   }
 

@@ -147,7 +147,6 @@ public:
         return;
       }
 
-
       // Calc the frame in the buffer that corresponds to the target beat position if we
       // are not rendering from a buffer already
       if (!sourceReadFrame)
@@ -190,7 +189,9 @@ public:
     }
   }
 
-  void toggleSource()
+  bool hasSource() const { return mpSource != nullptr; }
+
+  void removeSource()
   {
     if (mpSource)
     {
@@ -205,19 +206,15 @@ public:
         mpQueueReader->releaseSlot();
       }
     }
-    else
-    {
-      const auto channels = mLink.channels();
-      if (!channels.empty())
-      {
-        sourceReadFrame = std::nullopt;
-        mpSource = std::make_unique<LinkAudioSource>(
-          mLink,
-          channels.front().id,
-          [this](ableton::LinkAudioSource::BufferHandle bufferHandle)
-          { onSourceBuffer(bufferHandle); });
-      }
-    }
+  }
+
+  void createSource(const ChannelId& channelId)
+  {
+    mpSource = std::make_unique<LinkAudioSource>(
+      mLink,
+      channelId,
+      [this](ableton::LinkAudioSource::BufferHandle bufferHandle)
+      { onSourceBuffer(bufferHandle); });
   }
 
   void onSourceBuffer(const LinkAudioSource::BufferHandle bufferHandle)
