@@ -29,6 +29,8 @@
 #include <ableton/link/Sessions.hpp>
 #include <ableton/link/StartStopState.hpp>
 #include <ableton/util/TripleBuffer.hpp>
+
+#include <chrono>
 #include <condition_variable>
 #include <mutex>
 

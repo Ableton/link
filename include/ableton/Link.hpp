@@ -22,7 +22,8 @@
 
 #pragma once
 
-#include <ableton/platforms/Config.hpp>
+#include <ableton/link/ApiConfig.hpp>
+
 #include <chrono>
 #include <mutex>
 
