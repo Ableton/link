@@ -40,7 +40,8 @@ namespace link
 template <typename IoContext,
           typename SessionMembershipCallback,
           typename SessionTimelineCallback,
-          typename SessionStartStopStateCallback>
+          typename SessionStartStopStateCallback,
+          typename AudioEndpointCallback>
 class Peers
 {
   // non-movable private implementation type
@@ -52,9 +53,13 @@ public:
   Peers(util::Injected<IoContext> io,
         SessionMembershipCallback membership,
         SessionTimelineCallback timeline,
-        SessionStartStopStateCallback startStop)
-    : mpImpl(std::make_shared<Impl>(
-        std::move(io), std::move(membership), std::move(timeline), std::move(startStop)))
+        SessionStartStopStateCallback startStop,
+        AudioEndpointCallback audioEndpoint)
+    : mpImpl(std::make_shared<Impl>(std::move(io),
+                                    std::move(membership),
+                                    std::move(timeline),
+                                    std::move(startStop),
+                                    std::move(audioEndpoint)))
   {
   }
 
@@ -179,11 +184,13 @@ private:
     Impl(util::Injected<IoContext> io,
          SessionMembershipCallback membership,
          SessionTimelineCallback timeline,
-         SessionStartStopStateCallback startStop)
+         SessionStartStopStateCallback startStop,
+         AudioEndpointCallback audioEndpointCallback)
       : mIo(std::move(io))
       , mSessionMembershipCallback(std::move(membership))
       , mSessionTimelineCallback(std::move(timeline))
       , mSessionStartStopStateCallback(std::move(startStop))
+      , mAudioEndpointCallback(std::move(audioEndpointCallback))
     {
     }
 
@@ -253,6 +260,8 @@ private:
       {
         mSessionMembershipCallback();
       }
+
+      mAudioEndpointCallback(peerState.ident(), peerState.audioEndpoint, gatewayAddr);
     }
 
     void peerLeftGateway(const NodeId& nodeId, const discovery::IpAddress& gatewayAddr)
@@ -338,6 +347,7 @@ private:
     SessionMembershipCallback mSessionMembershipCallback;
     SessionTimelineCallback mSessionTimelineCallback;
     SessionStartStopStateCallback mSessionStartStopStateCallback;
+    AudioEndpointCallback mAudioEndpointCallback;
     std::vector<Peer> mPeers; // sorted by peerId, unique by (peerId, addr)
   };
 
@@ -354,20 +364,24 @@ private:
 template <typename Io,
           typename SessionMembershipCallback,
           typename SessionTimelineCallback,
-          typename SessionStartStopStateCallback>
+          typename SessionStartStopStateCallback,
+          typename AudioEndpointCallback>
 Peers<Io,
       SessionMembershipCallback,
       SessionTimelineCallback,
-      SessionStartStopStateCallback>
+      SessionStartStopStateCallback,
+      AudioEndpointCallback>
 makePeers(util::Injected<Io> io,
           SessionMembershipCallback membershipCallback,
           SessionTimelineCallback timelineCallback,
-          SessionStartStopStateCallback startStopStateCallback)
+          SessionStartStopStateCallback startStopStateCallback,
+          AudioEndpointCallback audioEndpointCallback)
 {
   return {std::move(io),
           std::move(membershipCallback),
           std::move(timelineCallback),
-          std::move(startStopStateCallback)};
+          std::move(startStopStateCallback),
+          std::move(audioEndpointCallback)};
 }
 
 } // namespace link

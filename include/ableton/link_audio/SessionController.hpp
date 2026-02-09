@@ -20,6 +20,7 @@
 #pragma once
 
 #include <ableton/link_audio/Controller.hpp>
+#include <ableton/link_audio/Id.hpp>
 
 namespace ableton
 {
@@ -93,6 +94,12 @@ public:
     this->mRtClientStateSetter.updateEnabled();
 
     this->updateIsLinkAudioEnabled();
+  }
+
+  void sawAudioEndpointCallback(Id,
+                                std::optional<discovery::UdpEndpoint>,
+                                discovery::IpAddress)
+  {
   }
 };
 

@@ -155,7 +155,8 @@ public:
     , mPeers(util::injectRef(*mIo),
              SessionMembershipCallback{this},
              SessionTimelineCallback{*this},
-             SessionStartStopStateCallback{*this})
+             SessionStartStopStateCallback{*this},
+             SawAudioEndpointCallback{this})
     , mSessions(
         {mSessionId, mSessionState.timeline, {mSessionState.ghostXForm, mClock.micros()}},
         util::injectRef(mPeers),
@@ -664,6 +665,22 @@ protected:
     Controller& mController;
   };
 
+  struct SawAudioEndpointCallback
+  {
+    void operator()(NodeId peerId,
+                    std::optional<discovery::UdpEndpoint> endpoint,
+                    discovery::IpAddress gateway)
+    {
+      if (mpController->mpSessionController)
+      {
+        mpController->mpSessionController->sawAudioEndpointCallback(
+          peerId, endpoint, gateway);
+      }
+    }
+
+    Controller* mpController;
+  };
+
   struct SessionMembershipCallback
   {
     void operator()()
@@ -790,7 +807,8 @@ protected:
   using ControllerPeers = Peers<IoType&,
                                 SessionMembershipCallback,
                                 SessionTimelineCallback,
-                                SessionStartStopStateCallback>;
+                                SessionStartStopStateCallback,
+                                SawAudioEndpointCallback>;
 
   using ControllerGateway =
     Gateway<typename ControllerPeers::GatewayObserver, Clock, IoType&>;

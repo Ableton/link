@@ -58,10 +58,20 @@ struct SessionStartStopStateCallback
   std::vector<std::pair<SessionId, StartStopState>> sessionStartStopStates;
 };
 
+struct AudioEndpointCallback
+{
+  void operator()(link::NodeId,
+                  std::optional<discovery::UdpEndpoint>,
+                  discovery::IpAddress)
+  {
+  }
+};
+
 using PeerVector = std::vector<typename Peers<test::serial_io::Context,
                                               SessionMembershipCallback,
                                               SessionTimelineCallback,
-                                              SessionStartStopStateCallback>::Peer>;
+                                              SessionStartStopStateCallback,
+                                              AudioEndpointCallback>::Peer>;
 
 void expectPeers(const PeerVector& expected, const PeerVector& actual)
 {
@@ -115,13 +125,15 @@ TEST_CASE("Peers")
   auto membership = SessionMembershipCallback{};
   auto sessions = SessionTimelineCallback{};
   auto startStops = SessionStartStopStateCallback{};
+  auto audioEndpoint = AudioEndpointCallback{};
 
   test::serial_io::Fixture io;
 
   auto peers = makePeers(util::injectVal(io.makeIoContext()),
                          std::ref(membership),
                          std::ref(sessions),
-                         std::ref(startStops));
+                         std::ref(startStops),
+                         std::ref(audioEndpoint));
 
   SECTION("EmptySessionPeersAfterInit")
   {
@@ -172,7 +184,6 @@ TEST_CASE("Peers")
 
   SECTION("AddThreePeersTwoOnSameGateway")
   {
-
     auto observer1 = makeGatewayObserver(peers, gateway1);
     auto observer2 = makeGatewayObserver(peers, gateway2);
 

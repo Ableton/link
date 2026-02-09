@@ -21,6 +21,8 @@
 
 #include <ableton/link/Controller.hpp>
 
+#include <optional>
+
 namespace ableton
 {
 namespace link
@@ -90,6 +92,12 @@ public:
     // after we have joined a running session when enabling
     this->mRtClientStateSetter.processPendingClientStates();
     this->mRtClientStateSetter.updateEnabled();
+  }
+
+  void sawAudioEndpointCallback(NodeId,
+                                std::optional<discovery::UdpEndpoint>,
+                                discovery::IpAddress)
+  {
   }
 };
 
