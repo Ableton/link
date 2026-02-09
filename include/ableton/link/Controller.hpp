@@ -181,8 +181,6 @@ public:
   Controller& operator=(const Controller&) = delete;
   Controller& operator=(Controller&&) = delete;
 
-  ~Controller() { stopIoService(); }
-
   void enable(const bool bEnable)
   {
     const bool bWasEnabled = mEnabled.exchange(bEnable);
@@ -777,7 +775,7 @@ protected:
     Controller* mpController;
   };
 
-  void stopIoService()
+  void shutdown()
   {
     if (mIoStopped)
     {

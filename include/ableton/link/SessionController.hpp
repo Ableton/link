@@ -71,7 +71,7 @@ public:
     this->mRtClientStateSetter.start();
   }
 
-  ~SessionController() { this->mpSessionController = nullptr; }
+  ~SessionController() { this->shutdown(); }
 
   void sessionMembershipCallback() { this->mSessionPeerCounter(); }
 

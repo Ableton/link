@@ -94,8 +94,6 @@ public:
         mGateways.clear();
         mProcessor.stop();
       });
-
-    this->stopIoService();
   }
 
   void enableLinkAudio(bool enabled)
