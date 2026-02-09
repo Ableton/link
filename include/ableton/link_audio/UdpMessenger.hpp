@@ -116,6 +116,49 @@ public:
 
   discovery::UdpEndpoint endpoint() const { return mpImpl->mpInterface->endpoint(); }
 
+  template <typename It>
+  void pruneChannelsEndpoints(It peersBegin, It peersEnd)
+  {
+    auto it = std::remove_if(
+      mpImpl->mReceivers.begin(),
+      mpImpl->mReceivers.end(),
+      [&](const auto& r)
+      {
+        return std::none_of(
+          peersBegin, peersEnd, [&](const auto& peerId) { return peerId == r.id; });
+      });
+
+    mpImpl->mReceivers.erase(it, mpImpl->mReceivers.end());
+  }
+
+  void sawLinkAudioEndpoint(link::NodeId peerId,
+                            std::optional<discovery::UdpEndpoint> endpoint)
+  {
+    if (endpoint)
+    {
+      if (endpoint->address().is_v6())
+      {
+        *endpoint = discovery::ipV6Endpoint(*mpImpl->mpInterface, *endpoint);
+      }
+      auto it =
+        std::find_if(mpImpl->mReceivers.begin(),
+                     mpImpl->mReceivers.end(),
+                     [&](const auto& receiver) { return receiver.endpoint == endpoint; });
+      if (it == mpImpl->mReceivers.end())
+      {
+        mpImpl->mReceivers.push_back({peerId, *endpoint});
+      }
+    }
+    else
+    {
+      auto it = std::remove_if(mpImpl->mReceivers.begin(),
+                               mpImpl->mReceivers.end(),
+                               [&](const auto& r) { return r.id == peerId; });
+
+      mpImpl->mReceivers.erase(it, mpImpl->mReceivers.end());
+    }
+  }
+
 private:
   struct Receiver
   {

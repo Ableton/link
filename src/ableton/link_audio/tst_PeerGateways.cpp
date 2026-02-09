@@ -18,7 +18,9 @@
  */
 
 #include <ableton/discovery/AsioTypes.hpp>
+#include <ableton/link/NodeId.hpp>
 #include <ableton/link_audio/PeerGateways.hpp>
+#include <ableton/platforms/stl/Random.hpp>
 #include <ableton/test/CatchWrapper.hpp>
 #include <ableton/test/serial_io/Fixture.hpp>
 #include <memory>
@@ -33,9 +35,15 @@ namespace
 
 struct Gateway
 {
+  void sawLinkAudioEndpoint(link::NodeId, std::optional<discovery::UdpEndpoint>)
+  {
+    ++sawLinkAudioEndpointCount;
+  }
+
   void updateAnnouncement(int a) { announcement = a; }
 
   discovery::IpAddress address;
+  int sawLinkAudioEndpointCount{0};
   int announcement{0};
 };
 
@@ -67,6 +75,8 @@ void expectGateways(Gateways& gateways, std::vector<Gateway> expectedGateways)
       for (; begin != end; ++begin)
       {
         CHECK(begin->first == expectedGateways[i].address);
+        CHECK(begin->second->sawLinkAudioEndpointCount
+              == expectedGateways[i].sawLinkAudioEndpointCount);
         CHECK(begin->second->announcement == expectedGateways[i].announcement);
         ++i;
       }
@@ -97,45 +107,56 @@ TEST_CASE("PeerGateways")
   SECTION("GatewayAppears")
   {
     gateways.updateGateways({addr1});
-    expectGateways(gateways, {{addr1, 0}});
+    expectGateways(gateways, {{addr1, 0, 0}});
     CHECK(factory.changedCount == 1);
 
     gateways.updateGateways({addr1, addr2});
-    expectGateways(gateways, {{addr1, 0}, {addr2, 0}});
+    expectGateways(gateways, {{addr1, 0, 0}, {addr2, 0, 0}});
     CHECK(factory.changedCount == 2);
   }
 
   SECTION("GatewayDisappears")
   {
     gateways.updateGateways({addr1, addr2});
-    expectGateways(gateways, {{addr1, 0}, {addr2, 0}});
+    expectGateways(gateways, {{addr1, 0, 0}, {addr2, 0, 0}});
     CHECK(factory.changedCount == 1);
 
     gateways.updateGateways({addr1});
-    expectGateways(gateways, {{addr1, 0}});
+    expectGateways(gateways, {{addr1, 0, 0}});
     CHECK(factory.changedCount == 2);
   }
 
   SECTION("GatewayChangesAddress")
   {
     gateways.updateGateways({addr1});
-    expectGateways(gateways, {{addr1, 0}});
+    expectGateways(gateways, {{addr1, 0, 0}});
     CHECK(factory.changedCount == 1);
 
     gateways.updateGateways({addr2});
-    expectGateways(gateways, {{addr2, 0}});
+    expectGateways(gateways, {{addr2, 0, 0}});
     CHECK(factory.changedCount == 2);
   }
 
   SECTION("UpdateAnnouncement")
   {
     gateways.updateGateways({addr1, addr2});
-    expectGateways(gateways, {{addr1, 0}, {addr2, 0}});
+    expectGateways(gateways, {{addr1, 0, 0}, {addr2, 0, 0}});
     CHECK(factory.changedCount == 1);
 
     gateways.updateAnnouncement(42);
-    expectGateways(gateways, {{addr1, 42}, {addr2, 42}});
+    expectGateways(gateways, {{addr1, 0, 42}, {addr2, 0, 42}});
     CHECK(factory.changedCount == 1);
+  }
+
+  SECTION("SawLinkAudioEndpoint")
+  {
+    using Random = ableton::platforms::stl::Random;
+    const auto peerId = link::NodeId::random<Random>();
+
+    gateways.updateGateways({addr1, addr2});
+    gateways.sawLinkAudioEndpoint(peerId, std::nullopt, addr2);
+
+    expectGateways(gateways, {{addr1, 0, 0}, {addr2, 1, 0}});
   }
 }
 

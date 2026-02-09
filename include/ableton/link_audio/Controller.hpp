@@ -28,6 +28,7 @@
 #include <ableton/util/Injected.hpp>
 #include <algorithm>
 #include <atomic>
+#include <set>
 #include <vector>
 
 namespace ableton
@@ -109,6 +110,25 @@ protected:
     }
   }
 
+  void updateLinkAudio()
+  {
+    auto peers = std::set<link::NodeId>();
+
+    for (const auto& sessionPeer : this->mPeers.sessionPeers(this->mSessionId))
+    {
+      peers.insert(sessionPeer.first.nodeState.ident());
+    }
+
+    mGateways.updateSessionPeers(begin(peers), end(peers));
+  }
+
+  void sawLinkAudioEndpoint(link::NodeId peerId,
+                            std::optional<discovery::UdpEndpoint> endpoint,
+                            discovery::IpAddress gateway)
+  {
+    mGateways.sawLinkAudioEndpoint(peerId, endpoint, gateway);
+  }
+
   void updateLinkAudioGateways()
   {
     auto gateways = std::vector<discovery::IpAddress>();
@@ -119,6 +139,7 @@ protected:
     if (mIsLinkAudioEnabled)
     {
       mGateways.updateGateways(std::move(gateways));
+      updateLinkAudio();
     }
     else
     {

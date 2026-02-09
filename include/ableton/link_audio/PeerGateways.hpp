@@ -20,10 +20,12 @@
 #pragma once
 
 #include <ableton/discovery/AsioTypes.hpp>
+#include <ableton/link/NodeId.hpp>
 #include <ableton/util/Injected.hpp>
 #include <algorithm>
 #include <map>
 #include <memory>
+#include <optional>
 #include <type_traits>
 #include <vector>
 
@@ -122,6 +124,23 @@ struct PeerGateways
     if (!staleAddrs.empty() || !newAddrs.empty())
     {
       mFactory->gatewaysChanged();
+    }
+  }
+
+  template <typename It>
+  void updateSessionPeers(It peersBegin, It peersEnd)
+  {
+    forEachGateway([&](auto& gateway)
+                   { gateway->pruneChannelsEndpoints(peersBegin, peersEnd); });
+  }
+
+  void sawLinkAudioEndpoint(link::NodeId peerId,
+                            std::optional<discovery::UdpEndpoint> endpoint,
+                            discovery::IpAddress gateway)
+  {
+    if (auto it = mGateways.find(gateway); it != mGateways.end())
+    {
+      it->second->sawLinkAudioEndpoint(peerId, endpoint);
     }
   }
 

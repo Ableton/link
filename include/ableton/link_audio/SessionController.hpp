@@ -72,9 +72,17 @@ public:
 
   ~SessionController() { this->mpSessionController = nullptr; }
 
-  void sessionMembershipCallback() { this->mSessionPeerCounter(); }
+  void sessionMembershipCallback()
+  {
+    this->mSessionPeerCounter();
+    this->updateLinkAudio();
+  }
 
-  void joinSessionCallback(const link::Session& session) { this->joinSession(session); }
+  void joinSessionCallback(const link::Session& session)
+  {
+    this->joinSession(session);
+    this->updateLinkAudio();
+  }
 
   template <typename Peer, typename Handler>
   void measurePeerCallback(Peer peer, Handler handler)
@@ -96,10 +104,11 @@ public:
     this->updateIsLinkAudioEnabled();
   }
 
-  void sawAudioEndpointCallback(Id,
-                                std::optional<discovery::UdpEndpoint>,
-                                discovery::IpAddress)
+  void sawAudioEndpointCallback(Id peerId,
+                                std::optional<discovery::UdpEndpoint> endpoint,
+                                discovery::IpAddress gateway)
   {
+    this->sawLinkAudioEndpoint(peerId, endpoint, gateway);
   }
 };
 
