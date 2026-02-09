@@ -20,6 +20,7 @@
 #pragma once
 
 #include <ableton/link/Controller.hpp>
+#include <ableton/link_audio/PeerInfo.hpp>
 #include <atomic>
 
 namespace ableton
@@ -59,6 +60,7 @@ public:
     : LinkController(tempo, peerCallback, tempoCallback, startStopStateCallback, clock)
     , mIsLinkAudioEnabled(false)
     , mWasLinkAudioEnabled(false)
+    , mPeerInfo{}
   {
   }
 
@@ -86,6 +88,7 @@ protected:
 
   std::atomic_bool mIsLinkAudioEnabled;
   bool mWasLinkAudioEnabled;
+  PeerInfo mPeerInfo;
 };
 
 } // namespace link_audio
