@@ -90,7 +90,11 @@ public:
     this->measurePeer(std::move(peer), std::move(handler));
   }
 
-  void updateDiscoveryCallback() { this->updateDiscovery(); }
+  void updateDiscoveryCallback()
+  {
+    this->updateDiscovery();
+    this->updateAudioDiscovery();
+  }
 
   void gatewaysChangedCallback() { this->updateLinkAudioGateways(); }
 

@@ -23,6 +23,8 @@
 
 #include <ableton/link_audio/ApiConfig.hpp>
 
+#include <string>
+
 namespace ableton
 {
 
@@ -30,10 +32,12 @@ template <typename Clock>
 class BasicLinkAudio : public BasicLink<Clock>
 {
 public:
-  BasicLinkAudio(double bpm);
+  BasicLinkAudio(double bpm, std::string name);
 
   bool isLinkAudioEnabled() const;
   void enableLinkAudio(bool bEnable);
+
+  void setPeerName(std::string name);
 
 private:
   using Controller = ableton::link::ApiController<Clock>;
@@ -44,8 +48,8 @@ class LinkAudio : public BasicLinkAudio<link::platform::Clock>
 public:
   using Clock = link::platform::Clock;
 
-  LinkAudio(double bpm)
-    : BasicLinkAudio<Clock>(bpm)
+  LinkAudio(double bpm, std::string name)
+    : BasicLinkAudio<Clock>(bpm, name)
   {
   }
 };

@@ -94,6 +94,19 @@ public:
 
   bool isLinkAudioEnabled() const { return mIsLinkAudioEnabled; }
 
+  void setName(std::string name)
+  {
+    this->mIo->async(
+      [this, name = std::move(name)]()
+      {
+        mPeerInfo.name = std::move(name);
+        if (this->mpSessionController)
+        {
+          this->mpSessionController->updateDiscoveryCallback();
+        }
+      });
+  }
+
 protected:
   void updateIsLinkAudioEnabled()
   {
@@ -108,6 +121,12 @@ protected:
       mGateways.clear();
       updateAudioEndpoints({});
     }
+  }
+
+  void updateAudioDiscovery()
+  {
+    mGateways.updateAnnouncement(
+      PeerAnnouncement{this->mNodeId, this->mSessionId, mPeerInfo});
   }
 
   void updateLinkAudio()

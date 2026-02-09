@@ -40,9 +40,9 @@ struct State
   ableton::LinkAudio link;
   ableton::linkaudio::AudioPlatform<ableton::LinkAudio> audioPlatform;
 
-  State()
+  State(std::string name)
     : running(true)
-    , link(120.)
+    , link(120., name)
     , audioPlatform(link)
   {
   }
@@ -193,9 +193,15 @@ void input(State& state)
 
 } // namespace
 
-int main(int, char**)
+int main(int nargs, char** args)
 {
-  State state;
+  if (nargs < 2)
+  {
+    std::cout << "Usage: LinkAudioHut [name]" << std::endl;
+    return -1;
+  }
+
+  State state(args[1]);
 
   printHelp();
   printStateHeader();

@@ -23,9 +23,10 @@ namespace ableton
 {
 
 template <typename Clock>
-inline BasicLinkAudio<Clock>::BasicLinkAudio(const double bpm)
+inline BasicLinkAudio<Clock>::BasicLinkAudio(const double bpm, std::string name)
   : BasicLink<Clock>(bpm)
 {
+  setPeerName(name);
 }
 
 template <typename Clock>
@@ -38,6 +39,12 @@ template <typename Clock>
 inline void BasicLinkAudio<Clock>::enableLinkAudio(const bool bEnable)
 {
   this->mController.enableLinkAudio(bEnable);
+}
+
+template <typename Clock>
+inline void BasicLinkAudio<Clock>::setPeerName(std::string name)
+{
+  this->mController.setName(std::move(name));
 }
 
 } // namespace ableton
