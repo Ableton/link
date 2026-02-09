@@ -183,6 +183,8 @@ set(link_HEADERS
   ${link_util_HEADERS}
   ${link_DIR}/Link.hpp
   ${link_DIR}/Link.ipp
+  ${link_DIR}/LinkAudio.hpp
+  ${link_DIR}/LinkAudio.ipp
   PARENT_SCOPE
 )
 
