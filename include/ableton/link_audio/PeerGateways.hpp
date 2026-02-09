@@ -60,7 +60,11 @@ struct PeerGateways
     handler(mGateways.begin(), mGateways.end());
   }
 
-  void clear() { mGateways.clear(); }
+  void clear()
+  {
+    mGateways.clear();
+    mFactory->gatewaysChanged();
+  }
 
   template <typename Announcement>
   void updateAnnouncement(const Announcement& announcement)
@@ -113,6 +117,11 @@ struct PeerGateways
         warning(mIo->log()) << "failed to init audio gateway on interface " << addr
                             << " reason: " << e.what();
       }
+    }
+
+    if (!staleAddrs.empty() || !newAddrs.empty())
+    {
+      mFactory->gatewaysChanged();
     }
   }
 

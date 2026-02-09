@@ -23,6 +23,8 @@
 #include <ableton/link/MeasurementService.hpp>
 #include <ableton/link/PeerState.hpp>
 
+#include <optional>
+
 namespace ableton
 {
 namespace link
@@ -37,18 +39,20 @@ public:
           util::Injected<PeerObserver> observer,
           NodeState nodeState,
           GhostXForm ghostXForm,
-          Clock clock)
+          Clock clock,
+          std::optional<discovery::UdpEndpoint> audioEndpoint = std::nullopt)
     : mIo(std::move(io))
     , mMeasurement(addr,
                    nodeState.sessionId,
                    std::move(ghostXForm),
                    std::move(clock),
                    util::injectRef(*mIo))
-    , mPeerGateway(
-        discovery::makeGateway(util::injectRef(*mIo),
-                               std::move(addr),
-                               std::move(observer),
-                               PeerState{std::move(nodeState), mMeasurement.endpoint()}))
+    , moAudioEndpoint(audioEndpoint)
+    , mPeerGateway(discovery::makeGateway(
+        util::injectRef(*mIo),
+        std::move(addr),
+        std::move(observer),
+        PeerState{std::move(nodeState), mMeasurement.endpoint(), moAudioEndpoint}))
   {
   }
 
@@ -58,6 +62,7 @@ public:
   Gateway(Gateway&& rhs)
     : mIo(std::move(rhs.mIo))
     , mMeasurement(std::move(rhs.mMeasurement))
+    , moAudioEndpoint(std::move(rhs.moAudioEndpoint))
     , mPeerGateway(std::move(rhs.mPeerGateway))
   {
   }
@@ -66,6 +71,7 @@ public:
   {
     mIo = std::move(rhs.mIo);
     mMeasurement = std::move(rhs.mMeasurement);
+    moAudioEndpoint = std::move(rhs.moAudioEndpoint);
     mPeerGateway = std::move(rhs.mPeerGateway);
     return *this;
   }
@@ -73,7 +79,13 @@ public:
   void updateNodeState(std::pair<NodeState, GhostXForm> state)
   {
     mMeasurement.updateNodeState(state.first.sessionId, state.second);
-    mPeerGateway.updateState(PeerState{std::move(state.first), mMeasurement.endpoint()});
+    mPeerGateway.updateState(
+      PeerState{std::move(state.first), mMeasurement.endpoint(), moAudioEndpoint});
+  }
+
+  void updateAudioEndpoint(std::optional<discovery::UdpEndpoint> audioEndpoint)
+  {
+    moAudioEndpoint = audioEndpoint;
   }
 
   template <typename Handler>
@@ -85,6 +97,7 @@ public:
 private:
   util::Injected<IoContext> mIo;
   MeasurementService<Clock, typename util::Injected<IoContext>::type&> mMeasurement;
+  std::optional<discovery::UdpEndpoint> moAudioEndpoint;
   discovery::Gateway<PeerObserver, PeerState, typename util::Injected<IoContext>::type&>
     mPeerGateway;
 };

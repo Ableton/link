@@ -45,6 +45,10 @@ struct Factory
   {
     return std::make_shared<Gateway>(Gateway{addr});
   }
+
+  void gatewaysChanged() { ++changedCount; }
+
+  size_t changedCount{0};
 };
 
 
@@ -84,40 +88,54 @@ TEST_CASE("PeerGateways")
   auto gateways =
     TestGateways(util::injectRef(factory), util::injectVal(io.makeIoContext()));
 
+  SECTION("CallGatewaysChangedOnClear")
+  {
+    gateways.clear();
+    CHECK(factory.changedCount == 1);
+  }
+
   SECTION("GatewayAppears")
   {
     gateways.updateGateways({addr1});
     expectGateways(gateways, {{addr1, 0}});
+    CHECK(factory.changedCount == 1);
 
     gateways.updateGateways({addr1, addr2});
     expectGateways(gateways, {{addr1, 0}, {addr2, 0}});
+    CHECK(factory.changedCount == 2);
   }
 
   SECTION("GatewayDisappears")
   {
     gateways.updateGateways({addr1, addr2});
     expectGateways(gateways, {{addr1, 0}, {addr2, 0}});
+    CHECK(factory.changedCount == 1);
 
     gateways.updateGateways({addr1});
     expectGateways(gateways, {{addr1, 0}});
+    CHECK(factory.changedCount == 2);
   }
 
   SECTION("GatewayChangesAddress")
   {
     gateways.updateGateways({addr1});
     expectGateways(gateways, {{addr1, 0}});
+    CHECK(factory.changedCount == 1);
 
     gateways.updateGateways({addr2});
     expectGateways(gateways, {{addr2, 0}});
+    CHECK(factory.changedCount == 2);
   }
 
   SECTION("UpdateAnnouncement")
   {
     gateways.updateGateways({addr1, addr2});
     expectGateways(gateways, {{addr1, 0}, {addr2, 0}});
+    CHECK(factory.changedCount == 1);
 
     gateways.updateAnnouncement(42);
     expectGateways(gateways, {{addr1, 42}, {addr2, 42}});
+    CHECK(factory.changedCount == 1);
   }
 }
 

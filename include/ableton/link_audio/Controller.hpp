@@ -105,6 +105,7 @@ protected:
     {
       mWasLinkAudioEnabled = false;
       mGateways.clear();
+      updateAudioEndpoints({});
     }
   }
 
@@ -123,6 +124,32 @@ protected:
     {
       mGateways.clear();
     }
+  }
+
+  void updateAudioEndpoints(std::vector<discovery::UdpEndpoint> endpoints)
+  {
+    this->mDiscovery.withGateways(
+      [&](auto begin, auto end)
+      {
+        std::for_each(begin,
+                      end,
+                      [&](auto& gateway)
+                      {
+                        auto it = std::find_if(endpoints.begin(),
+                                               endpoints.end(),
+                                               [&](const auto& ep)
+                                               { return ep.address() == gateway.first; });
+                        if (it != endpoints.end())
+                        {
+                          gateway.second->updateAudioEndpoint(*it);
+                        }
+                        else
+                        {
+                          gateway.second->updateAudioEndpoint(std::nullopt);
+                        }
+                      });
+      });
+    this->updateDiscovery();
   }
 
   struct ChannelsChanged
@@ -145,6 +172,21 @@ protected:
         util::injectVal(makeGatewayObserver(mpController->mChannels, addr)),
         PeerAnnouncement{
           mpController->mNodeId, mpController->mSessionId, mpController->mPeerInfo});
+    }
+
+    void gatewaysChanged()
+    {
+      std::vector<discovery::UdpEndpoint> endpoints;
+      mpController->mGateways.withGateways(
+        [&](auto begin, auto end)
+        {
+          endpoints.reserve(std::distance(begin, end));
+          std::transform(begin,
+                         end,
+                         std::back_inserter(endpoints),
+                         [](auto gateway) { return gateway.second->endpoint(); });
+        });
+      mpController->updateAudioEndpoints(std::move(endpoints));
     }
 
     Controller* mpController;
