@@ -22,6 +22,7 @@
 #include <ableton/link_audio/ChannelAnnouncements.hpp>
 #include <ableton/link_audio/ChannelRequests.hpp>
 #include <ableton/link_audio/Id.hpp>
+#include <ableton/link_audio/PCMCodec.hpp>
 #include <ableton/link_audio/Source.hpp>
 #include <ableton/link_audio/v1/Messages.hpp>
 #include <ableton/util/Injected.hpp>
@@ -59,6 +60,11 @@ struct SourceProcessor
 
   bool process() { return mpImpl->process(); }
 
+  void receiveAudioBuffer(const AudioBuffer& buffer)
+  {
+    mpImpl->receiveAudioBuffer(buffer);
+  }
+
   const Id& id() const { return mpImpl->id(); }
 
   struct Impl : public std::enable_shared_from_this<Impl>
@@ -71,6 +77,8 @@ struct SourceProcessor
       , mpSource(pSource)
       , mGetSender(std::move(getSender))
       , mGetNodeId(std::move(getNodeId))
+      , mBuffer(4096 * 2)
+      , mDecoder(util::injectVal(Callback{this}), 4096)
     {
     }
 
@@ -121,13 +129,27 @@ struct SourceProcessor
 
     bool process() { return mpSource.use_count() > 1; }
 
+    void receiveAudioBuffer(const AudioBuffer& buffer) { mDecoder(buffer); }
+
     const Id& id() const { return mpSource->id(); }
 
   private:
+    struct Callback
+    {
+      void operator()(BufferCallbackHandle<Buffer<int16_t>> buffer)
+      {
+        pImpl->mpSource->callback(buffer);
+      }
+
+      Impl* pImpl;
+    };
+
     Timer mTimer;
     std::shared_ptr<Source> mpSource;
     util::Injected<GetSender> mGetSender;
     util::Injected<GetNodeId> mGetNodeId;
+    Buffer<int16_t> mBuffer;
+    PCMDecoder<int16_t, Callback> mDecoder;
   };
 
   std::shared_ptr<Impl> mpImpl;

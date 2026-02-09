@@ -80,6 +80,11 @@ struct MainProcessor
     mpImpl->receiveChannelRequest(std::move(request), ttl);
   }
 
+  template <typename It>
+  void receiveAudioBuffer(It begin, It end)
+  {
+    mpImpl->receiveAudioBuffer(begin, end);
+  }
 
 private:
   struct Impl : std::enable_shared_from_this<Impl>
@@ -203,6 +208,22 @@ private:
       if (it != mSinks.end())
       {
         it->get()->receiveChannelRequest(std::move(request), ttl);
+      }
+    }
+
+    template <typename It>
+    void receiveAudioBuffer(It begin, It end)
+    {
+      static auto audioBuffer = AudioBuffer{};
+      AudioBuffer::fromNetworkByteStream(audioBuffer, begin, end);
+
+      auto it = std::find_if(mSources.begin(),
+                             mSources.end(),
+                             [&](const auto& pSource)
+                             { return audioBuffer.channelId == pSource->id(); });
+      if (it != mSources.end())
+      {
+        it->get()->receiveAudioBuffer(audioBuffer);
       }
     }
 

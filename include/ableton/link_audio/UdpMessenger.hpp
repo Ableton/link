@@ -393,6 +393,9 @@ private:
         case v1::kStopChannelRequest:
           receiveAudioStopRequest(std::move(result.first), result.second, messageEnd);
           break;
+        case v1::kAudioBuffer:
+          receiveAudioBuffer(std::move(result.first), result.second, messageEnd);
+          break;
         default:
           info(mIo->log()) << "Unknown message received of type: " << header.messageType;
         }
@@ -530,6 +533,19 @@ private:
       catch (const std::runtime_error& err)
       {
         info(mIo->log()) << "Ignoring ChannelStopRequest message: " << err.what();
+      }
+    }
+
+    template <typename It>
+    void receiveAudioBuffer(v1::MessageHeader header, It payloadBegin, It payloadEnd)
+    {
+      try
+      {
+        mChannelsMessageHandler->receiveAudioBuffer(payloadBegin, payloadEnd);
+      }
+      catch (const std::runtime_error& err)
+      {
+        info(mIo->log()) << "Ignoring AudioBuffer message: " << err.what();
       }
     }
 
