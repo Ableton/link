@@ -166,6 +166,7 @@ set(link_platform_HEADERS
 set(link_util_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ableton/util)
 set(link_util_HEADERS
   ${link_util_DIR}/Injected.hpp
+  ${link_util_DIR}/Locked.hpp
   ${link_util_DIR}/Log.hpp
   ${link_util_DIR}/SafeAsyncHandler.hpp
   ${link_util_DIR}/SampleTiming.hpp
