@@ -19,8 +19,10 @@
 
 #pragma once
 
+#include <optional>
 #include <pthread.h>
 #include <thread>
+#include <utility>
 
 namespace ableton
 {
@@ -29,18 +31,42 @@ namespace platforms
 namespace linux_
 {
 
-struct HighThreadPriority
+struct ThreadPriority
 {
-  void operator()() const
+  void setHigh()
   {
-    pthread_attr_t attributes;
-    pthread_attr_init(&attributes);
-    pthread_attr_setinheritsched(&attributes, PTHREAD_EXPLICIT_SCHED);
+    if (!moOriginal)
+    {
+      capture();
+    }
 
-    sched_param p;
-    p.sched_priority = 35;
-    pthread_setschedparam(pthread_self(), SCHED_FIFO, &p);
+    sched_param high{};
+    high.sched_priority = 35;
+    pthread_setschedparam(pthread_self(), SCHED_FIFO, &high);
   }
+
+  void reset()
+  {
+    if (moOriginal)
+    {
+      pthread_setschedparam(pthread_self(), moOriginal->first, &moOriginal->second);
+      moOriginal = std::nullopt;
+    }
+  }
+
+private:
+  void capture()
+  {
+    int policy;
+    sched_param params;
+    const auto result = pthread_getschedparam(pthread_self(), &policy, &params);
+    if (result == 0)
+    {
+      moOriginal = std::make_pair(policy, params);
+    }
+  }
+
+  std::optional<std::pair<int, sched_param>> moOriginal;
 };
 
 struct ThreadFactory

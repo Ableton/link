@@ -21,6 +21,7 @@
 
 #include <mach/mach.h>
 #include <mach/mach_time.h>
+#include <optional>
 #include <pthread.h>
 #include <thread>
 #include <utility>
@@ -32,10 +33,17 @@ namespace platforms
 namespace darwin
 {
 
-struct HighThreadPriority
+struct ThreadPriority
 {
-  void operator()() const
+  // Captures the current thread priority and sets the thread priority to high.
+  // Noop if there is already a captured priority
+  void setHigh()
   {
+    if (!moOriginal)
+    {
+      capture();
+    }
+
     mach_timebase_info_data_t info;
     mach_timebase_info(&info);
     const auto machRatio =
@@ -47,16 +55,17 @@ struct HighThreadPriority
     // The nominal time interval between the beginnings of two consecutive duty cycles. It
     // defines how often the thread expects to run. A nonzero value specifies the thread's
     // periodicity.
-    policy.period = millisecond * 1; // link_audio::MainController's timer period
+    policy.period =
+      static_cast<uint32_t>(millisecond * 1); // link_audio::MainController's timer period
 
     // The amount of CPU time the thread needs during each period. This is the actual
     // execution time required per cycle. Needs to be less or equal to the period.
-    policy.computation = millisecond * 0.2;
+    policy.computation = static_cast<uint32_t>(millisecond * 0.2);
 
     // The maximum real time that may elapse from the start of a period to the end of
     // computation. This sets an upper bound on the allowed delay for completing the
     // computation. It cannot be less than computation.
-    policy.constraint = millisecond * 1;
+    policy.constraint = static_cast<uint32_t>(millisecond * 1);
 
     // A boolean value indicating whether the thread's computation can be interrupted
     // (preempted) by other threads. If set to 1, the thread can be preempted; if 0, it
@@ -65,9 +74,42 @@ struct HighThreadPriority
 
     thread_policy_set(mach_thread_self(),
                       THREAD_TIME_CONSTRAINT_POLICY,
-                      (thread_policy_t)&policy,
+                      reinterpret_cast<thread_policy_t>(&policy),
                       THREAD_TIME_CONSTRAINT_POLICY_COUNT);
   }
+
+  // Resets the thread priority to the previously captured priority.
+  // Noop if there is no captured thread priority
+  void reset()
+  {
+    if (moOriginal)
+    {
+      thread_policy_set(mach_thread_self(),
+                        THREAD_TIME_CONSTRAINT_POLICY,
+                        reinterpret_cast<thread_policy_t>(&*moOriginal),
+                        THREAD_TIME_CONSTRAINT_POLICY_COUNT);
+      moOriginal = std::nullopt;
+    }
+  }
+
+private:
+  void capture()
+  {
+    thread_time_constraint_policy_data_t policy{};
+    mach_msg_type_number_t count = THREAD_TIME_CONSTRAINT_POLICY_COUNT;
+    boolean_t getDefault = false;
+    const auto result = thread_policy_get(mach_thread_self(),
+                                          THREAD_TIME_CONSTRAINT_POLICY,
+                                          reinterpret_cast<thread_policy_t>(&policy),
+                                          &count,
+                                          &getDefault);
+    if (result == KERN_SUCCESS)
+    {
+      moOriginal = policy;
+    }
+  }
+
+  std::optional<thread_time_constraint_policy_data_t> moOriginal;
 };
 
 struct ThreadFactory

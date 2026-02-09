@@ -61,7 +61,7 @@ namespace platform
 #if defined(LINK_PLATFORM_WINDOWS)
 using Clock = platforms::windows::Clock;
 using Random = platforms::stl::Random;
-using HighThreadPriority = platforms::windows::HighThreadPriority;
+using ThreadPriority = platforms::windows::ThreadPriority;
 #if defined(LINK_WINDOWS_SETTHREADDESCRIPTION)
 using IoContext =
   platforms::LINK_ASIO_NAMESPACE::Context<platforms::windows::ScanIpIfAddrs,
@@ -80,12 +80,12 @@ using IoContext =
                                           util::NullLog,
                                           platforms::darwin::ThreadFactory>;
 using Random = platforms::stl::Random;
-using HighThreadPriority = platforms::darwin::HighThreadPriority;
+using ThreadPriority = platforms::darwin::ThreadPriority;
 
 #elif defined(LINK_PLATFORM_LINUX)
 using Clock = platforms::linux_::ClockMonotonicRaw;
 using Random = platforms::stl::Random;
-using HighThreadPriority = platforms::linux_::HighThreadPriority;
+using ThreadPriority = platforms::linux_::ThreadPriority;
 #ifdef __linux__
 using IoContext =
   platforms::LINK_ASIO_NAMESPACE::Context<platforms::posix::ScanIpIfAddrs,

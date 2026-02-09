@@ -21,6 +21,7 @@
 
 #include <Windows.h>
 #include <avrt.h>
+#include <optional>
 #include <processthreadsapi.h>
 #include <thread>
 #include <utility>
@@ -32,13 +33,35 @@ namespace platforms
 namespace windows
 {
 
-struct HighThreadPriority
+struct ThreadPriority
 {
-  void operator()() const
+  void setHigh()
   {
+    if (moOriginal)
+    {
+      return;
+    }
+
     DWORD taskIndex = 0;
-    ::AvSetMmThreadCharacteristics(TEXT("Distribution"), &taskIndex);
+    HANDLE handle = ::AvSetMmThreadCharacteristicsW(L"Distribution", &taskIndex);
+    if (handle)
+    {
+      ::AvSetMmThreadPriority(handle, AVRT_PRIORITY_HIGH);
+      moOriginal = handle;
+    }
   }
+
+  void reset()
+  {
+    if (moOriginal)
+    {
+      ::AvRevertMmThreadCharacteristics(*moOriginal);
+      moOriginal = std::nullopt;
+    }
+  }
+
+private:
+  std::optional<HANDLE> moOriginal;
 };
 
 struct ThreadFactory

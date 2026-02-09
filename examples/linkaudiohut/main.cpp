@@ -39,6 +39,7 @@ struct State
   std::atomic<bool> running;
   ableton::LinkAudio link;
   ableton::linkaudio::AudioPlatform<ableton::LinkAudio> audioPlatform;
+  ableton::link::platform::ThreadPriority threadPriority;
 
   State(std::string name)
     : running(true)
@@ -188,8 +189,19 @@ void input(State& state)
       engine.setStartStopSyncEnabled(!engine.isStartStopSyncEnabled());
       break;
     case 'c':
-      state.link.enableLinkAudio(!state.link.isLinkAudioEnabled());
+    {
+      if (!state.link.isLinkAudioEnabled())
+      {
+        state.link.callOnLinkThread([&]() { state.threadPriority.setHigh(); });
+        state.link.enableLinkAudio(true);
+      }
+      else
+      {
+        state.link.callOnLinkThread([&]() { state.threadPriority.reset(); });
+        state.link.enableLinkAudio(false);
+      }
       break;
+    }
     case 'o':
       state.audioPlatform.mEngine.mLinkAudioRenderer.toggleSource();
       break;
@@ -221,8 +233,6 @@ int main(int nargs, char** args)
 
   State state(args[1]);
   state.link.setChannelsChangedCallback([&]() { printChannels(state); });
-
-  state.link.callOnLinkThread(ableton::link::platform::HighThreadPriority{});
 
   printHelp();
   printStateHeader();
