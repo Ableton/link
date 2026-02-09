@@ -32,6 +32,9 @@ class BasicLinkAudio : public BasicLink<Clock>
 public:
   BasicLinkAudio(double bpm);
 
+  bool isLinkAudioEnabled() const;
+  void enableLinkAudio(bool bEnable);
+
 private:
   using Controller = ableton::link::ApiController<Clock>;
 };

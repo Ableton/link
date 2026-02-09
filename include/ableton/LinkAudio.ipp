@@ -28,4 +28,16 @@ inline BasicLinkAudio<Clock>::BasicLinkAudio(const double bpm)
 {
 }
 
+template <typename Clock>
+inline bool BasicLinkAudio<Clock>::isLinkAudioEnabled() const
+{
+  return this->mController.isLinkAudioEnabled();
+}
+
+template <typename Clock>
+inline void BasicLinkAudio<Clock>::enableLinkAudio(const bool bEnable)
+{
+  this->mController.enableLinkAudio(bEnable);
+}
+
 } // namespace ableton

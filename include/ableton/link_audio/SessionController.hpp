@@ -91,6 +91,8 @@ public:
     // after we have joined a running session when enabling
     this->mRtClientStateSetter.processPendingClientStates();
     this->mRtClientStateSetter.updateEnabled();
+
+    this->updateIsLinkAudioEnabled();
   }
 };
 

@@ -382,6 +382,8 @@ private:
   link::TempoCallback mTempoCallback = [](link::Tempo) {};
   link::StartStopStateCallback mStartStopCallback = [](bool) {};
   Clock mClock;
+
+protected:
   Controller mController;
 };
 

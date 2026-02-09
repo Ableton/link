@@ -20,6 +20,7 @@
 #pragma once
 
 #include <ableton/link/Controller.hpp>
+#include <atomic>
 
 namespace ableton
 {
@@ -56,8 +57,35 @@ public:
              link::StartStopStateCallback startStopStateCallback,
              Clock clock)
     : LinkController(tempo, peerCallback, tempoCallback, startStopStateCallback, clock)
+    , mIsLinkAudioEnabled(false)
+    , mWasLinkAudioEnabled(false)
   {
   }
+
+  void enableLinkAudio(bool enabled)
+  {
+    mIsLinkAudioEnabled = enabled;
+    this->mRtClientStateSetter.invoke();
+  }
+
+  bool isLinkAudioEnabled() const { return mIsLinkAudioEnabled; }
+
+protected:
+  void updateIsLinkAudioEnabled()
+  {
+    if (mIsLinkAudioEnabled && !mWasLinkAudioEnabled && this->mpSessionController)
+    {
+      mWasLinkAudioEnabled = true;
+      this->mpSessionController->gatewaysChangedCallback();
+    }
+    else if (!mIsLinkAudioEnabled && mWasLinkAudioEnabled)
+    {
+      mWasLinkAudioEnabled = false;
+    }
+  }
+
+  std::atomic_bool mIsLinkAudioEnabled;
+  bool mWasLinkAudioEnabled;
 };
 
 } // namespace link_audio
