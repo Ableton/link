@@ -285,10 +285,10 @@ protected:
     Controller* mpController;
   };
 
-  using ControllerChannels = Channels<IoContext&, ChannelsChanged>;
-  using ControllerMessengerPtr =
-    MessengerPtr<typename ControllerChannels::GatewayObserver,
-                 typename util::Injected<IoContext>::type&>;
+
+  using Interface = MessengerInterface<typename util::Injected<IoContext>::type&>;
+  using ControllerChannels = Channels<IoContext&, ChannelsChanged, Interface>;
+
   struct ChannelsCallback
   {
     void operator()()
@@ -303,6 +303,9 @@ protected:
   };
 
   using ControllerMainProcessor = MainProcessor<ChannelsCallback, Random, IoContext&>;
+  using ControllerMessengerPtr =
+    MessengerPtr<typename ControllerChannels::GatewayObserver,
+                 typename util::Injected<IoContext>::type&>;
 
   struct GatewayFactory
   {

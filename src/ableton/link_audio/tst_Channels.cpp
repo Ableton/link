@@ -58,7 +58,7 @@ TEST_CASE("Channels")
 
   using Random = ableton::platforms::stl::Random;
   using IoContext = test::serial_io::Context;
-  using TestChannels = Channels<IoContext, std::reference_wrapper<Callback>>;
+  using TestChannels = Channels<IoContext, std::reference_wrapper<Callback>, int>;
   using Channel = TestChannels::Channel;
 
   auto checkChannel = [](const Input& test, const std::vector<Channel>& channels)
@@ -125,6 +125,31 @@ TEST_CASE("Channels")
 
       CHECK(1 == uniqueChannels.size());
       checkChannel(foo, uniqueChannels);
+
+      SECTION("GetSendHandler")
+      {
+        const auto handler =
+          channels.channelSendHandler(foo.announcement.channels.channels[0].id);
+        CHECK(handler.has_value());
+        CHECK(foo.from == handler->endpoint());
+
+        SECTION("GetSendHandlerForBestConnection")
+        {
+          auto fasterFoo = foo;
+          fasterFoo.networkQuality = foo.networkQuality * 2;
+          const auto expectedSendHandler =
+            TestChannels::SendHandler({discovery::makeAddress("3.3.3.3"), 3333}, {});
+          fasterFoo.from = expectedSendHandler.endpoint();
+          auto observer2 = makeGatewayObserver(channels, gateway2);
+          sawAnnouncement(observer2, fasterFoo);
+          CHECK(2 == channels.sessionChannels(sessionId).size());
+          CHECK(1 == channels.uniqueSessionChannels(sessionId).size());
+          auto sendHandler =
+            channels.channelSendHandler(foo.announcement.channels.channels[0].id);
+          CHECK(sendHandler.has_value());
+          CHECK(expectedSendHandler.endpoint() == sendHandler->endpoint());
+        }
+      }
     }
 
     SECTION("ReAddChannelWithChangedPeerId")
@@ -132,6 +157,19 @@ TEST_CASE("Channels")
       auto changedFoo = foo;
       changedFoo.announcement.nodeId = Id::random<Random>();
       sawAnnouncement(observer, changedFoo);
+
+      SECTION("GetSendHandler")
+      {
+        const auto handler = channels.peerSendHandler(changedFoo.announcement.nodeId);
+        CHECK(handler.has_value());
+        CHECK(foo.from == handler->endpoint());
+      }
+
+      SECTION("GetSendHandlerWithUnknownChannelId")
+      {
+        const auto handler = channels.channelSendHandler(Id::random<Random>());
+        CHECK(!handler.has_value());
+      }
     }
 
     SECTION("UniqueChannelsWithUnknownSessionId")

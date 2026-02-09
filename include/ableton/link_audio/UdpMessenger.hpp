@@ -22,6 +22,8 @@
 #include <ableton/discovery/AsioTypes.hpp>
 #include <ableton/discovery/UdpMessenger.hpp>
 #include <ableton/discovery/UnicastIpInterface.hpp>
+#include <ableton/link/PayloadEntries.hpp>
+#include <ableton/link_audio/NetworkMetrics.hpp>
 #include <ableton/link_audio/v1/Messages.hpp>
 #include <ableton/util/Injected.hpp>
 #include <ableton/util/SafeAsyncHandler.hpp>
@@ -80,6 +82,9 @@ public:
     link::NodeId ident() const { return announcement.ident(); }
 
     Announcement announcement;
+    double networkQuality;
+    Interface interface;
+    discovery::UdpEndpoint from;
     int ttl;
   };
 
@@ -156,7 +161,7 @@ public:
                      [&](const auto& receiver) { return receiver.endpoint == endpoint; });
       if (it == mpImpl->mReceivers.end())
       {
-        mpImpl->mReceivers.push_back({peerId, *endpoint});
+        mpImpl->mReceivers.push_back({peerId, *endpoint, {}, {}});
       }
     }
     else
@@ -174,6 +179,8 @@ private:
   {
     link::NodeId id;
     discovery::UdpEndpoint endpoint;
+    std::chrono::microseconds lastPingTime;
+    NetworkMetricsFilter metricsFilter;
   };
 
   struct Impl : std::enable_shared_from_this<Impl>
@@ -303,18 +310,37 @@ private:
 
     void sendAnnouncement()
     {
+      const auto pingTime = std::chrono::duration_cast<std::chrono::microseconds>(
+        mTimer.now().time_since_epoch());
       for (auto& receiver : mReceivers)
       {
         try
         {
+          // Send one ping per receiver
+          auto shouldSendPing = true;
           for (const auto& announcement : mAnnouncements)
           {
-            sendLinkAudioUdpMessage(*mpInterface,
-                                    announcement.ident(),
-                                    mTtl,
-                                    v1::kPeerAnnouncement,
-                                    toPayload(announcement),
-                                    receiver.endpoint);
+            if (shouldSendPing)
+            {
+              const auto hostTime = link::HostTime{pingTime};
+              sendLinkAudioUdpMessage(
+                *mpInterface,
+                announcement.ident(),
+                mTtl,
+                v1::kPeerAnnouncement,
+                toPayload(announcement) + discovery::makePayload(hostTime),
+                receiver.endpoint);
+              shouldSendPing = false;
+            }
+            else
+            {
+              sendLinkAudioUdpMessage(*mpInterface,
+                                      announcement.ident(),
+                                      mTtl,
+                                      v1::kPeerAnnouncement,
+                                      toPayload(announcement),
+                                      receiver.endpoint);
+            }
           }
         }
         catch (const discovery::UdpSendException&)
@@ -345,15 +371,76 @@ private:
         {
         case v1::kPeerAnnouncement:
           receiveAnnouncement(std::move(result.first), result.second, messageEnd, from);
+          receivePing(result.second, messageEnd, from);
           break;
         case v1::kChannelByes:
           receiveChannelByes(result.second, messageEnd);
+          break;
+        case v1::kPong:
+          receivePong(result.second, messageEnd, from);
           break;
         default:
           info(mIo->log()) << "Unknown message received of type: " << header.messageType;
         }
       }
       listen();
+    }
+
+    template <typename It>
+    void receivePing(It payloadBegin, It payloadEnd, discovery::UdpEndpoint from)
+    {
+      std::optional<std::chrono::microseconds> oHostTime;
+      discovery::parsePayload<link::HostTime>(payloadBegin,
+                                              payloadEnd,
+                                              [&oHostTime](link::HostTime ht)
+                                              { oHostTime = std::move(ht.time); });
+
+      if (oHostTime)
+      {
+        try
+        {
+          sendLinkAudioUdpMessage(*mpInterface,
+                                  mAnnouncements.front().ident(),
+                                  mTtl,
+                                  v1::kPong,
+                                  discovery::makePayload(link::HostTime{*oHostTime}),
+                                  from);
+        }
+        catch (const std::runtime_error& err)
+        {
+          return;
+        }
+      }
+    }
+
+    template <typename It>
+    void receivePong(It payloadBegin, It payloadEnd, discovery::UdpEndpoint from)
+    {
+      const auto receiveTime = std::chrono::duration_cast<std::chrono::microseconds>(
+        mTimer.now().time_since_epoch());
+      std::chrono::microseconds sendTime{0};
+
+      try
+      {
+        discovery::parsePayload<link::HostTime>(payloadBegin,
+                                                payloadEnd,
+                                                [&sendTime](link::HostTime ht)
+                                                { sendTime = std::move(ht.time); });
+
+        auto it = std::find_if(
+          mReceivers.begin(),
+          mReceivers.end(),
+          [&](const auto& receiver)
+          { return receiver.endpoint == from && receiver.lastPingTime == sendTime; });
+        if (it != mReceivers.end())
+        {
+          it->metricsFilter(receiveTime - sendTime);
+        }
+      }
+      catch (const std::runtime_error& err)
+      {
+        return;
+      }
     }
 
     template <typename It>
@@ -374,8 +461,12 @@ private:
           auto announcement = Announcement::fromPayload(
             std::move(header.ident), std::move(payloadBegin), std::move(payloadEnd));
 
-          sawAnnouncement(
-            *mObserver, ExtendedAnnouncement{std::move(announcement), mTtl});
+          sawAnnouncement(*mObserver,
+                          ExtendedAnnouncement{std::move(announcement),
+                                               it->metricsFilter.metrics().quality(),
+                                               mpInterface.shared,
+                                               from,
+                                               mTtl});
         }
         catch (const std::runtime_error& err)
         {

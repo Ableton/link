@@ -27,8 +27,10 @@
 #include <algorithm>
 #include <cassert>
 #include <chrono>
+#include <map>
 #include <memory>
 #include <optional>
+#include <stdexcept>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -38,13 +40,43 @@ namespace ableton
 namespace link_audio
 {
 
-template <typename IoContext, typename Callback>
+template <typename IoContext, typename Callback, typename Interface>
 class Channels
 {
   // non-movable private implementation type
   struct Impl;
 
 public:
+  struct SendHandler
+  {
+    SendHandler(discovery::UdpEndpoint endpoint, std::shared_ptr<Interface> interface)
+      : mEndpoint(endpoint)
+      , mpInterface(interface)
+    {
+    }
+
+    std::size_t operator()(const uint8_t* const pData, const size_t numBytes)
+    {
+      if (auto interface = mpInterface.lock())
+      {
+        try
+        {
+          return interface->send(pData, numBytes, mEndpoint);
+        }
+        catch (const std::runtime_error&)
+        {
+        }
+      }
+      return 0;
+    }
+
+    discovery::UdpEndpoint endpoint() const { return mEndpoint; }
+
+  private:
+    discovery::UdpEndpoint mEndpoint;
+    std::weak_ptr<Interface> mpInterface;
+  };
+
   struct Channel
   {
     std::string name;
@@ -113,6 +145,23 @@ public:
                           end(channels),
                           [](const auto& a, const auto& b) { return a.id == b.id; });
     return {begin(channels), it};
+  }
+
+  std::optional<SendHandler> peerSendHandler(const Id peerId) const
+  {
+    auto it = mpImpl->mPeerSendHandlers.find(peerId);
+    return it != mpImpl->mPeerSendHandlers.end() ? std::optional{it->second.handler}
+                                                 : std::nullopt;
+  }
+
+  std::optional<SendHandler> channelSendHandler(const Id channelId) const
+  {
+    const auto& channels = mpImpl->mChannels;
+    const auto it =
+      std::find_if(begin(channels),
+                   end(channels),
+                   [&](const auto& info) { return info.channel.id == channelId; });
+    return it != end(channels) ? peerSendHandler(it->channel.peerId) : std::nullopt;
   }
 
   struct GatewayObserver
@@ -205,6 +254,8 @@ private:
       const auto peerInfo = incoming.announcement.peerInfo;
       const auto peerAudioChannels = incoming.announcement.channels.channels;
       const auto ttl = incoming.ttl;
+      auto sendHandler = SendHandler(incoming.from, incoming.interface);
+      const auto networkQuality = incoming.networkQuality;
       bool didChannelsChange = false;
 
       for (const auto& peerChannel : peerAudioChannels)
@@ -279,6 +330,16 @@ private:
             *addrRange.first = std::move(channelInfo);
           }
         }
+
+        if (mPeerSendHandlers.count(nodeId) == 0)
+        {
+          mPeerSendHandlers.emplace(nodeId, PeerSendHandler{sendHandler, networkQuality});
+        }
+        else if (mPeerSendHandlers.at(nodeId).networkQuality < networkQuality)
+        {
+          mPeerSendHandlers.insert_or_assign(
+            nodeId, PeerSendHandler{sendHandler, networkQuality});
+        }
       }
 
       // Invoke callbacks outside the critical section
@@ -288,6 +349,24 @@ private:
       }
 
       scheduleNextPruning();
+    }
+
+    void pruneSendHandlers()
+    {
+      using namespace std;
+      for (auto it = begin(mPeerSendHandlers); it != end(mPeerSendHandlers);)
+      {
+        if (none_of(begin(mChannels),
+                    end(mChannels),
+                    [&](const auto& info) { return info.channel.peerId == it->first; }))
+        {
+          it = mPeerSendHandlers.erase(it);
+        }
+        else
+        {
+          ++it;
+        }
+      }
     }
 
     template <typename It>
@@ -326,6 +405,7 @@ private:
 
       if (channelsChanged)
       {
+        pruneSendHandlers();
         mCallback();
       }
     }
@@ -354,6 +434,7 @@ private:
 
       if (channelsChanged)
       {
+        pruneSendHandlers();
         mCallback();
       }
     }
@@ -396,6 +477,7 @@ private:
 
       if (channelsChanged)
       {
+        pruneSendHandlers();
         mCallback();
       }
     }
@@ -422,6 +504,13 @@ private:
     util::Injected<IoContext> mIo;
     Callback mCallback;
     std::vector<ChannelInfo> mChannels;
+
+    struct PeerSendHandler
+    {
+      SendHandler handler;
+      double networkQuality;
+    };
+    std::map<Id, PeerSendHandler> mPeerSendHandlers;
 
     using ChannelTimeout = std::tuple<TimePoint, discovery::IpAddress, Id>;
     using ChannelTimeouts = std::vector<ChannelTimeout>;
