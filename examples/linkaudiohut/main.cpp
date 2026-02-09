@@ -203,6 +203,8 @@ int main(int nargs, char** args)
 
   State state(args[1]);
 
+  state.link.callOnLinkThread(ableton::link::platform::HighThreadPriority{});
+
   printHelp();
   printStateHeader();
   disableBufferedInput();

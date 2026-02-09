@@ -28,9 +28,7 @@
 #include <ableton/platforms/stl/Random.hpp>
 #include <ableton/platforms/windows/Clock.hpp>
 #include <ableton/platforms/windows/ScanIpIfAddrs.hpp>
-#if defined(LINK_WINDOWS_SETTHREADDESCRIPTION)
 #include <ableton/platforms/windows/ThreadFactory.hpp>
-#endif
 #elif defined(LINK_PLATFORM_MACOSX)
 #include <ableton/platforms/asio/Context.hpp>
 #include <ableton/platforms/darwin/Clock.hpp>
@@ -63,6 +61,7 @@ namespace platform
 #if defined(LINK_PLATFORM_WINDOWS)
 using Clock = platforms::windows::Clock;
 using Random = platforms::stl::Random;
+using HighThreadPriority = platforms::windows::HighThreadPriority;
 #if defined(LINK_WINDOWS_SETTHREADDESCRIPTION)
 using IoContext =
   platforms::LINK_ASIO_NAMESPACE::Context<platforms::windows::ScanIpIfAddrs,
@@ -81,10 +80,12 @@ using IoContext =
                                           util::NullLog,
                                           platforms::darwin::ThreadFactory>;
 using Random = platforms::stl::Random;
+using HighThreadPriority = platforms::darwin::HighThreadPriority;
 
 #elif defined(LINK_PLATFORM_LINUX)
 using Clock = platforms::linux_::ClockMonotonicRaw;
 using Random = platforms::stl::Random;
+using HighThreadPriority = platforms::linux_::HighThreadPriority;
 #ifdef __linux__
 using IoContext =
   platforms::LINK_ASIO_NAMESPACE::Context<platforms::posix::ScanIpIfAddrs,

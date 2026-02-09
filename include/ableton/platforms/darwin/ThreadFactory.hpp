@@ -19,6 +19,8 @@
 
 #pragma once
 
+#include <mach/mach.h>
+#include <mach/mach_time.h>
 #include <pthread.h>
 #include <thread>
 #include <utility>
@@ -29,6 +31,44 @@ namespace platforms
 {
 namespace darwin
 {
+
+struct HighThreadPriority
+{
+  void operator()() const
+  {
+    mach_timebase_info_data_t info;
+    mach_timebase_info(&info);
+    const auto machRatio =
+      static_cast<double>(info.denom) / static_cast<double>(info.numer);
+    const auto millisecond = machRatio * 1000000;
+
+    struct thread_time_constraint_policy policy;
+
+    // The nominal time interval between the beginnings of two consecutive duty cycles. It
+    // defines how often the thread expects to run. A nonzero value specifies the thread's
+    // periodicity.
+    policy.period = millisecond * 1; // link_audio::MainController's timer period
+
+    // The amount of CPU time the thread needs during each period. This is the actual
+    // execution time required per cycle. Needs to be less or equal to the period.
+    policy.computation = millisecond * 0.2;
+
+    // The maximum real time that may elapse from the start of a period to the end of
+    // computation. This sets an upper bound on the allowed delay for completing the
+    // computation. It cannot be less than computation.
+    policy.constraint = millisecond * 1;
+
+    // A boolean value indicating whether the thread's computation can be interrupted
+    // (preempted) by other threads. If set to 1, the thread can be preempted; if 0, it
+    // should run to completion within its constraint.
+    policy.preemptible = 1;
+
+    thread_policy_set(mach_thread_self(),
+                      THREAD_TIME_CONSTRAINT_POLICY,
+                      (thread_policy_t)&policy,
+                      THREAD_TIME_CONSTRAINT_POLICY_COUNT);
+  }
+};
 
 struct ThreadFactory
 {

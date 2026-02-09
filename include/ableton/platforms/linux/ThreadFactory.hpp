@@ -29,6 +29,20 @@ namespace platforms
 namespace linux_
 {
 
+struct HighThreadPriority
+{
+  void operator()() const
+  {
+    pthread_attr_t attributes;
+    pthread_attr_init(&attributes);
+    pthread_attr_setinheritsched(&attributes, PTHREAD_EXPLICIT_SCHED);
+
+    sched_param p;
+    p.sched_priority = 35;
+    pthread_setschedparam(pthread_self(), SCHED_FIFO, &p);
+  }
+};
+
 struct ThreadFactory
 {
   template <typename Callable, typename... Args>

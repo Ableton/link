@@ -19,6 +19,8 @@
 
 #pragma once
 
+#include <Windows.h>
+#include <avrt.h>
 #include <processthreadsapi.h>
 #include <thread>
 #include <utility>
@@ -29,6 +31,15 @@ namespace platforms
 {
 namespace windows
 {
+
+struct HighThreadPriority
+{
+  void operator()() const
+  {
+    DWORD taskIndex = 0;
+    ::AvSetMmThreadCharacteristics(TEXT("Distribution"), &taskIndex);
+  }
+};
 
 struct ThreadFactory
 {

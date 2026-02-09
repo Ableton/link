@@ -130,7 +130,7 @@ function(configure_linkhut_audio_sources target)
       )
       endif()
 
-    target_link_libraries(${target} winmm)
+    target_link_libraries(${target} winmm Avrt)
   endif()
 
 endfunction()
