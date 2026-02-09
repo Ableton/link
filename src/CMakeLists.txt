@@ -10,6 +10,7 @@ project(LinkTest)
 
 set(link_discovery_test_SOURCES
   ableton/discovery/tst_InterfaceScanner.cpp
+  ableton/discovery/tst_NetworkByteStreamSerializable.cpp
   ableton/discovery/tst_Payload.cpp
   ableton/discovery/tst_PeerGateway.cpp
   ableton/discovery/tst_PeerGateways.cpp

@@ -32,6 +32,8 @@
 
 #include <chrono>
 #include <cstdint>
+#include <iterator>
+#include <string>
 #include <type_traits>
 #include <utility>
 #include <vector>
@@ -274,7 +276,7 @@ template <typename It>
 It toNetworkByteStream(const std::chrono::microseconds micros, It out)
 {
   static_assert(sizeof(int64_t) == sizeof(std::chrono::microseconds::rep),
-                "The size of microseconds::rep must matche the size of int64_t.");
+                "The size of microseconds::rep must match the size of int64_t.");
   return toNetworkByteStream(static_cast<int64_t>(micros.count()), std::move(out));
 }
 
@@ -288,6 +290,34 @@ struct Deserialize<std::chrono::microseconds>
     auto result =
       Deserialize<int64_t>::fromNetworkByteStream(std::move(begin), std::move(end));
     return make_pair(chrono::microseconds{result.first}, result.second);
+  }
+};
+
+// string
+inline std::uint32_t sizeInByteStream(const std::string& str)
+{
+  return sizeof(std::uint32_t) + static_cast<std::uint32_t>(str.size());
+}
+
+template <typename It>
+It toNetworkByteStream(const std::string& str, It out)
+{
+  static_assert(sizeof(std::uint8_t) == sizeof(char),
+                "The size of char must match the size of uint8_t.");
+  out = toNetworkByteStream(static_cast<std::uint32_t>(str.size()), out);
+  return std::copy(str.begin(), str.end(), out);
+}
+
+template <>
+struct Deserialize<std::string>
+{
+  template <typename It>
+  static std::pair<std::string, It> fromNetworkByteStream(It bytesBegin, It bytesEnd)
+  {
+    const auto result = Deserialize<uint32_t>::fromNetworkByteStream(
+      std::move(bytesBegin), std::move(bytesEnd));
+    const auto endIt = std::next(result.second, result.first);
+    return std::make_pair(std::string(result.second, endIt), endIt);
   }
 };
 
