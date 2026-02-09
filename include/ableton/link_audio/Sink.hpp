@@ -17,6 +17,7 @@
  *  please contact <link-devs@ableton.com>.
  */
 
+#include <ableton/link_audio/BeatTimeMapping.hpp>
 #include <ableton/link_audio/Buffer.hpp>
 #include <ableton/link_audio/Id.hpp>
 #include <ableton/link_audio/Queue.hpp>
@@ -51,6 +52,68 @@ struct Sink
   bool nameChanged() { return !mNameIsUpToDate.test_and_set(); }
 
   const Id& id() const { return mId; }
+
+  Buffer<int16_t>* retainBuffer()
+  {
+    auto queueWriter = mQueue.writer();
+
+    if (queueWriter.numRetainedSlots() > 0)
+    {
+      return nullptr;
+    }
+
+    if (!queueWriter.retainSlot())
+    {
+      return nullptr;
+    }
+
+    return queueWriter[0];
+  }
+
+  void releaseAndCommitBuffer(const link::Timeline& timeline,
+                              const Id& sessionId,
+                              double beatsAtBufferBegin,
+                              double quantum,
+                              size_t numFrames,
+                              size_t numChannels,
+                              uint32_t sampleRate)
+  {
+    auto queueWriter = mQueue.writer();
+
+    if (queueWriter.numRetainedSlots() > 0)
+    {
+      auto pBuffer = queueWriter[0];
+      const auto beginBeats =
+        globalBeatAtBeat(timeline, link::Beats{beatsAtBufferBegin}, link::Beats{quantum});
+      pBuffer->mBeginBeats = beginBeats;
+      pBuffer->mTempo = timeline.tempo;
+      pBuffer->mNumChannels = static_cast<uint32_t>(numChannels);
+      pBuffer->mSampleRate = sampleRate;
+      pBuffer->mNumFrames = static_cast<uint32_t>(numFrames);
+      pBuffer->mSessionId = sessionId;
+      queueWriter.releaseSlot();
+    }
+  }
+
+  void releaseBuffer()
+  {
+    auto queueWriter = mQueue.writer();
+
+    assert(queueWriter.numRetainedSlots() > 0);
+
+    if (queueWriter.numRetainedSlots() > 0)
+    {
+      queueWriter[0]->mBeginBeats = link::Beats{0.};
+      queueWriter[0]->mTempo = link::Tempo{0};
+      queueWriter.releaseSlot();
+    }
+  }
+
+  Buffer<int16_t>* buffer()
+  {
+    auto queueWriter = mQueue.writer();
+    return queueWriter.numRetainedSlots() > 0 ? queueWriter[0] : nullptr;
+  }
 
   Queue<Buffer<int16_t>>::Reader reader() { return mQueue.reader(); }
 

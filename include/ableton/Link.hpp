@@ -368,6 +368,9 @@ public:
                                           double quantum);
 
   private:
+    template <typename SessionState>
+    friend const link::ApiState& detail::linkApiState(const SessionState& sessionState);
+
     friend BasicLink<Clock>;
     link::ApiState mOriginalState;
     link::ApiState mState;

@@ -23,6 +23,7 @@
 
 #include <ableton/platforms/Config.hpp>
 
+#include <ableton/link_audio/Buffer.hpp>
 #include <ableton/link_audio/Id.hpp>
 #include <ableton/link_audio/SessionController.hpp>
 #include <ableton/link_audio/Sink.hpp>

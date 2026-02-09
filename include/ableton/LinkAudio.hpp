@@ -92,9 +92,38 @@ public:
   LinkAudioSink& operator=(LinkAudioSink&&) = default;
 
   std::string name() const;
+
   void setName(std::string name);
 
+  struct BufferHandle
+  {
+    BufferHandle(LinkAudioSink&);
+
+    BufferHandle(const BufferHandle&) = delete;
+    BufferHandle(BufferHandle&& other) = delete;
+    BufferHandle& operator=(const BufferHandle&) = delete;
+    BufferHandle& operator=(BufferHandle&& other) = delete;
+
+    ~BufferHandle();
+
+    operator bool() const;
+    int16_t* samples;
+    size_t maxNumSamples;
+    template <typename SessionState>
+    bool commit(const SessionState&,
+                double beatsAtBufferBegin,
+                double quantum,
+                size_t numFrames,
+                size_t numChannels,
+                uint32_t sampleRate);
+
+  private:
+    std::weak_ptr<link_audio::Sink> mpSink;
+    link_audio::Buffer<int16_t>* mpBuffer;
+  };
+
 private:
+  friend struct BufferHandle;
   std::shared_ptr<link_audio::Sink> mpImpl;
 };
 

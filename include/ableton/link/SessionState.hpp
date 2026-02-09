@@ -114,4 +114,16 @@ struct ApiState
 };
 
 } // namespace link
+
+
+namespace detail
+{
+template <typename SessionState>
+const link::ApiState& linkApiState(const SessionState& sessionState)
+{
+  return sessionState.mState;
+}
+
+} // namespace detail
+
 } // namespace ableton

@@ -109,6 +109,69 @@ inline void LinkAudioSink::setName(std::string name)
   mpImpl->setName(std::move(name));
 }
 
+inline LinkAudioSink::BufferHandle::BufferHandle(LinkAudioSink& sink)
+  : samples(nullptr)
+  , maxNumSamples(0)
+  , mpSink(sink.mpImpl)
+  , mpBuffer(nullptr)
+{
+  if (auto pBuffer = sink.mpImpl->retainBuffer())
+  {
+    samples = pBuffer->mSamples.data();
+    maxNumSamples = pBuffer->mSamples.size();
+    mpBuffer = pBuffer;
+  }
+}
+
+inline LinkAudioSink::BufferHandle::~BufferHandle()
+{
+  // BufferHandle should not outlive the LinkAudioSink it was created from
+  assert(mpSink.lock());
+
+  if (mpBuffer)
+  {
+    if (auto pSink = mpSink.lock())
+    {
+      pSink->releaseBuffer();
+    }
+  }
+}
+
+inline LinkAudioSink::BufferHandle::operator bool() const
+{
+  return mpBuffer != nullptr;
+}
+
+template <typename SessionState>
+inline bool LinkAudioSink::BufferHandle::commit(const SessionState& sessionState,
+                                                const double beatsAtBufferBegin,
+                                                const double quantum,
+                                                const size_t numFrames,
+                                                const size_t numChannels,
+                                                const uint32_t sampleRate)
+{
+  const auto result = static_cast<bool>(*this) && (numChannels == 1 || numChannels == 2)
+                      && maxNumSamples >= numFrames * numChannels;
+
+  if (result && mpBuffer)
+  {
+    if (auto pSink = mpSink.lock())
+    {
+      pSink->releaseAndCommitBuffer(detail::linkApiState(sessionState).timeline,
+                                    detail::linkApiState(sessionState).timelineSessionId,
+                                    beatsAtBufferBegin,
+                                    quantum,
+                                    numFrames,
+                                    numChannels,
+                                    sampleRate);
+    }
+  }
+
+  mpBuffer = nullptr;
+
+  return result;
+}
+
 template <typename LinkAudio>
 inline LinkAudioSource::LinkAudioSource(LinkAudio& link, ChannelId id)
   : mpImpl{link.mController.addSource(std::move(id))}
