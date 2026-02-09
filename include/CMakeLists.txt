@@ -66,6 +66,7 @@ set(link_audio_HEADERS
   ${link_audio_DIR}/PeerInfo.hpp
   ${link_audio_DIR}/Queue.hpp
   ${link_audio_DIR}/Receivers.hpp
+  ${link_audio_DIR}/Resizer.hpp
   ${link_audio_DIR}/SessionController.hpp
   ${link_audio_DIR}/Sink.hpp
   ${link_audio_DIR}/SinkProcessor.hpp
