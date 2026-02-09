@@ -27,6 +27,7 @@
 #include <ableton/link_audio/PeerInfo.hpp>
 #include <ableton/link_audio/UdpMessenger.hpp>
 #include <ableton/util/Injected.hpp>
+#include <ableton/util/Locked.hpp>
 #include <algorithm>
 #include <atomic>
 #include <functional>
@@ -73,10 +74,11 @@ public:
              Clock clock)
     : LinkController(tempo, peerCallback, tempoCallback, startStopStateCallback, clock)
     , mChannelsChangedCallback{[]() {}}
+    , mApiChannels({})
     , mIsLinkAudioEnabled(false)
     , mWasLinkAudioEnabled(false)
     , mPeerInfo{}
-    , mChannels(util::injectRef(*(this->mIo)), ChannelsChanged{})
+    , mChannels(util::injectRef(*(this->mIo)), ChannelsChanged{this})
     , mProcessor{util::injectRef(*(this->mIo)), ChannelsCallback{this}}
     , mGateways{util::injectVal(GatewayFactory{this}), util::injectRef(*(this->mIo))}
   {
@@ -145,6 +147,8 @@ public:
                      { mChannelsChangedCallback = callback; });
   }
 
+  auto channels() const { return mApiChannels.read(); }
+
 protected:
   void updateIsLinkAudioEnabled()
   {
@@ -177,6 +181,8 @@ protected:
     }
 
     mGateways.updateSessionPeers(begin(peers), end(peers));
+
+    updateApiChannels();
   }
 
   void sawLinkAudioEndpoint(link::NodeId peerId,
@@ -230,9 +236,43 @@ protected:
     this->updateDiscovery();
   }
 
+  void updateApiChannels()
+  {
+    auto channelsChanged = false;
+    auto currentChannels = mChannels.uniqueSessionChannels(this->mSessionId);
+
+    std::sort(currentChannels.begin(),
+              currentChannels.end(),
+              [](const auto& a, const auto& b)
+              {
+                if (a.peerName == b.peerName)
+                {
+                  return a.name < b.name;
+                }
+                return a.peerName < b.peerName;
+              });
+
+    mApiChannels.update(
+      [&](auto& apiChannels)
+      {
+        if (apiChannels != currentChannels)
+        {
+          apiChannels = currentChannels;
+          channelsChanged = true;
+        }
+      });
+
+    if (channelsChanged)
+    {
+      mChannelsChangedCallback();
+    }
+  }
+
   struct ChannelsChanged
   {
-    void operator()() {}
+    void operator()() { mpController->updateApiChannels(); }
+
+    Controller* mpController;
   };
 
   using ControllerChannels = Channels<IoContext&, ChannelsChanged>;
@@ -287,6 +327,7 @@ protected:
   };
 
   ChannelsChangedCallback mChannelsChangedCallback;
+  util::Locked<std::vector<typename ControllerChannels::Channel>> mApiChannels;
   std::atomic_bool mIsLinkAudioEnabled;
   bool mWasLinkAudioEnabled;
   PeerInfo mPeerInfo;

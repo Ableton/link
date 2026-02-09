@@ -126,6 +126,18 @@ void printState(const std::chrono::microseconds time,
   clearLine();
 }
 
+void printChannels(const State& state)
+{
+  clearLine();
+  std::cout << "\n\nLinkAudio Peers:" << std::endl;
+  for (const auto& channel : state.link.channels())
+  {
+    std::cout << channel.peerName << " | " << channel.name << std::endl;
+  }
+  std::cout << std::endl;
+  printStateHeader();
+}
+
 void input(State& state)
 {
   char in;
@@ -202,6 +214,7 @@ int main(int nargs, char** args)
   }
 
   State state(args[1]);
+  state.link.setChannelsChangedCallback([&]() { printChannels(state); });
 
   state.link.callOnLinkThread(ableton::link::platform::HighThreadPriority{});
 

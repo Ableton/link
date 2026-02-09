@@ -25,6 +25,7 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 
 namespace ableton
 {
@@ -44,6 +45,16 @@ public:
 
   template <typename Callback>
   void setChannelsChangedCallback(Callback callback);
+
+  struct Channel
+  {
+    ChannelId id;
+    std::string name;
+    PeerId peerId;
+    std::string peerName;
+  };
+
+  std::vector<Channel> channels() const;
 
   template <typename Function>
   void callOnLinkThread(Function func);

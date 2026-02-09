@@ -52,6 +52,12 @@ public:
     std::string peerName;
     Id peerId;
     Id sessionId;
+
+    friend bool operator==(const Channel& lhs, const Channel& rhs)
+    {
+      return std::tie(lhs.name, lhs.id, lhs.peerName, lhs.peerId, lhs.sessionId)
+             == std::tie(rhs.name, rhs.id, rhs.peerName, rhs.peerId, rhs.sessionId);
+    }
   };
 
   struct ChannelInfo
@@ -83,6 +89,30 @@ public:
   Channels(util::Injected<IoContext> io, Callback callback)
     : mpImpl(std::make_shared<Impl>(std::move(io), std::move(callback)))
   {
+  }
+
+  std::vector<Channel> sessionChannels(const link::SessionId& sessionId) const
+  {
+    using namespace std;
+    vector<Channel> result;
+    auto& channelsVec = mpImpl->mChannels;
+    for (const auto& channel : mpImpl->mChannels)
+    {
+      if (channel.channel.sessionId == sessionId)
+      {
+        result.push_back(channel.channel);
+      }
+    }
+    return result;
+  }
+
+  std::vector<Channel> uniqueSessionChannels(const link::SessionId& sessionId) const
+  {
+    auto channels = sessionChannels(sessionId);
+    auto it = std::unique(begin(channels),
+                          end(channels),
+                          [](const auto& a, const auto& b) { return a.id == b.id; });
+    return {begin(channels), it};
   }
 
   struct GatewayObserver

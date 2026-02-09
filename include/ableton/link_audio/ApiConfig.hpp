@@ -23,6 +23,7 @@
 
 #include <ableton/platforms/Config.hpp>
 
+#include <ableton/link_audio/Id.hpp>
 #include <ableton/link_audio/SessionController.hpp>
 #include <ableton/link_audio/Sink.hpp>
 
@@ -40,6 +41,10 @@ using ApiController = ableton::link_audio::SessionController<PeerCountCallback,
                                                              platform::IoContext>;
 
 } // namespace link
+
+using ChannelId = link_audio::Id;
+using PeerId = link_audio::Id;
+
 } // namespace ableton
 
 #define LINK_API_CONTROLLER YES

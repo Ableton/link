@@ -70,6 +70,21 @@ inline void BasicLinkAudio<Clock>::setChannelsChangedCallback(Callback callback)
 }
 
 template <typename Clock>
+inline std::vector<typename BasicLinkAudio<Clock>::Channel> BasicLinkAudio<
+  Clock>::channels() const
+{
+  auto channels = this->mController.channels();
+  auto result = std::vector<typename BasicLinkAudio<Clock>::Channel>{};
+  result.reserve(channels.size());
+  for (auto& channel : channels)
+  {
+    result.push_back(typename BasicLinkAudio<Clock>::Channel{
+      channel.id, channel.name, channel.peerId, channel.peerName});
+  }
+  return result;
+}
+
+template <typename Clock>
 template <typename Function>
 inline void BasicLinkAudio<Clock>::callOnLinkThread(Function func)
 {

@@ -26,6 +26,7 @@
 #include <ableton/platforms/stl/Random.hpp>
 #include <ableton/test/CatchWrapper.hpp>
 #include <ableton/test/serial_io/Fixture.hpp>
+#include <algorithm>
 #include <chrono>
 #include <functional>
 #include <memory>
@@ -58,6 +59,24 @@ TEST_CASE("Channels")
   using Random = ableton::platforms::stl::Random;
   using IoContext = test::serial_io::Context;
   using TestChannels = Channels<IoContext, std::reference_wrapper<Callback>>;
+  using Channel = TestChannels::Channel;
+
+  auto checkChannel = [](const Input& test, const std::vector<Channel>& channels)
+  {
+    for (const auto& channel : test.announcement.channels.channels)
+    {
+      const auto expected = Channel{channel.name,
+                                    channel.id,
+                                    test.announcement.peerInfo.name,
+                                    test.announcement.nodeId,
+                                    test.announcement.sessionId};
+
+      CHECK(std::find_if(channels.begin(),
+                         channels.end(),
+                         [&](const auto& c) { return expected == c; })
+            != channels.end());
+    }
+  };
 
   const auto sessionId = Id::random<Random>();
   const auto foo = Input{{Id::random<Random>(),
@@ -79,6 +98,7 @@ TEST_CASE("Channels")
                          5};
 
   const auto gateway1 = discovery::makeAddress("123.123.123.123");
+  const auto gateway2 = discovery::makeAddress("210.210.210.210");
 
   auto callback = Callback{};
   test::serial_io::Fixture io;
@@ -98,6 +118,15 @@ TEST_CASE("Channels")
 
     CHECK(1 == callback.mNumCalls);
 
+    SECTION("UniqueChannels")
+    {
+      const auto uniqueChannels =
+        channels.uniqueSessionChannels(foo.announcement.sessionId);
+
+      CHECK(1 == uniqueChannels.size());
+      checkChannel(foo, uniqueChannels);
+    }
+
     SECTION("ReAddChannelWithChangedPeerId")
     {
       auto changedFoo = foo;
@@ -105,19 +134,55 @@ TEST_CASE("Channels")
       sawAnnouncement(observer, changedFoo);
     }
 
+    SECTION("UniqueChannelsWithUnknownSessionId")
+    {
+      const auto uniqueChannels = channels.uniqueSessionChannels(Id::random<Random>());
+
+      CHECK(0 == uniqueChannels.size());
+    }
+
     SECTION("RemoveChannel")
     {
       auto byes = std::vector<Id>{foo.announcement.channels.channels[0].id};
       channelsLeft(observer, begin(byes), end(byes));
 
+      const auto uniqueChannels =
+        channels.uniqueSessionChannels(foo.announcement.sessionId);
+
       CHECK(2 == callback.mNumCalls);
+      CHECK(0 == uniqueChannels.size());
+    }
+
+    SECTION("AddSecondPeer")
+    {
+      sawAnnouncement(observer, bar);
+
+      auto uniqueChannels = channels.uniqueSessionChannels(sessionId);
+
+      CHECK(2 == uniqueChannels.size());
+      checkChannel(foo, uniqueChannels);
+      checkChannel(bar, uniqueChannels);
+    }
+
+    SECTION("AddSecondChannel")
+    {
+      auto observer2 = makeGatewayObserver(channels, gateway2);
+      sawAnnouncement(observer2, foo);
+
+      const auto uniqueChannels = channels.uniqueSessionChannels(sessionId);
+
+      CHECK(1 == uniqueChannels.size());
+      checkChannel(foo, uniqueChannels);
     }
 
     SECTION("Timeout")
     {
       io.advanceTime(std::chrono::seconds(5));
 
+      const auto uniqueChannels = channels.uniqueSessionChannels(sessionId);
+
       CHECK(2 == callback.mNumCalls);
+      CHECK(0 == uniqueChannels.size());
     }
   }
 }
