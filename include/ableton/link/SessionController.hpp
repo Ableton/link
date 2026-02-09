@@ -68,6 +68,7 @@ public:
                     Clock clock)
     : LinkController(tempo, peerCallback, tempoCallback, startStopStateCallback, clock)
   {
+    this->mRtClientStateSetter.start();
   }
 
   ~SessionController() { this->mpSessionController = nullptr; }

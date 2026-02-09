@@ -114,6 +114,8 @@ struct MockIoContext
     {
     }
 
+    void start() {}
+
     void invoke() { mCallback(); }
 
     Callback mCallback;

@@ -590,6 +590,8 @@ protected:
     {
     }
 
+    void start() { mCallbackDispatcher.start(); }
+
     void invoke() { mCallbackDispatcher.invoke(); }
 
     void push(const IncomingClientState clientState)

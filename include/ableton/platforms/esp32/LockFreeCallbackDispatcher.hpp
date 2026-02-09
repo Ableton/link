@@ -47,7 +47,6 @@ public:
     , mFallbackPeriod(std::move(fallbackPeriod))
     , mRunning(true)
   {
-    xTaskCreate(run, "link", 4096, this, tskIDLE_PRIORITY, &mTaskHandle);
   }
 
   ~LockFreeCallbackDispatcher()
@@ -56,6 +55,8 @@ public:
     mCondition.notify_one();
     vTaskDelete(mTaskHandle);
   }
+
+  void start() { xTaskCreate(run, "link", 4096, this, tskIDLE_PRIORITY, &mTaskHandle); }
 
   void invoke()
   {

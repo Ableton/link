@@ -46,7 +46,6 @@ public:
     : mCallback(std::move(callback))
     , mFallbackPeriod(std::move(fallbackPeriod))
     , mRunning(true)
-    , mThread(ThreadFactory::makeThread("Link Dispatcher", [this] { run(); }))
   {
   }
 
@@ -55,6 +54,11 @@ public:
     mRunning = false;
     mCondition.notify_one();
     mThread.join();
+  }
+
+  void start()
+  {
+    mThread = ThreadFactory::makeThread("Link Dispatcher", [this] { run(); });
   }
 
   void invoke() { mCondition.notify_one(); }

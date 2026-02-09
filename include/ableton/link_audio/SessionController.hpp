@@ -68,6 +68,7 @@ public:
     : LinkAudioController(
         tempo, peerCallback, tempoCallback, startStopStateCallback, clock)
   {
+    this->mRtClientStateSetter.start();
   }
 
   ~SessionController() { this->mpSessionController = nullptr; }
