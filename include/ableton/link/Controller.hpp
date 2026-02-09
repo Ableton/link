@@ -590,6 +590,8 @@ protected:
 
     void start() { mCallbackDispatcher.start(); }
 
+    void stop() { mCallbackDispatcher.stop(); }
+
     void invoke() { mCallbackDispatcher.invoke(); }
 
     void push(const IncomingClientState clientState)
@@ -788,6 +790,8 @@ protected:
     this->mIo->async(
       [this, &mutex, &condition]()
       {
+        mRtClientStateSetter.stop();
+
         mEnabled = false;
         mDiscovery.enable(false);
 
