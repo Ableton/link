@@ -39,7 +39,9 @@ namespace link_audio
 template <typename SampleFormat, typename Successor, size_t KMaxNumBytes>
 struct Resizer
 {
-  static constexpr uint32_t kMaxNumSamples = KMaxNumBytes / sizeof(SampleFormat);
+  static constexpr uint32_t kSampleFormatSize =
+    static_cast<uint32_t>(sizeof(SampleFormat));
+  static constexpr uint32_t kMaxNumSamples = KMaxNumBytes / kSampleFormatSize;
 
   Resizer(util::Injected<Successor> successor)
     : mSuccessor(std::move(successor))
@@ -119,8 +121,8 @@ private:
   void updateAvailableFrames()
   {
     const auto availableBytes =
-      kMaxNumSamples * sizeof(SampleFormat) - discovery::sizeInByteStream(mChunks);
-    const auto bytesPerFrame = mNumChannels * sizeof(SampleFormat);
+      kMaxNumSamples * kSampleFormatSize - discovery::sizeInByteStream(mChunks);
+    const auto bytesPerFrame = mNumChannels * kSampleFormatSize;
     const auto offsetBytes = availableBytes % bytesPerFrame;
     mAvailableFrames = (availableBytes - offsetBytes) / bytesPerFrame;
   }
