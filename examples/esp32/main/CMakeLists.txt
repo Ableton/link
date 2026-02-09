@@ -1,3 +1,5 @@
+set(CMAKE_CXX_STANDARD 17)
+
 idf_component_register(SRCS main.cpp)
 
 if(NOT DEFINED LINK_ESP_TASK_CORE_ID)

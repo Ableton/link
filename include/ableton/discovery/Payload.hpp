@@ -262,12 +262,7 @@ struct ParsePayload<First, Rest...>
       const auto res = First::fromNetworkByteStream(begin, end);
       if (res.second != end)
       {
-        std::ostringstream stringStream;
-        stringStream << "Parsing payload entry " << First::key
-                     << " did not consume the expected number of bytes. "
-                     << " Expected: " << distance(begin, end)
-                     << ", Actual: " << distance(begin, res.second);
-        throw range_error(stringStream.str());
+        throw range_error("Parsing payload failed");
       }
       handler(res.first);
     };
