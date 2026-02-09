@@ -72,6 +72,13 @@ struct MainProcessor
     return mpImpl->channelAnnouncements();
   }
 
+  template <typename Request>
+  void receiveChannelRequest(Request request, uint8_t ttl)
+  {
+    mpImpl->receiveChannelRequest(std::move(request), ttl);
+  }
+
+
 private:
   struct Impl : std::enable_shared_from_this<Impl>
   {
@@ -180,6 +187,19 @@ private:
           ChannelAnnouncement{sink->name(), sink->id()});
       }
       return announcements;
+    }
+
+    template <typename Request>
+    void receiveChannelRequest(Request request, uint8_t ttl)
+    {
+      auto it =
+        std::find_if(mSinks.begin(),
+                     mSinks.end(),
+                     [&](const auto& pSink) { return request.channelId == pSink->id(); });
+      if (it != mSinks.end())
+      {
+        it->get()->receiveChannelRequest(std::move(request), ttl);
+      }
     }
 
     util::Injected<IoContext> mIo;

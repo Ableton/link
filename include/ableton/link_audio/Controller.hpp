@@ -333,7 +333,8 @@ protected:
   using ControllerMainProcessor =
     MainProcessor<ChannelsCallback, GetSender, GetNodeId, Random, IoContext&>;
   using ControllerMessengerPtr =
-    MessengerPtr<typename ControllerChannels::GatewayObserver,
+    MessengerPtr<ControllerMainProcessor&,
+                 typename ControllerChannels::GatewayObserver,
                  typename util::Injected<IoContext>::type&>;
 
   struct GatewayFactory
@@ -341,6 +342,7 @@ protected:
     ControllerMessengerPtr operator()(const discovery::IpAddress& addr)
     {
       return makeMessengerPtr(
+        util::injectRef(mpController->mProcessor),
         util::injectRef(*(mpController->mIo)),
         addr,
         util::injectVal(makeGatewayObserver(mpController->mChannels, addr)),
