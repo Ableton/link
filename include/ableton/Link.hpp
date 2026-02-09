@@ -374,12 +374,7 @@ public:
   };
 
 private:
-  using Controller = ableton::link::Controller<link::PeerCountCallback,
-                                               link::TempoCallback,
-                                               link::StartStopStateCallback,
-                                               Clock,
-                                               link::platform::Random,
-                                               link::platform::IoContext>;
+  using Controller = ableton::link::ApiController<Clock>;
 
   std::mutex mCallbackMutex;
   link::PeerCountCallback mPeerCountCallback = [](std::size_t) {};

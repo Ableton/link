@@ -29,6 +29,7 @@ set(link_core_HEADERS
   ${link_core_DIR}/PeerState.hpp
   ${link_core_DIR}/Phase.hpp
   ${link_core_DIR}/PingResponder.hpp
+  ${link_core_DIR}/SessionController.hpp
   ${link_core_DIR}/SessionId.hpp
   ${link_core_DIR}/SessionState.hpp
   ${link_core_DIR}/Sessions.hpp

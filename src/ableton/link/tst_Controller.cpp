@@ -17,7 +17,7 @@
  *  please contact <link-devs@ableton.com>.
  */
 
-#include <ableton/link/Controller.hpp>
+#include <ableton/link/SessionController.hpp>
 #include <ableton/link/Tempo.hpp>
 #include <ableton/platforms/stl/Random.hpp>
 #include <ableton/test/CatchWrapper.hpp>
@@ -130,12 +130,12 @@ struct MockIoContext
   }
 };
 
-using MockController = Controller<PeerCountCallback,
-                                  TempoCallback,
-                                  StartStopStateCallback,
-                                  MockClock,
-                                  platforms::stl::Random,
-                                  MockIoContext>;
+using MockController = SessionController<PeerCountCallback,
+                                         TempoCallback,
+                                         StartStopStateCallback,
+                                         MockClock,
+                                         platforms::stl::Random,
+                                         MockIoContext>;
 
 const auto kAnyTime = std::chrono::microseconds{6};
 

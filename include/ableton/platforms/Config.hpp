@@ -20,6 +20,7 @@
 #pragma once
 
 #include <ableton/link/Controller.hpp>
+#include <ableton/link/SessionController.hpp>
 #include <ableton/util/Log.hpp>
 
 #if defined(LINK_PLATFORM_WINDOWS)
@@ -102,5 +103,14 @@ using Random = platforms::esp32::Random;
 #endif
 
 } // namespace platform
+
+template <typename Clock>
+using ApiController = ableton::link::SessionController<link::PeerCountCallback,
+                                                       link::TempoCallback,
+                                                       link::StartStopStateCallback,
+                                                       Clock,
+                                                       link::platform::Random,
+                                                       link::platform::IoContext>;
+
 } // namespace link
 } // namespace ableton

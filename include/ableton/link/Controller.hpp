@@ -125,7 +125,8 @@ template <typename PeerCountCallback,
           typename StartStopStateCallback,
           typename Clock,
           typename Random,
-          typename IoContext>
+          typename IoContext,
+          typename SessionController>
 class Controller
 {
 public:
