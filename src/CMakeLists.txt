@@ -58,6 +58,7 @@ set(link_test_SOURCES
 )
 
 set(link_util_test_SOURCES
+  ableton/util/tst_FloatIntConversion.cpp
   ableton/util/tst_TripleBuffer.cpp
   ableton/test/catch/CatchMain.cpp
 )
