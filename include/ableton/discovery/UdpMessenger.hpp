@@ -246,9 +246,16 @@ private:
 
     void sendPeerState(const v1::MessageType messageType, const UdpEndpoint& to)
     {
-      sendUdpMessage(
-        *mInterface, mState.ident(), mTtl, messageType, toPayload(mState), to);
-      mLastBroadcastTime = mTimer.now();
+      try
+      {
+        sendUdpMessage(
+          *mInterface, mState.ident(), mTtl, messageType, toPayload(mState), to);
+        mLastBroadcastTime = mTimer.now();
+      }
+      catch (const UdpSendException& err)
+      {
+        debug(mIo->log()) << "Failed to send peer state message: " << err.what();
+      }
     }
 
     void sendResponse(const UdpEndpoint& to)
