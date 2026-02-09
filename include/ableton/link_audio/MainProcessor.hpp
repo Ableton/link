@@ -46,7 +46,8 @@ struct MainProcessor
 
   static constexpr auto kProcessTimerPeriod = std::chrono::milliseconds(1);
 
-  MainProcessor(util::Injected<IoContext> io, ChannelsChangedCallback callback)
+  MainProcessor(util::Injected<IoContext> io,
+                util::Injected<ChannelsChangedCallback> callback)
     : mpImpl(std::make_shared<Impl>(std::move(io), std::move(callback)))
   {
   }
@@ -93,7 +94,7 @@ private:
     using MainSinkProcessor = SinkProcessor<GetSender, GetNodeId, IoContext&>;
     using MainSourceProcessor = SourceProcessor<GetSender, GetNodeId, IoContext&>;
 
-    Impl(util::Injected<IoContext> io, ChannelsChangedCallback callback)
+    Impl(util::Injected<IoContext> io, util::Injected<ChannelsChangedCallback> callback)
       : mIo{std::move(io)}
       , mChannelsChangedCallback{std::move(callback)}
       , mProcessTimer{mIo->makeTimer()}
@@ -166,7 +167,7 @@ private:
 
       if (channelsChanged)
       {
-        mChannelsChangedCallback();
+        (*mChannelsChangedCallback)();
       }
     }
 
@@ -228,7 +229,7 @@ private:
     }
 
     util::Injected<IoContext> mIo;
-    ChannelsChangedCallback mChannelsChangedCallback;
+    util::Injected<ChannelsChangedCallback> mChannelsChangedCallback;
     std::vector<std::unique_ptr<MainSinkProcessor>> mSinks;
     std::vector<std::unique_ptr<MainSourceProcessor>> mSources;
     Timer mProcessTimer;

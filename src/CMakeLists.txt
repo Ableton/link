@@ -23,6 +23,7 @@ set(link_audio_test_SOURCES
   ableton/link_audio/tst_Receivers.cpp
   ableton/link_audio/tst_Resizer.cpp
   ableton/link_audio/tst_UdpMessenger.cpp
+  ableton/link_audio/tst_MainProcessor.cpp
   ableton/link_audio/v1/tst_Messages.cpp
 )
 

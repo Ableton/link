@@ -80,7 +80,7 @@ public:
     , mWasLinkAudioEnabled(false)
     , mPeerInfo{}
     , mChannels(util::injectRef(*(this->mIo)), ChannelsChanged{this})
-    , mProcessor{util::injectRef(*(this->mIo)), ChannelsCallback{this}}
+    , mProcessor{util::injectRef(*(this->mIo)), util::injectVal(ChannelsCallback{this})}
     , mGateways{util::injectVal(GatewayFactory{this}), util::injectRef(*(this->mIo))}
   {
   }
