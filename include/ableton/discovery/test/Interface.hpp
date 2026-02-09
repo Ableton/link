@@ -19,7 +19,11 @@
 
 #pragma once
 
+#include <ableton/discovery/AsioTypes.hpp>
 #include <ableton/util/Log.hpp>
+#include <functional>
+#include <utility>
+#include <vector>
 
 namespace ableton
 {
@@ -52,6 +56,13 @@ public:
     mCallback = [callback, tag](
                   const UdpEndpoint& from, const std::vector<uint8_t>& buffer)
     { callback(tag, from, begin(buffer), end(buffer)); };
+  }
+
+  template <typename Callback>
+  void receive(Callback callback)
+  {
+    mCallback = [callback](const auto& from, const auto& buffer)
+    { callback(from, begin(buffer), end(buffer)); };
   }
 
   template <typename It>
