@@ -387,10 +387,7 @@ protected:
                       << " for session: " << id;
     updateSessionTiming(mSessions.sawSessionTimeline(std::move(id), std::move(timeline)),
                         mSessionState.ghostXForm);
-    if (mpSessionController)
-    {
-      mpSessionController->updateDiscoveryCallback();
-    }
+    mpSessionController->updateDiscoveryCallback();
   }
 
   void resetSessionStartStopState() { mSessionState.startStopState = StartStopState{}; }
@@ -409,10 +406,7 @@ protected:
 
       // Always propagate the session start stop state so even a client that doesn't have
       // the feature enabled can function as a relay.
-      if (mpSessionController)
-      {
-        mpSessionController->updateDiscoveryCallback();
-      }
+      mpSessionController->updateDiscoveryCallback();
 
       if (mStartStopSyncEnabled)
       {
@@ -467,7 +461,7 @@ protected:
       }
     }
 
-    if (mustUpdateDiscovery && mpSessionController)
+    if (mustUpdateDiscovery)
     {
       mpSessionController->updateDiscoveryCallback();
     }
@@ -510,19 +504,13 @@ protected:
     }
 
     updateSessionTiming(session.timeline, session.measurement.xform);
-    if (mpSessionController)
-    {
-      mpSessionController->updateDiscoveryCallback();
-    }
+    mpSessionController->updateDiscoveryCallback();
 
     if (sessionIdChanged)
     {
       debug(mIo->log()) << "Joining session " << session.sessionId << " with tempo "
                         << session.timeline.tempo.bpm();
-      if (mpSessionController)
-      {
-        mpSessionController->sessionMembershipCallback();
-      }
+      mpSessionController->sessionMembershipCallback();
     }
   }
 
@@ -545,10 +533,7 @@ protected:
     resetSessionStartStopState();
 
     updateSessionTiming(newTl, xform);
-    if (mpSessionController)
-    {
-      mpSessionController->updateDiscoveryCallback();
-    }
+    mpSessionController->updateDiscoveryCallback();
 
     mSessions.resetSession({mNodeId, newTl, {xform, hostTime}});
     mPeers.resetPeers();
@@ -576,13 +561,7 @@ protected:
           [this]
           {
             mController.mIo->async(
-              [this]()
-              {
-                if (mController.mpSessionController)
-                {
-                  mController.mpSessionController->updateRtStatesCallback();
-                }
-              });
+              [this]() { mController.mpSessionController->updateRtStatesCallback(); });
           },
           detail::kRtHandlerFallbackPeriod)
     {
@@ -673,11 +652,8 @@ protected:
                     std::optional<discovery::UdpEndpoint> endpoint,
                     discovery::IpAddress gateway)
     {
-      if (mpController->mpSessionController)
-      {
-        mpController->mpSessionController->sawAudioEndpointCallback(
-          peerId, endpoint, gateway);
-      }
+      mpController->mpSessionController->sawAudioEndpointCallback(
+        peerId, endpoint, gateway);
     }
 
     Controller* mpController;
@@ -685,13 +661,7 @@ protected:
 
   struct SessionMembershipCallback
   {
-    void operator()()
-    {
-      if (mpController->mpSessionController)
-      {
-        mpController->mpSessionController->sessionMembershipCallback();
-      }
-    }
+    void operator()() { mpController->mpSessionController->sessionMembershipCallback(); }
 
     Controller* mpController;
   };
@@ -732,11 +702,8 @@ protected:
     template <typename Peer, typename Handler>
     void operator()(Peer peer, Handler handler)
     {
-      if (mpController->mpSessionController)
-      {
-        mpController->mpSessionController->measurePeerCallback(
-          std::move(peer), std::move(handler));
-      }
+      mpController->mpSessionController->measurePeerCallback(
+        std::move(peer), std::move(handler));
     }
 
     Controller* mpController;
@@ -768,10 +735,7 @@ protected:
   {
     void operator()(Session session)
     {
-      if (mpController->mpSessionController)
-      {
-        mpController->mpSessionController->joinSessionCallback(std::move(session));
-      }
+      mpController->mpSessionController->joinSessionCallback(std::move(session));
     }
 
     Controller* mpController;
@@ -835,10 +799,7 @@ protected:
 
     void gatewaysChanged()
     {
-      if (mpController->mpSessionController)
-      {
-        mpController->mpSessionController->gatewaysChangedCallback();
-      }
+      mpController->mpSessionController->gatewaysChangedCallback();
     }
 
     Controller* mpController;
