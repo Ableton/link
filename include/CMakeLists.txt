@@ -49,6 +49,7 @@ set(link_core_HEADERS
 
 set(link_audio_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ableton/link_audio)
 set(link_audio_HEADERS
+  ${link_audio_DIR}/ChannelAnnouncements.hpp
   ${link_audio_DIR}/Controller.hpp
   ${link_audio_DIR}/Id.hpp
   ${link_audio_DIR}/PeerAnnouncement.hpp

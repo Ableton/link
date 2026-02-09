@@ -8,6 +8,10 @@ project(LinkTest)
 # |____/ \___/ \__,_|_|  \___\___||___/
 #
 
+set(link_audio_test_SOURCES
+  ableton/link_audio/tst_ChannelAnnouncements.cpp
+)
+
 set(link_discovery_test_SOURCES
   ableton/discovery/tst_InterfaceScanner.cpp
   ableton/discovery/tst_NetworkByteStreamSerializable.cpp
@@ -60,6 +64,10 @@ source_group("Link" FILES
 
 source_group("Discovery" FILES
   ${link_discovery_HEADERS}
+)
+
+source_group("Audio" FILES
+  ${link_audio_HEADERS}
 )
 
 source_group("Platform" FILES
@@ -117,6 +125,18 @@ add_executable(LinkDiscoveryTest
   ${link_test_SOURCES}
 )
 configure_link_test_executable(LinkDiscoveryTest)
+
+add_executable(LinkAudioTest
+  ${link_discovery_HEADERS}
+  ${link_platform_HEADERS}
+  ${link_util_HEADERS}
+  ${link_test_HEADERS}
+  ${link_audio_HEADERS}
+
+  ${link_audio_test_SOURCES}
+  ${link_test_SOURCES}
+)
+configure_link_test_executable(LinkAudioTest)
 
 add_executable(LinkUtilTest
   ${link_platform_HEADERS}
