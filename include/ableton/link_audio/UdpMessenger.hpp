@@ -264,15 +264,18 @@ private:
     void updateAnnouncement(Announcement announcement)
     {
       sendAudioChannelByes(announcement.channels);
-
+      const auto pingPayload = discovery::makePayload(link::HostTime{});
+      const auto pingSize = sizeInByteStream(pingPayload);
       mAnnouncements = {Announcement{
         announcement.nodeId, announcement.sessionId, announcement.peerInfo, {}}};
 
       for (const auto& channel : announcement.channels.channels)
       {
-        auto addedSize = sizeInByteStream(channel);
-        if (discovery::sizeInByteStream(mAnnouncements.back().channels.channels)
-              + addedSize
+        const auto channelSize = sizeInByteStream(channel);
+        // A ping is sent along with the first announcement
+        auto addedSize =
+          mAnnouncements.size() == 1 ? channelSize + pingSize : channelSize;
+        if (sizeInByteStream(toPayload(mAnnouncements.back())) + addedSize
             > v1::kMaxPayloadSize)
         {
           mAnnouncements.push_back(Announcement{
