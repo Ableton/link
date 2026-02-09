@@ -374,7 +374,7 @@ public:
     bool mbRespectQuantum;
   };
 
-private:
+protected:
   using Controller = ableton::link::ApiController<Clock>;
 
   std::mutex mCallbackMutex;
@@ -382,8 +382,6 @@ private:
   link::TempoCallback mTempoCallback = [](link::Tempo) {};
   link::StartStopStateCallback mStartStopCallback = [](bool) {};
   Clock mClock;
-
-protected:
   Controller mController;
 };
 

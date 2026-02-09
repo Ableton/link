@@ -35,16 +35,23 @@ class BasicLinkAudio : public BasicLink<Clock>
 public:
   BasicLinkAudio(double bpm, std::string name);
 
+  ~BasicLinkAudio();
+
   bool isLinkAudioEnabled() const;
   void enableLinkAudio(bool bEnable);
 
   void setPeerName(std::string name);
+
+  template <typename Callback>
+  void setChannelsChangedCallback(Callback callback);
 
   template <typename Function>
   void callOnLinkThread(Function func);
 
 private:
   using Controller = ableton::link::ApiController<Clock>;
+
+  link_audio::ChannelsChangedCallback mChannelsChangedCallback = []() {};
 };
 
 class LinkAudio : public BasicLinkAudio<link::platform::Clock>

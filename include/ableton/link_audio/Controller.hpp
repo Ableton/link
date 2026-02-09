@@ -29,6 +29,8 @@
 #include <ableton/util/Injected.hpp>
 #include <algorithm>
 #include <atomic>
+#include <functional>
+#include <optional>
 #include <set>
 #include <vector>
 
@@ -37,6 +39,7 @@ namespace ableton
 namespace link_audio
 {
 
+using ChannelsChangedCallback = std::function<void()>;
 using CallOnThreadFunction = std::function<void()>;
 
 template <typename PeerCountCallback,
@@ -69,6 +72,7 @@ public:
              link::StartStopStateCallback startStopStateCallback,
              Clock clock)
     : LinkController(tempo, peerCallback, tempoCallback, startStopStateCallback, clock)
+    , mChannelsChangedCallback{[]() {}}
     , mIsLinkAudioEnabled(false)
     , mWasLinkAudioEnabled(false)
     , mPeerInfo{}
@@ -133,6 +137,12 @@ public:
       });
 
     return sink;
+  }
+
+  void setChannelsChangedCallback(ChannelsChangedCallback callback)
+  {
+    this->mIo->async([&, callback = std::move(callback)]()
+                     { mChannelsChangedCallback = callback; });
   }
 
 protected:
@@ -276,6 +286,7 @@ protected:
     Controller* mpController;
   };
 
+  ChannelsChangedCallback mChannelsChangedCallback;
   std::atomic_bool mIsLinkAudioEnabled;
   bool mWasLinkAudioEnabled;
   PeerInfo mPeerInfo;
