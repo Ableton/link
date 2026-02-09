@@ -62,6 +62,7 @@ struct SinkProcessor
          util::Injected<GetSender> getSender)
       : mIo(std::move(io))
       , mpSink(pSink)
+      , mQueueReader(pSink->reader())
       , mReceivers(util::injectRef(*mIo), std::move(getSender))
     {
     }
@@ -71,6 +72,11 @@ struct SinkProcessor
       if (mpSink.use_count() <= 1)
       {
         return false;
+      }
+
+      while (mQueueReader.retainSlot())
+      {
+        mQueueReader.releaseSlot();
       }
 
       return true;
@@ -91,6 +97,7 @@ struct SinkProcessor
   private:
     util::Injected<IoContext> mIo;
     std::shared_ptr<Sink> mpSink;
+    Queue<Buffer<int16_t>>::Reader mQueueReader;
     Receivers<GetSender, IoContext> mReceivers;
   };
 

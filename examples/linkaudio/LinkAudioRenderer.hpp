@@ -22,6 +22,8 @@
 #if defined(LINK_AUDIO)
 
 #include <ableton/LinkAudio.hpp>
+#include <ableton/link_audio/Buffer.hpp>
+#include <ableton/link_audio/Queue.hpp>
 
 namespace ableton
 {
@@ -34,7 +36,7 @@ class LinkAudioRenderer
 public:
   LinkAudioRenderer(Link& link)
     : mLink(link)
-    , mSink(mLink, "A Sink")
+    , mSink(mLink, "A Sink", 4096)
   {
   }
 

@@ -84,7 +84,7 @@ class LinkAudioSink
 {
 public:
   template <typename LinkAudio>
-  LinkAudioSink(LinkAudio& link, std::string name);
+  LinkAudioSink(LinkAudio& link, std::string name, size_t maxNumSamples);
 
   LinkAudioSink(const LinkAudioSink&) = default;
   LinkAudioSink& operator=(const LinkAudioSink&) = default;

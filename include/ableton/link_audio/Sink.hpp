@@ -17,7 +17,9 @@
  *  please contact <link-devs@ableton.com>.
  */
 
+#include <ableton/link_audio/Buffer.hpp>
 #include <ableton/link_audio/Id.hpp>
+#include <ableton/link_audio/Queue.hpp>
 #include <ableton/util/Locked.hpp>
 #include <atomic>
 #include <string>
@@ -31,9 +33,10 @@ namespace link_audio
 
 struct Sink
 {
-  Sink(std::string name, Id id)
+  Sink(std::string name, size_t maxNumSamples, Id id)
     : mName{std::move(name)}
     , mId{std::move(id)}
+    , mQueue(128, {static_cast<uint32_t>(maxNumSamples)})
   {
   }
 
@@ -49,10 +52,13 @@ struct Sink
 
   const Id& id() const { return mId; }
 
+  Queue<Buffer<int16_t>>::Reader reader() { return mQueue.reader(); }
+
 private:
   util::Locked<std::string> mName;
   std::atomic_flag mNameIsUpToDate;
   Id mId;
+  Queue<Buffer<int16_t>> mQueue;
 };
 
 } // namespace link_audio

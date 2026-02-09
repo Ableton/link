@@ -19,7 +19,9 @@
 
 #pragma once
 
+#include <ableton/link_audio/Buffer.hpp>
 #include <ableton/link_audio/Id.hpp>
+#include <ableton/link_audio/Queue.hpp>
 #include <ableton/util/Locked.hpp>
 
 #include <atomic>
@@ -34,6 +36,8 @@ static constexpr auto kSourceQueueSize = std::chrono::milliseconds(10000);
 
 struct Source
 {
+  using Callback = std::function<void(Buffer<int16_t>*)>;
+
   Source(Id id)
     : mId(std::move(id))
   {

@@ -92,8 +92,10 @@ inline void BasicLinkAudio<Clock>::callOnLinkThread(Function func)
 }
 
 template <typename LinkAudio>
-inline LinkAudioSink::LinkAudioSink(LinkAudio& link, std::string name)
-  : mpImpl{link.mController.addSink(std::move(name))}
+inline LinkAudioSink::LinkAudioSink(LinkAudio& link,
+                                    std::string name,
+                                    size_t maxNumSamples)
+  : mpImpl{link.mController.addSink(std::move(name), maxNumSamples)}
 {
 }
 

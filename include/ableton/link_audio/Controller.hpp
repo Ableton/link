@@ -124,10 +124,10 @@ public:
     this->mIo->async([func = std::move(func)]() { func(); });
   }
 
-  SharedSink addSink(std::string name)
+  SharedSink addSink(std::string name, size_t maxNumSamples)
   {
     auto id = Id::random<Random>();
-    auto sink = std::make_shared<Sink>(name, id);
+    auto sink = std::make_shared<Sink>(name, maxNumSamples, id);
 
     this->mIo->async(
       [this, sink]()
