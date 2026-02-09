@@ -49,14 +49,21 @@ public:
   {
   }
 
-  ~LockFreeCallbackDispatcher()
+  ~LockFreeCallbackDispatcher() { stop(); }
+
+  void start() { xTaskCreate(run, "link", 4096, this, tskIDLE_PRIORITY, &mTaskHandle); }
+
+  void stop()
   {
-    mRunning = false;
+    const auto wasRunning = mRunning.exchange(false);
+    if (!wasRunning)
+    {
+      return;
+    }
+
     mCondition.notify_one();
     vTaskDelete(mTaskHandle);
   }
-
-  void start() { xTaskCreate(run, "link", 4096, this, tskIDLE_PRIORITY, &mTaskHandle); }
 
   void invoke()
   {
@@ -77,6 +84,12 @@ private:
         std::unique_lock<std::mutex> lock(dispatcher->mMutex);
         dispatcher->mCondition.wait_for(lock, dispatcher->mFallbackPeriod);
       }
+
+      if (!dispatcher->mRunning.load())
+      {
+        break;
+      }
+
       dispatcher->mCallback();
       vTaskDelay(1);
     }

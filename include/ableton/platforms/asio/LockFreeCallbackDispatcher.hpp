@@ -49,16 +49,26 @@ public:
   {
   }
 
-  ~LockFreeCallbackDispatcher()
-  {
-    mRunning = false;
-    mCondition.notify_one();
-    mThread.join();
-  }
+  ~LockFreeCallbackDispatcher() { stop(); }
 
   void start()
   {
     mThread = ThreadFactory::makeThread("Link Dispatcher", [this] { run(); });
+  }
+
+  void stop()
+  {
+    const auto wasRunning = mRunning.exchange(false);
+    if (!wasRunning)
+    {
+      return;
+    }
+
+    mCondition.notify_one();
+    if (mThread.joinable())
+    {
+      mThread.join();
+    }
   }
 
   void invoke() { mCondition.notify_one(); }
@@ -72,6 +82,12 @@ private:
         std::unique_lock<std::mutex> lock(mMutex);
         mCondition.wait_for(lock, mFallbackPeriod);
       }
+
+      if (!mRunning.load())
+      {
+        break;
+      }
+
       mCallback();
     }
   }
