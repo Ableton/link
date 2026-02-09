@@ -45,6 +45,7 @@ using MessageType = uint8_t;
 using SessionGroupId = uint16_t;
 
 const MessageType kInvalid = 0;
+const MessageType kPeerAnnouncement = 1;
 
 struct MessageHeader
 {

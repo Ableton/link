@@ -83,7 +83,7 @@ public:
 
   void updateDiscoveryCallback() { this->updateDiscovery(); }
 
-  void gatewaysChangedCallback() {}
+  void gatewaysChangedCallback() { this->updateLinkAudioGateways(); }
 
   void updateRtStatesCallback()
   {

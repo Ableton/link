@@ -19,10 +19,16 @@
 
 #pragma once
 
+#include <ableton/discovery/AsioTypes.hpp>
 #include <ableton/link/Controller.hpp>
 #include <ableton/link_audio/Channels.hpp>
+#include <ableton/link_audio/PeerGateways.hpp>
 #include <ableton/link_audio/PeerInfo.hpp>
+#include <ableton/link_audio/UdpMessenger.hpp>
+#include <ableton/util/Injected.hpp>
+#include <algorithm>
 #include <atomic>
+#include <vector>
 
 namespace ableton
 {
@@ -63,7 +69,20 @@ public:
     , mWasLinkAudioEnabled(false)
     , mPeerInfo{}
     , mChannels(util::injectRef(*(this->mIo)), ChannelsChanged{})
+    , mGateways{util::injectVal(GatewayFactory{this}), util::injectRef(*(this->mIo))}
   {
+  }
+
+  ~Controller()
+  {
+    this->mIo->async(
+      [this]()
+      {
+        mIsLinkAudioEnabled = false;
+        mGateways.clear();
+      });
+
+    this->stopIoService();
   }
 
   void enableLinkAudio(bool enabled)
@@ -85,6 +104,24 @@ protected:
     else if (!mIsLinkAudioEnabled && mWasLinkAudioEnabled)
     {
       mWasLinkAudioEnabled = false;
+      mGateways.clear();
+    }
+  }
+
+  void updateLinkAudioGateways()
+  {
+    auto gateways = std::vector<discovery::IpAddress>();
+    this->mDiscovery.withGateways(
+      [&](auto begin, auto end)
+      { std::for_each(begin, end, [&](auto& it) { gateways.push_back(it.first); }); });
+
+    if (mIsLinkAudioEnabled)
+    {
+      mGateways.updateGateways(std::move(gateways));
+    }
+    else
+    {
+      mGateways.clear();
     }
   }
 
@@ -94,11 +131,30 @@ protected:
   };
 
   using ControllerChannels = Channels<IoContext&, ChannelsChanged>;
+  using ControllerMessengerPtr =
+    MessengerPtr<typename ControllerChannels::GatewayObserver,
+                 typename util::Injected<IoContext>::type&>;
+
+  struct GatewayFactory
+  {
+    ControllerMessengerPtr operator()(const discovery::IpAddress& addr)
+    {
+      return makeMessengerPtr(
+        util::injectRef(*(mpController->mIo)),
+        addr,
+        util::injectVal(makeGatewayObserver(mpController->mChannels, addr)),
+        PeerAnnouncement{
+          mpController->mNodeId, mpController->mSessionId, mpController->mPeerInfo});
+    }
+
+    Controller* mpController;
+  };
 
   std::atomic_bool mIsLinkAudioEnabled;
   bool mWasLinkAudioEnabled;
   PeerInfo mPeerInfo;
   ControllerChannels mChannels;
+  PeerGateways<GatewayFactory, IoContext&> mGateways;
 };
 
 } // namespace link_audio

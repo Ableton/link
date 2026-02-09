@@ -57,7 +57,7 @@ struct PeerAnnouncement
   {
     using namespace std;
     auto announcement = PeerAnnouncement{std::move(nodeId), {}, {}};
-    discovery::parsePayload<link::SessionMembership, PeerInfo>(
+    discovery::parsePayload<link::SessionMembership, PeerInfo, ChannelAnnouncements>(
       std::move(begin),
       std::move(end),
       [&announcement](link::SessionMembership membership)

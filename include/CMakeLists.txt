@@ -54,8 +54,10 @@ set(link_audio_HEADERS
   ${link_audio_DIR}/Controller.hpp
   ${link_audio_DIR}/Id.hpp
   ${link_audio_DIR}/PeerAnnouncement.hpp
+  ${link_audio_DIR}/PeerGateways.hpp
   ${link_audio_DIR}/PeerInfo.hpp
   ${link_audio_DIR}/SessionController.hpp
+  ${link_audio_DIR}/UdpMessenger.hpp
   ${link_audio_DIR}/v1/Messages.hpp
   PARENT_SCOPE
 )
@@ -79,6 +81,7 @@ set(link_discovery_HEADERS
   ${link_discovery_DIR}/PeerGateways.hpp
   ${link_discovery_DIR}/Service.hpp
   ${link_discovery_DIR}/UdpMessenger.hpp
+  ${link_discovery_DIR}/UnicastIpInterface.hpp
   ${link_discovery_DIR}/v1/Messages.hpp
   PARENT_SCOPE
 )

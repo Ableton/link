@@ -180,27 +180,7 @@ public:
   Controller& operator=(const Controller&) = delete;
   Controller& operator=(Controller&&) = delete;
 
-  ~Controller()
-  {
-    std::mutex mutex;
-    std::condition_variable condition;
-    auto stopped = false;
-
-    mIo->async(
-      [this, &mutex, &condition, &stopped]()
-      {
-        mEnabled = false;
-        mDiscovery.enable(false);
-        std::unique_lock<std::mutex> lock(mutex);
-        stopped = true;
-        condition.notify_one();
-      });
-
-    std::unique_lock<std::mutex> lock(mutex);
-    condition.wait(lock, [&stopped] { return stopped; });
-
-    mIo->stop();
-  }
+  ~Controller() { stopIoService(); }
 
   void enable(const bool bEnable)
   {
@@ -778,6 +758,33 @@ protected:
     Controller* mpController;
   };
 
+  void stopIoService()
+  {
+    if (mIoStopped)
+    {
+      return;
+    }
+
+    std::mutex mutex;
+    std::condition_variable condition;
+
+    this->mIo->async(
+      [this, &mutex, &condition]()
+      {
+        mEnabled = false;
+        mDiscovery.enable(false);
+
+        std::unique_lock<std::mutex> lock(mutex);
+        mIoStopped = true;
+        condition.notify_one();
+      });
+
+    std::unique_lock<std::mutex> lock(mutex);
+    condition.wait(lock, [&]() { return mIoStopped.load(); });
+
+    this->mIo->stop();
+  }
+
   using IoType = typename util::Injected<IoContext>::type;
 
   using ControllerPeers = Peers<IoType&,
@@ -853,6 +860,7 @@ protected:
   std::atomic<bool> mStartStopSyncEnabled;
 
   util::Injected<IoContext> mIo;
+  std::atomic<bool> mIoStopped{false};
 
   ControllerPeers mPeers;
 
