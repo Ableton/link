@@ -22,6 +22,7 @@
 #include <ableton/discovery/Payload.hpp>
 #include <ableton/link/NodeId.hpp>
 #include <ableton/link/SessionId.hpp>
+#include <ableton/link_audio/ChannelAnnouncements.hpp>
 #include <ableton/link_audio/PeerInfo.hpp>
 
 namespace ableton
@@ -33,20 +34,22 @@ struct PeerAnnouncement
 {
   using IdType = link::NodeId;
 
-  using Payload = decltype(discovery::makePayload(link::SessionMembership{}, PeerInfo{}));
+  using Payload = decltype(discovery::makePayload(
+    link::SessionMembership{}, PeerInfo{}, ChannelAnnouncements{}));
 
   link::NodeId ident() const { return nodeId; }
 
   friend bool operator==(const PeerAnnouncement& lhs, const PeerAnnouncement& rhs)
   {
-    return std::tie(lhs.nodeId, lhs.sessionId, lhs.peerInfo)
-           == std::tie(rhs.nodeId, rhs.sessionId, rhs.peerInfo);
+    return std::tie(lhs.nodeId, lhs.sessionId, lhs.peerInfo, lhs.channels)
+           == std::tie(rhs.nodeId, rhs.sessionId, rhs.peerInfo, rhs.channels);
   }
 
   friend Payload toPayload(const PeerAnnouncement& announcement)
   {
-    return discovery::makePayload(
-      link::SessionMembership{announcement.sessionId}, announcement.peerInfo);
+    return discovery::makePayload(link::SessionMembership{announcement.sessionId},
+                                  announcement.peerInfo,
+                                  announcement.channels);
   }
 
   template <typename It>
@@ -59,13 +62,16 @@ struct PeerAnnouncement
       std::move(end),
       [&announcement](link::SessionMembership membership)
       { announcement.sessionId = std::move(membership.sessionId); },
-      [&announcement](PeerInfo pi) { announcement.peerInfo = std::move(pi); });
+      [&announcement](PeerInfo pi) { announcement.peerInfo = std::move(pi); },
+      [&announcement](ChannelAnnouncements chs)
+      { announcement.channels = std::move(chs); });
     return announcement;
   }
 
   link::NodeId nodeId;
   link::SessionId sessionId;
   PeerInfo peerInfo;
+  ChannelAnnouncements channels;
 };
 
 } // namespace link_audio
