@@ -393,7 +393,7 @@ private:
           receiveChannelRequest(std::move(result.first), result.second, messageEnd);
           break;
         case v1::kStopChannelRequest:
-          receiveAudioStopRequest(std::move(result.first), result.second, messageEnd);
+          receiveChannelStopRequest(std::move(result.first), result.second, messageEnd);
           break;
         case v1::kAudioBuffer:
           receiveAudioBuffer(std::move(result.first), result.second, messageEnd);
@@ -525,7 +525,9 @@ private:
     }
 
     template <typename It>
-    void receiveAudioStopRequest(v1::MessageHeader header, It payloadBegin, It payloadEnd)
+    void receiveChannelStopRequest(v1::MessageHeader header,
+                                   It payloadBegin,
+                                   It payloadEnd)
     {
       try
       {
