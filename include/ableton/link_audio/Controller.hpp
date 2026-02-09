@@ -36,6 +36,8 @@ namespace ableton
 namespace link_audio
 {
 
+using CallOnThreadFunction = std::function<void()>;
+
 template <typename PeerCountCallback,
           typename TempoCallback,
           typename StartStopStateCallback,
@@ -105,6 +107,11 @@ public:
           this->mpSessionController->updateDiscoveryCallback();
         }
       });
+  }
+
+  void callOnLinkThread(CallOnThreadFunction func)
+  {
+    this->mIo->async([func = std::move(func)]() { func(); });
   }
 
 protected:

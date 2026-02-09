@@ -47,4 +47,11 @@ inline void BasicLinkAudio<Clock>::setPeerName(std::string name)
   this->mController.setName(std::move(name));
 }
 
+template <typename Clock>
+template <typename Function>
+inline void BasicLinkAudio<Clock>::callOnLinkThread(Function func)
+{
+  this->mController.callOnLinkThread(std::move(func));
+}
+
 } // namespace ableton

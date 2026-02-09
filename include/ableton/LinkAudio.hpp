@@ -39,6 +39,9 @@ public:
 
   void setPeerName(std::string name);
 
+  template <typename Function>
+  void callOnLinkThread(Function func);
+
 private:
   using Controller = ableton::link::ApiController<Clock>;
 };
