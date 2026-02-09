@@ -57,6 +57,7 @@ set(link_audio_HEADERS
   ${link_audio_DIR}/Channels.hpp
   ${link_audio_DIR}/ChannelRequests.hpp
   ${link_audio_DIR}/Controller.hpp
+  ${link_audio_DIR}/Encoder.hpp
   ${link_audio_DIR}/Id.hpp
   ${link_audio_DIR}/MainProcessor.hpp
   ${link_audio_DIR}/NetworkMetrics.hpp
