@@ -51,7 +51,7 @@ TEST_CASE("Channels")
 
     PeerAnnouncement announcement;
     double networkQuality;
-    std::shared_ptr<int> interface;
+    std::shared_ptr<int> pInterface;
     discovery::UdpEndpoint from;
     int ttl;
   };

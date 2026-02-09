@@ -31,6 +31,7 @@
 #include <algorithm>
 #include <chrono>
 #include <memory>
+#include <optional>
 #include <stdexcept>
 #include <vector>
 
@@ -80,6 +81,7 @@ public:
   using Timer = typename util::Injected<IoContext>::type::Timer;
   using TimerError = typename Timer::ErrorCode;
   using TimePoint = typename Timer::TimePoint;
+  using SharedInterface = std::shared_ptr<Interface>;
 
   struct ExtendedAnnouncement
   {
@@ -87,20 +89,20 @@ public:
 
     Announcement announcement;
     double networkQuality;
-    Interface interface;
+    SharedInterface pInterface;
     discovery::UdpEndpoint from;
     int ttl;
   };
 
   UdpMessenger(util::Injected<ChannelsMessageHandler> handler,
-               util::Injected<Interface> iface,
+               SharedInterface pIface,
                Announcement announcement,
                util::Injected<IoContext> io,
                const uint8_t ttl,
                const uint8_t ttlRatio,
                util::Injected<Observer> observer)
     : mpImpl(std::make_shared<Impl>(std::move(handler),
-                                    std::move(iface),
+                                    std::move(pIface),
                                     std::move(announcement),
                                     std::move(io),
                                     ttl,
@@ -191,7 +193,7 @@ private:
   struct Impl : std::enable_shared_from_this<Impl>
   {
     Impl(util::Injected<ChannelsMessageHandler> handler,
-         util::Injected<Interface> iface,
+         SharedInterface pIface,
          Announcement announcement,
          util::Injected<IoContext> io,
          const uint8_t ttl,
@@ -199,7 +201,7 @@ private:
          util::Injected<Observer> observer)
       : mIo(std::move(io))
       , mChannelsMessageHandler(std::move(handler))
-      , mpInterface(std::move(iface))
+      , mpInterface(std::move(pIface))
       , mTimer(mIo->makeTimer())
       , mLastBroadcastTime{}
       , mTtl(ttl)
@@ -482,7 +484,7 @@ private:
           sawAnnouncement(*mObserver,
                           ExtendedAnnouncement{std::move(announcement),
                                                it->metricsFilter.metrics().quality(),
-                                               mpInterface.shared,
+                                               mpInterface,
                                                from,
                                                mTtl});
         }
@@ -556,7 +558,7 @@ private:
 
     util::Injected<IoContext> mIo;
     util::Injected<ChannelsMessageHandler> mChannelsMessageHandler;
-    util::Injected<Interface> mpInterface;
+    SharedInterface mpInterface;
     std::vector<Announcement> mAnnouncements;
     Timer mTimer;
     TimePoint mLastBroadcastTime;
@@ -573,12 +575,15 @@ template <typename IoContext>
 using MessengerInterface =
   UnicastIpInterface<typename util::Injected<IoContext>::type&, v1::kMaxMessageSize>;
 template <typename IoContext>
-using MessengerInterfacePtr = std::shared_ptr<MessengerInterface<IoContext>>;
+using MessengerInterface = MessengerInterface<IoContext>;
 template <typename ChannelsMessageHandler, typename Observer, typename IoContext>
-using MessengerPtr = std::shared_ptr<UdpMessenger<ChannelsMessageHandler,
-                                                  MessengerInterfacePtr<IoContext>,
-                                                  Observer,
-                                                  IoContext>>;
+using Messenger = UdpMessenger<ChannelsMessageHandler,
+                               MessengerInterface<IoContext>,
+                               Observer,
+                               IoContext>;
+template <typename ChannelsMessageHandler, typename Observer, typename IoContext>
+using MessengerPtr =
+  std::shared_ptr<Messenger<ChannelsMessageHandler, Observer, IoContext>>;
 
 // Factory function
 template <typename ChannelsMessageHandler,
@@ -595,19 +600,17 @@ MessengerPtr<ChannelsMessageHandler, Observer, IoContext> makeMessengerPtr(
   const uint8_t ttl = 5;
   const uint8_t ttlRatio = 20;
 
-  MessengerInterfacePtr<IoContext> iface =
+  auto pIface =
     makeSharedUnicastIpInterface<v1::kMaxMessageSize>(util::injectRef(*io), addr);
 
-  return std::make_shared<UdpMessenger<ChannelsMessageHandler,
-                                       MessengerInterfacePtr<IoContext>,
-                                       Observer,
-                                       IoContext>>(std::move(handler),
-                                                   util::injectShared(iface),
-                                                   std::move(announcement),
-                                                   std::move(io),
-                                                   ttl,
-                                                   ttlRatio,
-                                                   std::move(observer));
+  return std::make_shared<Messenger<ChannelsMessageHandler, Observer, IoContext>>(
+    std::move(handler),
+    pIface,
+    std::move(announcement),
+    std::move(io),
+    ttl,
+    ttlRatio,
+    std::move(observer));
 }
 
 } // namespace link_audio

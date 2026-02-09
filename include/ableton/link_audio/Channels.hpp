@@ -254,7 +254,7 @@ private:
       const auto peerInfo = incoming.announcement.peerInfo;
       const auto peerAudioChannels = incoming.announcement.channels.channels;
       const auto ttl = incoming.ttl;
-      auto sendHandler = SendHandler(incoming.from, incoming.interface);
+      auto sendHandler = SendHandler(incoming.from, incoming.pInterface);
       const auto networkQuality = incoming.networkQuality;
       bool didChannelsChange = false;
 
