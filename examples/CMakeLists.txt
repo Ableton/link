@@ -187,6 +187,27 @@ configure_linkhut_audio_sources(LinkHut)
 configure_linkhut_executable(LinkHut)
 source_group("LinkHut" FILES ${linkhut_HEADERS} ${linkhut_SOURCES})
 
+#  _     _       _        _             _ _       _   _       _
+# | |   (_)_ __ | | __   / \  _   _  __| (_) ___ | | | |_   _| |_
+# | |   | | '_ \| |/ /  / _ \| | | |/ _` | |/ _ \| |_| | | | | __|
+# | |___| | | | |   <  / ___ \ |_| | (_| | | (_) |  _  | |_| | |_
+# |_____|_|_| |_|_|\_\/_/   \_\__,_|\__,_|_|\___/|_| |_|\__,_|\__|
+#
+
+set(linkaudiohut_SOURCES
+  linkaudiohut/main.cpp
+)
+
+add_executable(LinkAudioHut
+  ${linkhut_HEADERS}
+  ${linkaudiohut_SOURCES}
+  ${linkhut_audio_SOURCES}
+)
+configure_linkhut_audio_sources(LinkAudioHut)
+configure_linkhut_executable(LinkAudioHut)
+source_group("LinkAudioHut" FILES ${linkhut_HEADERS} ${linkaudioshut_SOURCES})
+
+
 #  _     _       _    _   _       _   ____  _ _            _
 # | |   (_)_ __ | | _| | | |_   _| |_/ ___|(_) | ___ _ __ | |_
 # | |   | | '_ \| |/ / |_| | | | | __\___ \| | |/ _ \ '_ \| __|
