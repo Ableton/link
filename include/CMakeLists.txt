@@ -40,6 +40,20 @@ set(link_core_HEADERS
   PARENT_SCOPE
 )
 
+#     _             _ _
+#    / \  _   _  __| (_) ___
+#   / _ \| | | |/ _` | |/ _ \
+#  / ___ \ |_| | (_| | | (_) |
+# /_/   \_\__,_|\__,_|_|\___/
+#
+
+set(link_audio_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ableton/link_audio)
+set(link_audio_HEADERS
+  ${link_audio_DIR}/Controller.hpp
+  ${link_audio_DIR}/SessionController.hpp
+  PARENT_SCOPE
+)
+
 #  ____  _
 # |  _ \(_)___  ___ _____   _____ _ __ _   _
 # | | | | / __|/ __/ _ \ \ / / _ \ '__| | | |
@@ -163,6 +177,7 @@ set(link_util_HEADERS
 set(link_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ableton)
 set(link_HEADERS
   ${link_core_HEADERS}
+  ${link_audio_HEADERS}
   ${link_discovery_HEADERS}
   ${link_platform_HEADERS}
   ${link_util_HEADERS}
