@@ -495,8 +495,10 @@ private:
     template <typename It>
     void receiveChannelByes(It payloadBegin, It payloadEnd)
     {
-      const auto [byes, _] = ChannelByes::fromNetworkByteStream(
-        std::move(payloadBegin), std::move(payloadEnd));
+      auto byes = ChannelByes{};
+      discovery::parsePayload<ChannelByes>(
+        payloadBegin, payloadEnd, [&](const auto& b) { byes = std::move(b); });
+
       std::vector<NodeId> byesVector;
       for (const auto& bye : byes.byes)
       {
