@@ -48,6 +48,9 @@ intended make sure it complies to the [Test Plan](TEST-PLAN.md).
 
 Link is a header-only library, so it should be straightforward to integrate into your
 application.
+When using the basic version of Link, you should include `Link.hpp`. If you want Link with Link
+Audio support, include `LinkAudio.hpp`. The library does not follow the IWYU principles, so
+you will have to include the respective header in every compilation unit.
 
 ### CMake-based Projects
 
@@ -67,7 +70,7 @@ Link's CMakeLists.txt.
 
 To include the Link library in your non CMake project, you must do the following:
 
- - Add the `link/include` and `modules/asio-standalone/asio/include` directories to your
+ - Add the `include` and `modules/asio-standalone/asio/include` directories to your
    list of include paths
  - Define `LINK_PLATFORM_MACOSX=1`, `LINK_PLATFORM_LINUX=1`, or `LINK_PLATFORM_WINDOWS=1`,
    depending on which platform you are building on.
@@ -80,12 +83,12 @@ insight as to the compiler flags needed to build Link.
 
 | Platform | Minimum Required     | Optional (only required for examples) |
 |----------|----------------------|---------------------------------------|
-| Windows  | MSVC 2015            | Steinberg ASIO SDK 2.3                |
-| Mac      | Xcode 9.4.1          |                                       |
-| Linux    | Clang 3.6 or GCC 5.2 | libportaudio19-dev                    |
+| Windows  | MSVC 17 2022         | Steinberg ASIO SDK 2.3                |
+| Mac      | Xcode 16.2.0         |                                       |
+| Linux    | Clang 13 or GCC 10   | libportaudio19-dev                    |
 
 
-Other compilers with good C++11 support should work, but are not verified.
+Other compilers with good C++17 support should work, but are not verified.
 
 iOS developers should not use this repo. See http://ableton.github.io/linkkit for
 information on the LinkKit SDK for iOS.
@@ -96,6 +99,8 @@ An overview of Link concepts can be found at http://ableton.github.io/link. Thos
 are new to Link should start there. The [Link.hpp](include/ableton/Link.hpp) header
 contains the full Link public interface. See the LinkHut projects in this repo for an
 example usage of the `Link` type.
+Similarly, [LinkAudio.hpp](include/ableton/LinkAudio.hpp) contains the documentation for
+the `LinkAudio` type and example usage is implemented in LinkAudioHut.
 
 ## Time and Clocks
 
