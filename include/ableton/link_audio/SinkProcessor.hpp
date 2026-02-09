@@ -20,6 +20,7 @@
 #pragma once
 
 #include <ableton/link_audio/Id.hpp>
+#include <ableton/link_audio/Receivers.hpp>
 #include <ableton/link_audio/Sink.hpp>
 #include <ableton/util/Injected.hpp>
 #include <memory>
@@ -30,10 +31,13 @@ namespace ableton
 namespace link_audio
 {
 
+template <typename GetSender, typename IoContext>
 struct SinkProcessor
 {
-  SinkProcessor(std::shared_ptr<Sink> pSink)
-    : mpImpl(std::make_shared<Impl>(pSink))
+  SinkProcessor(util::Injected<IoContext> io,
+                std::shared_ptr<Sink> pSink,
+                util::Injected<GetSender> getSender)
+    : mpImpl(std::make_shared<Impl>(std::move(io), pSink, std::move(getSender)))
   {
   }
 
@@ -45,10 +49,20 @@ struct SinkProcessor
 
   bool nameChanged() { return mpImpl->nameChanged(); }
 
+  template <typename Request>
+  void receiveChannelRequest(Request request, uint8_t ttl)
+  {
+    mpImpl->receiveChannelRequest(std::move(request), ttl);
+  }
+
   struct Impl : public std::enable_shared_from_this<Impl>
   {
-    Impl(std::shared_ptr<Sink> pSink)
-      : mpSink(pSink)
+    Impl(util::Injected<IoContext> io,
+         std::shared_ptr<Sink> pSink,
+         util::Injected<GetSender> getSender)
+      : mIo(std::move(io))
+      , mpSink(pSink)
+      , mReceivers(util::injectRef(*mIo), std::move(getSender))
     {
     }
 
@@ -68,8 +82,16 @@ struct SinkProcessor
 
     bool nameChanged() { return mpSink->nameChanged(); }
 
+    template <typename Request>
+    void receiveChannelRequest(Request request, uint8_t ttl)
+    {
+      mReceivers.receiveChannelRequest(std::move(request), ttl);
+    }
+
   private:
+    util::Injected<IoContext> mIo;
     std::shared_ptr<Sink> mpSink;
+    Receivers<GetSender, IoContext> mReceivers;
   };
 
   std::shared_ptr<Impl> mpImpl;

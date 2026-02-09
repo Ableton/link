@@ -132,7 +132,7 @@ public:
     this->mIo->async(
       [this, sink]()
       {
-        this->mProcessor.addSink(sink);
+        this->mProcessor.addSink(sink, util::injectVal(GetSender{this}));
         if (this->mpSessionController)
         {
           this->mpSessionController->updateDiscoveryCallback();
