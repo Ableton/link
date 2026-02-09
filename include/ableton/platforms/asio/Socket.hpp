@@ -51,7 +51,7 @@ struct Socket
                    const size_t numBytes,
                    const discovery::UdpEndpoint& to)
   {
-    assert(numBytes < MaxPacketSize);
+    assert(numBytes <= MaxPacketSize);
     return mpImpl->mSocket.send_to(::LINK_ASIO_NAMESPACE::buffer(pData, numBytes), to);
   }
 
