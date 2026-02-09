@@ -71,7 +71,11 @@ public:
     this->mRtClientStateSetter.start();
   }
 
-  ~SessionController() { this->shutdown(); }
+  ~SessionController()
+  {
+    this->mIo->async([this]() { this->stopAudio(); });
+    this->shutdown();
+  }
 
   void sessionMembershipCallback()
   {

@@ -85,17 +85,6 @@ public:
   {
   }
 
-  ~Controller()
-  {
-    this->mIo->async(
-      [this]()
-      {
-        mIsLinkAudioEnabled = false;
-        mGateways.clear();
-        mProcessor.stop();
-      });
-  }
-
   void enableLinkAudio(bool enabled)
   {
     mIsLinkAudioEnabled = enabled;
@@ -368,6 +357,13 @@ protected:
 
     Controller* mpController;
   };
+
+  void stopAudio()
+  {
+    mIsLinkAudioEnabled = false;
+    mGateways.clear();
+    mProcessor.stop();
+  }
 
   ChannelsChangedCallback mChannelsChangedCallback;
   util::Locked<std::vector<typename ControllerChannels::Channel>> mApiChannels;
