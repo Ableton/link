@@ -102,5 +102,79 @@ struct ChannelAnnouncements
   }
 };
 
+struct ChannelBye
+{
+  Id id;
+
+  // Model the NetworkByteStreamSerializable concept
+  friend std::uint32_t sizeInByteStream(const ChannelBye& bye)
+  {
+    return discovery::sizeInByteStream(bye.id);
+  }
+
+  template <typename It>
+  friend It toNetworkByteStream(const ChannelBye& bye, It out)
+  {
+    return discovery::toNetworkByteStream(bye.id, std::move(out));
+  }
+
+  template <typename It>
+  static std::pair<ChannelBye, It> fromNetworkByteStream(It begin, It end)
+  {
+    auto [bye, byeEnd] =
+      discovery::Deserialize<Id>::fromNetworkByteStream(std::move(begin), end);
+    return std::make_pair(ChannelBye{bye}, byeEnd);
+  }
+
+  friend bool operator==(const ChannelBye& lhs, const ChannelBye& rhs)
+  {
+    return lhs.id == rhs.id;
+  }
+
+  friend bool operator!=(const ChannelBye& lhs, const ChannelBye& rhs)
+  {
+    return !(lhs == rhs);
+  }
+};
+
+struct ChannelByes
+{
+  static constexpr std::int32_t key = 'aucb';
+  static_assert(key == 0x61756362, "Unexpected byte order");
+
+  std::vector<ChannelBye> byes;
+
+  // Model the NetworkByteStreamSerializable concept
+  friend std::uint32_t sizeInByteStream(const ChannelByes& channels)
+  {
+    return discovery::sizeInByteStream(channels.byes);
+  }
+
+  template <typename It>
+  friend It toNetworkByteStream(const ChannelByes& channels, It out)
+  {
+    return discovery::toNetworkByteStream(channels.byes, std::move(out));
+  }
+
+  template <typename It>
+  static std::pair<ChannelByes, It> fromNetworkByteStream(It begin, It end)
+  {
+    auto [byes, byesEnd] =
+      discovery::Deserialize<std::vector<ChannelBye>>::fromNetworkByteStream(
+        std::move(begin), end);
+    return std::make_pair(ChannelByes{byes}, byesEnd);
+  }
+
+  friend bool operator==(const ChannelByes& lhs, const ChannelByes& rhs)
+  {
+    return lhs.byes == rhs.byes;
+  }
+
+  friend bool operator!=(const ChannelByes& lhs, const ChannelByes& rhs)
+  {
+    return !(lhs == rhs);
+  }
+};
+
 } // namespace link_audio
 } // namespace ableton

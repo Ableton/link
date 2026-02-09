@@ -45,6 +45,19 @@ TEST_CASE("AudioChannels")
                bytes.begin(), bytes.end())
                .first);
   }
+
+  SECTION("ByesRoundtrip")
+  {
+    auto channels = ChannelByes{{ChannelBye{foo.id}, ChannelBye{bar.id}}};
+    const auto size = sizeInByteStream(channels);
+    auto bytes = std::vector<uint8_t>(size);
+    auto serializedEnd = toNetworkByteStream(channels, bytes.begin());
+    CHECK(bytes.end() == serializedEnd);
+    CHECK(channels
+          == discovery::Deserialize<ChannelByes>::fromNetworkByteStream(
+               bytes.begin(), bytes.end())
+               .first);
+  }
 }
 
 } // namespace link_audio
