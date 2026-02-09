@@ -17,6 +17,7 @@ set(link_audio_test_SOURCES
   ableton/link_audio/tst_Channels.cpp
   ableton/link_audio/tst_Encoder.cpp
   ableton/link_audio/tst_PCMCodec.cpp
+  ableton/link_audio/tst_PeerAnnouncement.cpp
   ableton/link_audio/tst_PeerGateways.cpp
   ableton/link_audio/tst_Queue.cpp
   ableton/link_audio/tst_Receivers.cpp
