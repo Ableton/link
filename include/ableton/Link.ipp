@@ -180,6 +180,19 @@ inline BasicLink<Clock>::SessionState::SessionState(const link::ApiState state,
 }
 
 template <typename Clock>
+inline bool BasicLink<Clock>::SessionState::operator==(const SessionState& other) const
+{
+  return std::tie(mOriginalState, mState, mbRespectQuantum)
+         == std::tie(other.mOriginalState, other.mState, other.mbRespectQuantum);
+}
+
+template <typename Clock>
+inline bool BasicLink<Clock>::SessionState::operator!=(const SessionState& other) const
+{
+  return !(operator==(other));
+}
+
+template <typename Clock>
 inline double BasicLink<Clock>::SessionState::tempo() const
 {
   return mState.timeline.tempo.bpm();

@@ -108,6 +108,17 @@ struct IncomingClientState
 
 struct ApiState
 {
+  friend bool operator==(const ApiState& lhs, const ApiState& rhs)
+  {
+    return std::tie(lhs.timeline, lhs.timelineSessionId, lhs.startStopState)
+           == std::tie(rhs.timeline, rhs.timelineSessionId, rhs.startStopState);
+  }
+
+  friend bool operator!=(const ApiState& lhs, const ApiState& rhs)
+  {
+    return !(lhs == rhs);
+  }
+
   Timeline timeline;
   SessionId timelineSessionId;
   ApiStartStopState startStopState;

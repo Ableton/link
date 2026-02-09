@@ -245,6 +245,9 @@ public:
   public:
     SessionState(const link::ApiState state, const bool bRespectQuantum);
 
+    bool operator==(const SessionState& other) const;
+    bool operator!=(const SessionState& other) const;
+
     /*! @brief: The tempo of the timeline, in Beats Per Minute.
      *
      *  @discussion This is a stable value that is appropriate for display
