@@ -60,6 +60,7 @@ set(link_audio_HEADERS
   ${link_audio_DIR}/Id.hpp
   ${link_audio_DIR}/MainProcessor.hpp
   ${link_audio_DIR}/NetworkMetrics.hpp
+  ${link_audio_DIR}/PCMCodec.hpp
   ${link_audio_DIR}/PeerAnnouncement.hpp
   ${link_audio_DIR}/PeerGateways.hpp
   ${link_audio_DIR}/PeerInfo.hpp
