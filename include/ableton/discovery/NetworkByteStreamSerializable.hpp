@@ -242,6 +242,25 @@ struct Deserialize<int64_t>
   }
 };
 
+// int16_t in terms of uint16_t
+template <typename It>
+It toNetworkByteStream(int16_t i, It out)
+{
+  return toNetworkByteStream(reinterpret_cast<const uint16_t&>(i), std::move(out));
+}
+
+template <>
+struct Deserialize<int16_t>
+{
+  template <typename It>
+  static std::pair<int16_t, It> fromNetworkByteStream(It begin, It end)
+  {
+    auto result =
+      Deserialize<uint16_t>::fromNetworkByteStream(std::move(begin), std::move(end));
+    return std::make_pair(reinterpret_cast<const int16_t&>(result.first), result.second);
+  }
+};
+
 // bool
 inline std::uint32_t sizeInByteStream(bool)
 {
