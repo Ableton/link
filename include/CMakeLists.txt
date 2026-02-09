@@ -51,7 +51,9 @@ set(link_audio_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ableton/link_audio)
 set(link_audio_HEADERS
   ${link_audio_DIR}/BeatTimeMapping.hpp
   ${link_audio_DIR}/ChannelAnnouncements.hpp
+  ${link_audio_DIR}/ChannelId.hpp
   ${link_audio_DIR}/Channels.hpp
+  ${link_audio_DIR}/ChannelRequests.hpp
   ${link_audio_DIR}/Controller.hpp
   ${link_audio_DIR}/Id.hpp
   ${link_audio_DIR}/MainProcessor.hpp

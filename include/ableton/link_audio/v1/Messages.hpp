@@ -48,6 +48,7 @@ const MessageType kInvalid = 0;
 const MessageType kPeerAnnouncement = 1;
 const MessageType kChannelByes = 2;
 const MessageType kPong = 3;
+const MessageType kChannelRequest = 4;
 
 struct MessageHeader
 {
