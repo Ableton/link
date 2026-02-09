@@ -41,7 +41,7 @@ AudioEngine<Link>::AudioEngine(Link& link)
   , mLockfreeEngineData(mSharedEngineData)
   , mTimeAtLastClick{}
   , mIsPlaying(false)
-  , mLinkAudioRenderer(mLink)
+  , mLinkAudioRenderer(mLink, mSampleRate)
 {
   if (!mOutputLatency.is_lock_free())
   {

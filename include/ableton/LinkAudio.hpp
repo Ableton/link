@@ -24,6 +24,7 @@
 #include <ableton/link_audio/ApiConfig.hpp>
 
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -133,15 +134,42 @@ private:
 class LinkAudioSource
 {
 public:
-  template <typename LinkAudio>
-  LinkAudioSource(LinkAudio& link, ChannelId id);
+  struct BufferHandle;
+
+  template <typename LinkAudio, typename Callback>
+  LinkAudioSource(LinkAudio& link, ChannelId id, Callback callback);
 
   LinkAudioSource(const LinkAudioSource&) = default;
   LinkAudioSource& operator=(const LinkAudioSource&) = default;
   LinkAudioSource(LinkAudioSource&&) = default;
   LinkAudioSource& operator=(LinkAudioSource&&) = default;
 
+  ~LinkAudioSource();
+
   ChannelId id() const;
+
+  struct BufferHandle
+  {
+    struct Info
+    {
+      size_t numChannels;
+      size_t numFrames;
+      uint32_t sampleRate;
+      uint64_t count;
+      double sessionBeatTime;
+      double tempo;
+      SessionId sessionId;
+
+      template <typename SessionState>
+      std::optional<double> beginBeats(const SessionState&, double quantum) const;
+
+      template <typename SessionState>
+      std::optional<double> endBeats(const SessionState&, double quantum) const;
+    };
+
+    int16_t* samples;
+    Info info;
+  };
 
 private:
   std::shared_ptr<link_audio::Source> mpImpl;

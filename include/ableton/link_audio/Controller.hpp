@@ -143,9 +143,9 @@ public:
     return sink;
   }
 
-  SharedSource addSource(Id channelId)
+  SharedSource addSource(Id channelId, Source::Callback callback)
   {
-    auto source = std::make_shared<Source>(std::move(channelId));
+    auto source = std::make_shared<Source>(std::move(channelId), std::move(callback));
 
     this->mIo->async(
       [this, source]()

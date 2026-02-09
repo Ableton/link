@@ -172,10 +172,64 @@ inline bool LinkAudioSink::BufferHandle::commit(const SessionState& sessionState
   return result;
 }
 
-template <typename LinkAudio>
-inline LinkAudioSource::LinkAudioSource(LinkAudio& link, ChannelId id)
-  : mpImpl{link.mController.addSource(std::move(id))}
+template <typename SessionState>
+inline std::optional<double> LinkAudioSource::BufferHandle::Info::beginBeats(
+  const SessionState& sessionState, const double quantum) const
 {
+  const auto& state = detail::linkApiState(sessionState);
+  if (state.timelineSessionId != sessionId)
+  {
+    return std::nullopt;
+  }
+
+  return link_audio::beatAtGlobalBeat(
+           state.timeline, link::Beats{sessionBeatTime}, link::Beats{quantum})
+    .floating();
+}
+
+
+template <typename SessionState>
+inline std::optional<double> LinkAudioSource::BufferHandle::Info::endBeats(
+  const SessionState& sessionState, const double quantum) const
+{
+  const auto& state = detail::linkApiState(sessionState);
+  if (state.timelineSessionId != sessionId)
+  {
+    return std::nullopt;
+  }
+
+  const auto durationSeconds =
+    static_cast<double>(numFrames) / static_cast<double>(sampleRate);
+  const auto beatsPerSecond = tempo / 60.0;
+  const auto endBeats = link::Beats{sessionBeatTime + durationSeconds * beatsPerSecond};
+  return link_audio::beatAtGlobalBeat(state.timeline, endBeats, link::Beats{quantum})
+    .floating();
+}
+
+
+template <typename LinkAudio, typename Callback>
+inline LinkAudioSource::LinkAudioSource(LinkAudio& link, ChannelId id, Callback callback)
+  : mpImpl{link.mController.addSource(
+      std::move(id),
+      [callback](auto handle)
+      {
+        auto info = LinkAudioSource::BufferHandle::Info{};
+        info.numChannels = handle.mBuffer.mNumChannels;
+        info.numFrames = handle.mBuffer.mNumFrames;
+        info.sampleRate = handle.mBuffer.mSampleRate;
+        info.count = handle.mBuffer.mCount;
+        info.sessionBeatTime = handle.mBuffer.mBeginBeats.floating();
+        info.tempo = handle.mBuffer.mTempo.bpm();
+        info.sessionId = handle.mBuffer.mSessionId;
+
+        callback(LinkAudioSource::BufferHandle{handle.mpSamples, info});
+      })}
+{
+}
+
+inline LinkAudioSource::~LinkAudioSource()
+{
+  mpImpl->setCallback([](auto) {});
 }
 
 inline void LinkAudioSink::requestMaxNumSamples(size_t numSamples)

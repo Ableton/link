@@ -45,6 +45,7 @@ using ApiController = ableton::link_audio::SessionController<PeerCountCallback,
 
 using ChannelId = link_audio::Id;
 using PeerId = link_audio::Id;
+using SessionId = link_audio::Id;
 
 } // namespace ableton
 

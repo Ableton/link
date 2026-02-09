@@ -36,17 +36,31 @@ static constexpr auto kSourceQueueSize = std::chrono::milliseconds(10000);
 
 struct Source
 {
-  using Callback = std::function<void(Buffer<int16_t>*)>;
+  using Callback = std::function<void(BufferCallbackHandle<Buffer<int16_t>>)>;
 
-  Source(Id id)
+  Source(Id id, Callback callback)
     : mId(std::move(id))
+    , mCallback(std::move(callback))
   {
   }
 
   const Id& id() const { return mId; }
 
+
+  void setCallback(Callback newCallback)
+  {
+    mCallback.update([newCallback_ = std::move(newCallback)](auto& callback)
+                     { callback = std::move(newCallback_); });
+  }
+
+  void callback(BufferCallbackHandle<Buffer<int16_t>> buffer)
+  {
+    mCallback.update([&](auto& callback) { callback(buffer); });
+  }
+
 private:
   Id mId;
+  util::Locked<Callback> mCallback;
 };
 
 } // namespace link_audio
