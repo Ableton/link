@@ -24,6 +24,7 @@
 #include <ableton/LinkAudio.hpp>
 #include <ableton/link_audio/Buffer.hpp>
 #include <ableton/link_audio/Queue.hpp>
+#include <ableton/util/FloatIntConversion.hpp>
 
 namespace ableton
 {
@@ -45,11 +46,32 @@ public:
   void operator()(double* pLeftSamples,
                   double* pRightSamples,
                   size_t numFrames,
-                  typename Link::SessionState,
-                  double,
-                  const std::chrono::microseconds,
-                  double)
+                  typename Link::SessionState sessionState,
+                  double sampleRate,
+                  const std::chrono::microseconds hostTime,
+                  double quantum)
   {
+    // Send the left channel to Link
+    // We can only send audo if the sink can provide a buffer to write to
+    auto buffer = LinkAudioSink::BufferHandle(mSink);
+    if (buffer)
+    {
+      // The sink expects 16 bit integers so the doubles have to be converted
+      for (auto i = 0u; i < numFrames; ++i)
+      {
+        buffer.samples[i] = ableton::util::floatToInt16(pLeftSamples[i]);
+      }
+
+      // The buffer is commited to Link Audio with the required timing information
+      const auto beatsAtBufferBegin = sessionState.beatAtTime(hostTime, quantum);
+      buffer.commit(sessionState,
+                    beatsAtBufferBegin,
+                    quantum,
+                    static_cast<uint32_t>(numFrames),
+                    1,
+                    static_cast<uint32_t>(sampleRate));
+    }
+
     std::copy_n(pLeftSamples, numFrames, pRightSamples);
   }
 
