@@ -165,9 +165,9 @@ void testSetAndGetClientState(SetClientStateFunctionT setClientState,
 
   clock.advance(microseconds{1});
   const auto initialTimeline =
-    Optional<Timeline>{Timeline{Tempo{60.}, Beats{0.}, kAnyTime}};
-  const auto initialStartStopState =
-    Optional<ClientStartStopState>{ClientStartStopState{false, kAnyTime, clock.micros()}};
+    std::optional<Timeline>{Timeline{Tempo{60.}, Beats{0.}, kAnyTime}};
+  const auto initialStartStopState = std::optional<ClientStartStopState>{
+    ClientStartStopState{false, kAnyTime, clock.micros()}};
   const auto initialClientState =
     IncomingClientState{initialTimeline, initialStartStopState, clock.micros()};
 
@@ -182,11 +182,11 @@ void testSetAndGetClientState(SetClientStateFunctionT setClientState,
   {
     // Set client state with a StartStopState having the same timestamp as the current
     // StartStopState - don't advance clock
-    const auto outdatedStartStopState = Optional<ClientStartStopState>{
+    const auto outdatedStartStopState = std::optional<ClientStartStopState>{
       ClientStartStopState{false, kAnyTime, clock.micros()}};
-    setClientState(
-      controller,
-      IncomingClientState{Optional<Timeline>{}, outdatedStartStopState, clock.micros()});
+    setClientState(controller,
+                   IncomingClientState{
+                     std::optional<Timeline>{}, outdatedStartStopState, clock.micros()});
     CHECK(initialClientState == getClientState(controller));
   }
 
@@ -194,28 +194,28 @@ void testSetAndGetClientState(SetClientStateFunctionT setClientState,
 
   SECTION("Set outdated start stop state (timestamp in past)")
   {
-    const auto outdatedStartStopState = Optional<ClientStartStopState>{
+    const auto outdatedStartStopState = std::optional<ClientStartStopState>{
       ClientStartStopState{false, kAnyTime, microseconds{0}}};
-    setClientState(
-      controller,
-      IncomingClientState{Optional<Timeline>{}, outdatedStartStopState, clock.micros()});
+    setClientState(controller,
+                   IncomingClientState{
+                     std::optional<Timeline>{}, outdatedStartStopState, clock.micros()});
     CHECK(initialClientState == getClientState(controller));
   }
 
   SECTION("Set empty client state")
   {
-    setClientState(
-      controller,
-      IncomingClientState{
-        Optional<Timeline>{}, Optional<ClientStartStopState>{}, clock.micros()});
+    setClientState(controller,
+                   IncomingClientState{std::optional<Timeline>{},
+                                       std::optional<ClientStartStopState>{},
+                                       clock.micros()});
     CHECK(initialClientState == getClientState(controller));
   }
 
   SECTION("Set client state with new Timeline and StartStopState")
   {
     const auto expectedTimeline =
-      Optional<Timeline>{Timeline{Tempo{80.}, Beats{1.}, kAnyTime}};
-    const auto expectedStartStopState = Optional<ClientStartStopState>{
+      std::optional<Timeline>{Timeline{Tempo{80.}, Beats{1.}, kAnyTime}};
+    const auto expectedStartStopState = std::optional<ClientStartStopState>{
       ClientStartStopState{false, kAnyTime, clock.micros()}};
     const auto expectedClientState =
       IncomingClientState{expectedTimeline, expectedStartStopState, clock.micros()};
@@ -246,8 +246,8 @@ void testCallbackInvocation(SetClientStateFunctionT setClientState)
   const auto initialIsPlaying = true;
 
   const auto initialTimeline =
-    Optional<Timeline>{Timeline{initialTempo, Beats{0.}, kAnyTime}};
-  const auto initialStartStopState = Optional<ClientStartStopState>{
+    std::optional<Timeline>{Timeline{initialTempo, Beats{0.}, kAnyTime}};
+  const auto initialStartStopState = std::optional<ClientStartStopState>{
     ClientStartStopState{initialIsPlaying, kAnyTime, clock.micros()}};
   setClientState(controller, {initialTimeline, initialStartStopState, clock.micros()});
 
@@ -263,8 +263,8 @@ void testCallbackInvocation(SetClientStateFunctionT setClientState)
     SECTION("Callbacks mustn't be called if Tempo and isPlaying don't change")
     {
       const auto timeline =
-        Optional<Timeline>{Timeline{initialTempo, Beats{1.}, kAnyTime}};
-      const auto startStopState = Optional<ClientStartStopState>{
+        std::optional<Timeline>{Timeline{initialTempo, Beats{1.}, kAnyTime}};
+      const auto startStopState = std::optional<ClientStartStopState>{
         ClientStartStopState{initialIsPlaying, kAnyTime, clock.micros()}};
       setClientState(controller, {timeline, startStopState, clock.micros()});
       CHECK(tempoCallback.tempos.empty());
@@ -389,8 +389,8 @@ TEST_CASE("Controller")
 
     clock.advance(microseconds{1});
     const auto initialTimeline =
-      Optional<Timeline>{Timeline{Tempo{50.}, Beats{0.}, clock.micros()}};
-    const auto initialStartStopState = Optional<ClientStartStopState>{
+      std::optional<Timeline>{Timeline{Tempo{50.}, Beats{0.}, clock.micros()}};
+    const auto initialStartStopState = std::optional<ClientStartStopState>{
       ClientStartStopState{true, kAnyTime, clock.micros()}};
     const auto initialState =
       IncomingClientState{initialTimeline, initialStartStopState, clock.micros()};
@@ -402,8 +402,8 @@ TEST_CASE("Controller")
 
     clock.advance(microseconds{1});
     const auto newTimeline =
-      Optional<Timeline>{Timeline{Tempo{70.}, Beats{1.}, clock.micros()}};
-    const auto newStartStopState = Optional<ClientStartStopState>{
+      std::optional<Timeline>{Timeline{Tempo{70.}, Beats{1.}, clock.micros()}};
+    const auto newStartStopState = std::optional<ClientStartStopState>{
       ClientStartStopState{false, kAnyTime, clock.micros()}};
     const auto newState =
       IncomingClientState{newTimeline, newStartStopState, clock.micros()};

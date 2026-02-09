@@ -20,12 +20,11 @@
 
 #pragma once
 
-#include <ableton/link/Optional.hpp>
-
 #include <array>
 #include <atomic>
 #include <cassert>
 #include <cstdint>
+#include <optional>
 
 namespace ableton
 {
@@ -57,13 +56,13 @@ public:
     return mBuffers[mReadIndex];
   }
 
-  Optional<T> readNew()
+  std::optional<T> readNew()
   {
     if (loadReadBuffer())
     {
-      return Optional<T>(mBuffers[mReadIndex]);
+      return std::optional<T>(mBuffers[mReadIndex]);
     }
-    return {};
+    return std::nullopt;
   }
 
   template <typename U>

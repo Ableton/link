@@ -19,20 +19,20 @@
 
 #pragma once
 
-#include <ableton/link/Optional.hpp>
 #include <ableton/link/StartStopState.hpp>
 #include <ableton/link/Timeline.hpp>
 #include <ableton/link/TripleBuffer.hpp>
 #include <mutex>
+#include <optional>
 
 namespace ableton
 {
 namespace link
 {
 
-using OptionalTimeline = Optional<Timeline>;
-using OptionalStartStopState = Optional<StartStopState>;
-using OptionalClientStartStopState = Optional<ClientStartStopState>;
+using OptionalTimeline = std::optional<Timeline>;
+using OptionalStartStopState = std::optional<StartStopState>;
+using OptionalClientStartStopState = std::optional<ClientStartStopState>;
 
 struct SessionState
 {

@@ -25,7 +25,6 @@ set(link_core_HEADERS
   ${link_core_DIR}/NodeId.hpp
   ${link_core_DIR}/NodeState.hpp
   ${link_core_DIR}/PayloadEntries.hpp
-  ${link_core_DIR}/Optional.hpp
   ${link_core_DIR}/Peers.hpp
   ${link_core_DIR}/PeerState.hpp
   ${link_core_DIR}/Phase.hpp
