@@ -95,6 +95,9 @@ public:
 
   void setName(std::string name);
 
+  void requestMaxNumSamples(size_t numSamples);
+  size_t maxNumSamples() const;
+
   struct BufferHandle
   {
     BufferHandle(LinkAudioSink&);

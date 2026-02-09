@@ -178,6 +178,16 @@ inline LinkAudioSource::LinkAudioSource(LinkAudio& link, ChannelId id)
 {
 }
 
+inline void LinkAudioSink::requestMaxNumSamples(size_t numSamples)
+{
+  mpImpl->requestMaxNumSamples(numSamples);
+}
+
+inline size_t LinkAudioSink::maxNumSamples() const
+{
+  return mpImpl->maxNumSamples();
+}
+
 inline ChannelId LinkAudioSource::id() const
 {
   return mpImpl->id();

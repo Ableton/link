@@ -37,6 +37,7 @@ struct Sink
   Sink(std::string name, size_t maxNumSamples, Id id)
     : mName{std::move(name)}
     , mId{std::move(id)}
+    , mMaxNumSamples{maxNumSamples}
     , mQueue(128, {static_cast<uint32_t>(maxNumSamples)})
   {
   }
@@ -65,6 +66,12 @@ struct Sink
     if (!queueWriter.retainSlot())
     {
       return nullptr;
+    }
+
+    if (queueWriter[0]->mSamples.size() < mMaxNumSamples)
+    {
+      queueWriter.releaseSlot();
+      return retainBuffer();
     }
 
     return queueWriter[0];
@@ -109,6 +116,10 @@ struct Sink
     }
   }
 
+  void requestMaxNumSamples(size_t numSamples) { mMaxNumSamples = numSamples; }
+
+  size_t maxNumSamples() const { return mMaxNumSamples; }
+
   Buffer<int16_t>* buffer()
   {
     auto queueWriter = mQueue.writer();
@@ -121,6 +132,7 @@ private:
   util::Locked<std::string> mName;
   std::atomic_flag mNameIsUpToDate;
   Id mId;
+  std::atomic<size_t> mMaxNumSamples;
   Queue<Buffer<int16_t>> mQueue;
 };
 

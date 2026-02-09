@@ -106,6 +106,10 @@ struct SinkProcessor
         {
           mEncoder(*mQueueReader[0]);
         }
+        if (mQueueReader[0]->mSamples.size() < mpSink->maxNumSamples())
+        {
+          mQueueReader[0]->mSamples.resize(mpSink->maxNumSamples());
+        }
         mQueueReader.releaseSlot();
       }
 
