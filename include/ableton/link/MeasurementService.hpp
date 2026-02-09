@@ -39,22 +39,19 @@ template <typename Clock, typename IoContext>
 class MeasurementService
 {
 public:
-  using IoType = util::Injected<IoContext>;
-  using MeasurementInstance = Measurement<Clock, IoContext>;
+  using IoType = typename util::Injected<IoContext>::type;
+  using MeasurementInstance = Measurement<Clock, IoType&>;
 
   MeasurementService(discovery::IpAddress address,
                      SessionId sessionId,
                      GhostXForm ghostXForm,
                      Clock clock,
-                     IoType io)
+                     util::Injected<IoContext> io)
     : mClock(std::move(clock))
-    , mIo(std::move(io))
-    , mPingResponder(std::move(address),
-                     std::move(sessionId),
-                     std::move(ghostXForm),
-                     mClock,
-                     util::injectRef(*mIo))
+    , mpImpl(std::make_shared<Impl>(
+        address, std::move(sessionId), std::move(ghostXForm), mClock, std::move(io)))
   {
+    mpImpl->listen();
   }
 
   MeasurementService(const MeasurementService&) = delete;
@@ -62,10 +59,10 @@ public:
 
   void updateNodeState(const SessionId& sessionId, const GhostXForm& xform)
   {
-    mPingResponder.updateNodeState(sessionId, xform);
+    mpImpl->updateNodeState(sessionId, xform);
   }
 
-  discovery::UdpEndpoint endpoint() const { return mPingResponder.endpoint(); }
+  discovery::UdpEndpoint endpoint() const { return mpImpl->socket().endpoint(); }
 
   // Measure the peer and invoke the handler with a GhostXForm
   template <typename Handler>
@@ -74,28 +71,83 @@ public:
     using namespace std;
 
     const auto nodeId = state.nodeState.nodeId;
-    auto addr = mPingResponder.endpoint().address();
-    auto callback = CompletionCallback<Handler>{*this, nodeId, handler};
+    auto addr = mpImpl->socket().endpoint().address();
+    auto callback = CompletionCallback<Handler>{mpImpl, nodeId, handler};
 
     try
     {
-      mMeasurementMap[nodeId] =
-        std::unique_ptr<MeasurementInstance>(new MeasurementInstance{
-          state, std::move(callback), std::move(addr), mClock, mIo});
+      mpImpl->mMeasurementMap[nodeId] =
+        std::make_unique<MeasurementInstance>(state,
+                                              std::move(callback),
+                                              std::move(addr),
+                                              mClock,
+                                              util::injectRef(*(mpImpl->mIo)),
+                                              mpImpl->socket());
     }
     catch (const runtime_error& err)
     {
-      info(mIo->log()) << "gateway@" + addr.to_string()
-                       << " Failed to measure. Reason: " << err.what();
+      info(mpImpl->mIo->log()) << "gateway@" + addr.to_string()
+                               << " Failed to measure. Reason: " << err.what();
       handler(GhostXForm{});
     }
   }
+
+  struct Impl : std::enable_shared_from_this<Impl>
+  {
+    using Socket = typename IoType::template Socket<v1::kMaxMessageSize>;
+
+    Impl(discovery::IpAddress address,
+         SessionId sessionId,
+         GhostXForm ghostXForm,
+         Clock clock,
+         util::Injected<IoContext> io)
+      : mIo(std::move(io))
+      , mSocket((*mIo).template openUnicastSocket<v1::kMaxMessageSize>(address))
+      , mPingResponder(mSocket,
+                       std::move(sessionId),
+                       std::move(ghostXForm),
+                       clock,
+                       util::injectRef(*mIo))
+    {
+    }
+
+    void updateNodeState(const SessionId& sessionId, const GhostXForm& xform)
+    {
+      mPingResponder.updateNodeState(sessionId, xform);
+    }
+
+    template <typename It>
+    void operator()(const discovery::UdpEndpoint& from,
+                    const It messageBegin,
+                    const It messageEnd)
+    {
+      mPingResponder(from, messageBegin, messageEnd);
+
+      for (auto it = mMeasurementMap.begin(); it != mMeasurementMap.end(); ++it)
+      {
+        (*(it->second))(from, messageBegin, messageEnd);
+      }
+
+      listen();
+    }
+
+    void listen() { mSocket.receive(util::makeAsyncSafe(this->shared_from_this())); }
+
+    Socket& socket() { return mSocket; }
+
+    using MeasurementMap = std::map<NodeId, std::unique_ptr<MeasurementInstance>>;
+
+    util::Injected<IoContext> mIo;
+    Socket mSocket;
+    PingResponder<Clock, IoType&> mPingResponder;
+    MeasurementMap mMeasurementMap;
+  };
 
 private:
   template <typename Handler>
   struct CompletionCallback
   {
-    void operator()(std::vector<double>& data)
+    void operator()(std::vector<double> data)
     {
       using namespace std;
       using std::chrono::microseconds;
@@ -106,7 +158,7 @@ private:
       // gone by the time the block gets executed.
       auto nodeId = mNodeId;
       auto handler = mHandler;
-      auto& measurementMap = mMeasurementService.mMeasurementMap;
+      auto& measurementMap = mpImpl->mMeasurementMap;
       const auto it = measurementMap.find(nodeId);
       if (it != measurementMap.end())
       {
@@ -122,7 +174,7 @@ private:
       }
     }
 
-    MeasurementService& mMeasurementService;
+    std::shared_ptr<Impl> mpImpl;
     NodeId mNodeId;
     Handler mHandler;
   };
@@ -130,11 +182,9 @@ private:
   // Make sure the measurement map outlives the IoContext so that the rest of
   // the members are guaranteed to be valid when any final handlers
   // are begin run.
-  using MeasurementMap = std::map<NodeId, std::unique_ptr<MeasurementInstance>>;
-  MeasurementMap mMeasurementMap;
+
   Clock mClock;
-  IoType mIo;
-  PingResponder<Clock, IoContext> mPingResponder;
+  std::shared_ptr<Impl> mpImpl;
 };
 
 } // namespace link

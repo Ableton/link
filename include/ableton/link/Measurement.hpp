@@ -39,6 +39,8 @@ struct Measurement
 {
   using Callback = std::function<void(std::vector<double>&)>;
   using Micros = std::chrono::microseconds;
+  using Socket =
+    typename util::Injected<IoContext>::type::template Socket<v1::kMaxMessageSize>;
 
   static const std::size_t kNumberDataPoints = 100;
   static const std::size_t kNumberMeasurements = 5;
@@ -47,12 +49,15 @@ struct Measurement
               Callback callback,
               discovery::IpAddress address,
               Clock clock,
-              util::Injected<IoContext> io)
-    : mIo(std::move(io))
-    , mpImpl(std::make_shared<Impl>(
-        std::move(state), std::move(callback), std::move(address), std::move(clock), mIo))
+              util::Injected<IoContext> io,
+              Socket& socket)
+    : mpImpl(std::make_shared<Impl>(std::move(state),
+                                    std::move(callback),
+                                    std::move(address),
+                                    std::move(clock),
+                                    std::move(io),
+                                    socket))
   {
-    mpImpl->listen();
   }
 
   Measurement(const Measurement&) = delete;
@@ -60,10 +65,16 @@ struct Measurement
   Measurement(const Measurement&&) = delete;
   Measurement& operator=(Measurement&&) = delete;
 
+  template <typename It>
+  void operator()(const discovery::UdpEndpoint& from,
+                  const It messageBegin,
+                  const It messageEnd)
+  {
+    (*mpImpl)(from, messageBegin, messageEnd);
+  }
+
   struct Impl : std::enable_shared_from_this<Impl>
   {
-    using Socket =
-      typename util::Injected<IoContext>::type::template Socket<v1::kMaxMessageSize>;
     using Timer = typename util::Injected<IoContext>::type::Timer;
     using Log = typename util::Injected<IoContext>::type::Log;
 
@@ -71,14 +82,16 @@ struct Measurement
          Callback callback,
          discovery::IpAddress address,
          Clock clock,
-         util::Injected<IoContext> io)
-      : mSocket(io->template openUnicastSocket<v1::kMaxMessageSize>(address))
+         util::Injected<IoContext> io,
+         Socket& socket)
+      : mIo(std::move(io))
+      , mSocket(socket)
       , mSessionId(state.nodeState.sessionId)
       , mCallback(std::move(callback))
       , mClock(std::move(clock))
       , mTimer(io->makeTimer())
       , mMeasurementsStarted(0)
-      , mLog(channel(io->log(), "Measurement on gateway@" + address.to_string()))
+      , mLog(channel(mIo->log(), "Measurement on gateway@" + address.to_string()))
       , mSuccess(false)
     {
       if (state.endpoint.address().is_v4())
@@ -121,8 +134,6 @@ struct Measurement
         });
     }
 
-    void listen() { mSocket.receive(util::makeAsyncSafe(this->shared_from_this())); }
-
     // Operator to handle incoming messages on the interface
     template <typename It>
     void operator()(const discovery::UdpEndpoint& from,
@@ -157,7 +168,6 @@ struct Measurement
         catch (const std::runtime_error& err)
         {
           warning(mLog) << "Failed parsing payload, caught exception: " << err.what();
-          listen();
           return;
         }
 
@@ -169,8 +179,6 @@ struct Measurement
             discovery::makePayload(HostTime{hostTime}, PrevGHostTime{ghostTime});
 
           sendPing(from, payload);
-          listen();
-
 
           if (ghostTime != Micros{0} && prevHostTime != Micros{0})
           {
@@ -203,7 +211,6 @@ struct Measurement
       else
       {
         debug(mLog) << "Received invalid message from " << from;
-        listen();
       }
     }
 
@@ -231,17 +238,34 @@ struct Measurement
       mTimer.cancel();
       mSuccess = true;
       debug(mLog) << "Measuring " << mEndpoint << " done.";
-      mCallback(mData);
+      std::weak_ptr<Impl> pHandle = this->shared_from_this();
+      mIo->async(
+        [pHandle]()
+        {
+          if (auto pLocked = pHandle.lock())
+          {
+            pLocked->mCallback(pLocked->mData);
+          }
+        });
     }
 
     void fail()
     {
-      mData.clear();
       debug(mLog) << "Measuring " << mEndpoint << " failed.";
-      mCallback(mData);
+      std::weak_ptr<Impl> pHandle = this->shared_from_this();
+      mIo->async(
+        [pHandle]()
+        {
+          if (auto pLocked = pHandle.lock())
+          {
+            pLocked->mData.clear();
+            pLocked->mCallback(pLocked->mData);
+          }
+        });
     }
 
-    Socket mSocket;
+    util::Injected<IoContext> mIo;
+    Socket& mSocket;
     SessionId mSessionId;
     discovery::UdpEndpoint mEndpoint;
     std::vector<double> mData;
@@ -253,7 +277,6 @@ struct Measurement
     bool mSuccess;
   };
 
-  util::Injected<IoContext> mIo;
   std::shared_ptr<Impl> mpImpl;
 };
 

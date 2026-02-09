@@ -58,19 +58,29 @@ struct MockIoContext
 
   Log log() const { return {}; }
 
+  template <typename Handler>
+  void async(Handler handler)
+  {
+    handler();
+  }
+
   ableton::util::test::IoService mIo;
 };
 
 struct TFixture
 {
   TFixture()
-    : mMeasurement(
+    : mIo(MockIoContext{})
+    , mSocket(mIo.openUnicastSocket<512>({}))
+    , mMeasurement(
         mStateQuery(),
         [](std::vector<double>) {},
         {},
         MockClock{},
-        util::Injected<MockIoContext>(MockIoContext{}))
+        util::Injected<MockIoContext>(mIo),
+        mSocket)
   {
+    listen();
   }
 
   discovery::test::Socket socket() { return mMeasurement.mpImpl->mSocket; }
@@ -88,6 +98,23 @@ struct TFixture
     PeerState mState;
   };
 
+  template <typename It>
+  void dispatch(const discovery::UdpEndpoint& from,
+                const It messageBegin,
+                const It messageEnd)
+  {
+    mMeasurement(from, messageBegin, messageEnd);
+    listen();
+  }
+
+  void listen()
+  {
+    mSocket.receive([&](const auto& from, const auto messageBegin, const auto messageEnd)
+                    { dispatch(from, messageBegin, messageEnd); });
+  }
+
+  MockIoContext mIo;
+  discovery::test::Socket mSocket;
   StateQuery mStateQuery;
   Measurement<MockClock, MockIoContext> mMeasurement;
 };

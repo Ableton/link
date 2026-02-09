@@ -64,20 +64,38 @@ struct MockIoContext
 struct RpFixture
 {
   RpFixture()
-    : mAddress(discovery::makeAddress("127.0.0.1"))
-    , mResponder(mAddress,
+    : mSocket(MockIoContext{}.openUnicastSocket<512>(discovery::makeAddress("127.0.0.1")))
+    , mResponder(mSocket,
                  NodeId::random<Random>(),
                  GhostXForm{1.0, std::chrono::microseconds{0}},
                  MockClock{},
-                 util::injectRef(*mIo))
+                 util::injectVal(*mIo))
   {
+    listen();
   }
 
   discovery::test::Socket responderSocket() { return mResponder.socket(); }
 
   std::size_t numSentMessages() { return responderSocket().sentMessages.size(); }
 
-  discovery::IpAddress mAddress = discovery::makeAddress("127.0.0.1");
+  discovery::IpAddress address() const { return mSocket.endpoint().address(); }
+
+  template <typename It>
+  void dispatch(const discovery::UdpEndpoint& from,
+                const It messageBegin,
+                const It messageEnd)
+  {
+    mResponder(from, messageBegin, messageEnd);
+    listen();
+  }
+
+  void listen()
+  {
+    mSocket.receive([&](const auto& from, const auto messageBegin, const auto messageEnd)
+                    { dispatch(from, messageBegin, messageEnd); });
+  }
+
+  discovery::test::Socket mSocket;
   util::Injected<MockIoContext> mIo;
   PingResponder<MockClock, MockIoContext> mResponder;
 };
@@ -99,7 +117,7 @@ TEST_CASE("PingResponder")
     v1::MessageBuffer buffer;
     const auto msgBegin = std::begin(buffer);
     const auto msgEnd = v1::pingMessage(payload, msgBegin);
-    const auto endpoint = discovery::UdpEndpoint(fixture.mAddress, 8888);
+    const auto endpoint = discovery::UdpEndpoint(fixture.address(), 8888);
 
     fixture.responderSocket().incomingMessage(endpoint, msgBegin, msgEnd);
 
@@ -135,7 +153,7 @@ TEST_CASE("PingResponder")
     const auto msgBegin = std::begin(buffer);
     const auto msgEnd = v1::pingMessage(payload, msgBegin);
 
-    const auto endpoint = discovery::UdpEndpoint(fixture.mAddress, 8888);
+    const auto endpoint = discovery::UdpEndpoint(fixture.address(), 8888);
 
     fixture.responderSocket().incomingMessage(endpoint, msgBegin, msgEnd);
 

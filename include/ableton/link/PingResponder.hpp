@@ -36,23 +36,21 @@ namespace link
 template <typename Clock, typename IoContext>
 class PingResponder
 {
-  using IoType = util::Injected<IoContext&>;
-  using Socket = typename IoType::type::template Socket<v1::kMaxMessageSize>;
+  using IoType = typename util::Injected<IoContext>::type;
+  using Socket = typename IoType::template Socket<v1::kMaxMessageSize>;
 
 public:
-  PingResponder(discovery::IpAddress address,
+  PingResponder(Socket& socket,
                 SessionId sessionId,
                 GhostXForm ghostXForm,
                 Clock clock,
-                IoType io)
-    : mIo(io)
-    , mpImpl(std::make_shared<Impl>(std::move(address),
+                util::Injected<IoContext> io)
+    : mpImpl(std::make_shared<Impl>(socket,
                                     std::move(sessionId),
                                     std::move(ghostXForm),
                                     std::move(clock),
                                     std::move(io)))
   {
-    mpImpl->listen();
   }
 
   PingResponder(const PingResponder&) = delete;
@@ -70,23 +68,29 @@ public:
 
   Socket socket() const { return mpImpl->mSocket; }
 
+  template <typename It>
+  void operator()(const discovery::UdpEndpoint& from,
+                  const It messageBegin,
+                  const It messageEnd)
+  {
+    (*mpImpl)(from, messageBegin, messageEnd);
+  }
+
 private:
   struct Impl : std::enable_shared_from_this<Impl>
   {
-    Impl(discovery::IpAddress address,
+    Impl(Socket& socket,
          SessionId sessionId,
          GhostXForm ghostXForm,
          Clock clock,
-         IoType io)
+         util::Injected<IoContext> io)
       : mSessionId(std::move(sessionId))
       , mGhostXForm(std::move(ghostXForm))
       , mClock(std::move(clock))
-      , mLog(channel(io->log(), "gateway@" + address.to_string()))
-      , mSocket(io->template openUnicastSocket<v1::kMaxMessageSize>(address))
+      , mLog(channel(io->log(), "gateway@" + socket.endpoint().address().to_string()))
+      , mSocket(socket)
     {
     }
-
-    void listen() { mSocket.receive(util::makeAsyncSafe(this->shared_from_this())); }
 
     // Operator to handle incoming messages on the interface
     template <typename It>
@@ -120,7 +124,6 @@ private:
       {
         info(mLog) << " Received invalid Message from " << from << ".";
       }
-      listen();
     }
 
     template <typename It>
@@ -147,11 +150,10 @@ private:
     SessionId mSessionId;
     GhostXForm mGhostXForm;
     Clock mClock;
-    typename IoType::type::Log mLog;
-    Socket mSocket;
+    typename IoType::Log mLog;
+    Socket& mSocket;
   };
 
-  IoType mIo;
   std::shared_ptr<Impl> mpImpl;
 };
 
