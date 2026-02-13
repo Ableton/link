@@ -76,8 +76,8 @@ public:
     : LinkController(tempo, peerCallback, tempoCallback, startStopStateCallback, clock)
     , mChannelsChangedCallback{[]() {}}
     , mApiChannels({})
-    , mIsLinkAudioEnabled(false)
-    , mWasLinkAudioEnabled(false)
+    , mIsLinkAudioEnabledByUser(false)
+    , mIsLinkAudioEffectivlyEnabled(false)
     , mPeerInfo{}
     , mChannels(util::injectRef(*(this->mIo)), ChannelsChanged{this})
     , mProcessor{util::injectRef(*(this->mIo)), util::injectVal(ChannelsCallback{this})}
@@ -87,11 +87,11 @@ public:
 
   void enableLinkAudio(bool enabled)
   {
-    mIsLinkAudioEnabled = enabled;
+    mIsLinkAudioEnabledByUser = enabled;
     this->mRtClientStateSetter.invoke();
   }
 
-  bool isLinkAudioEnabled() const { return mIsLinkAudioEnabled; }
+  bool isLinkAudioEnabled() const { return mIsLinkAudioEnabledByUser; }
 
   void setName(std::string name)
   {
@@ -155,16 +155,16 @@ public:
 protected:
   void updateIsLinkAudioEnabled()
   {
-    if (mIsLinkAudioEnabled && !mWasLinkAudioEnabled && this->mpSessionController)
+    const auto shouldBeEnabled = this->mEnabled && mIsLinkAudioEnabledByUser;
+    if (shouldBeEnabled && !mIsLinkAudioEffectivlyEnabled)
     {
-      mWasLinkAudioEnabled = true;
+      mIsLinkAudioEffectivlyEnabled = true;
       this->mpSessionController->gatewaysChangedCallback();
     }
-    else if (!mIsLinkAudioEnabled && mWasLinkAudioEnabled)
+    else if (!shouldBeEnabled && mIsLinkAudioEffectivlyEnabled)
     {
-      mWasLinkAudioEnabled = false;
+      mIsLinkAudioEffectivlyEnabled = false;
       mGateways.clear();
-      updateAudioEndpoints({});
     }
   }
 
@@ -202,7 +202,7 @@ protected:
       [&](auto begin, auto end)
       { std::for_each(begin, end, [&](auto& it) { gateways.push_back(it.first); }); });
 
-    if (mIsLinkAudioEnabled)
+    if (mIsLinkAudioEffectivlyEnabled)
     {
       mGateways.updateGateways(std::move(gateways));
       updateLinkAudio();
@@ -360,15 +360,15 @@ protected:
 
   void stopAudio()
   {
-    mIsLinkAudioEnabled = false;
-    mGateways.clear();
+    mIsLinkAudioEnabledByUser = false;
+    updateIsLinkAudioEnabled();
     mProcessor.stop();
   }
 
   ChannelsChangedCallback mChannelsChangedCallback;
   util::Locked<std::vector<typename ControllerChannels::Channel>> mApiChannels;
-  std::atomic_bool mIsLinkAudioEnabled;
-  bool mWasLinkAudioEnabled;
+  std::atomic_bool mIsLinkAudioEnabledByUser;
+  bool mIsLinkAudioEffectivlyEnabled;
   PeerInfo mPeerInfo;
   ControllerChannels mChannels;
   ControllerMainProcessor mProcessor;
