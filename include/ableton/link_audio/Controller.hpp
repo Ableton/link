@@ -185,6 +185,9 @@ protected:
 
     mGateways.updateSessionPeers(begin(peers), end(peers));
 
+    // Remove channels for peers that are no longer in the session
+    mChannels.prunePeerChannels(peers.begin(), peers.end());
+
     updateApiChannels();
   }
 

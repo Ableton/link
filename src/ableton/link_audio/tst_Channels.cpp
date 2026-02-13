@@ -197,9 +197,25 @@ TEST_CASE("Channels")
 
       auto uniqueChannels = channels.uniqueSessionChannels(sessionId);
 
+      CHECK(2 == callback.mNumCalls);
       CHECK(2 == uniqueChannels.size());
       checkChannel(foo, uniqueChannels);
       checkChannel(bar, uniqueChannels);
+
+      SECTION("PruneDisconnectedPeerChannels")
+      {
+        const auto connectedPeers = std::vector<Id>{foo.announcement.nodeId};
+        channels.prunePeerChannels(begin(connectedPeers), end(connectedPeers));
+
+        uniqueChannels = channels.uniqueSessionChannels(sessionId);
+
+        CHECK(3 == callback.mNumCalls);
+        CHECK(1 == uniqueChannels.size());
+        checkChannel(foo, uniqueChannels);
+
+        const auto handler = channels.peerSendHandler(bar.announcement.nodeId);
+        CHECK(!handler.has_value());
+      }
     }
 
     SECTION("AddSecondChannel")

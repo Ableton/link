@@ -164,6 +164,12 @@ public:
     return it != end(channels) ? peerSendHandler(it->channel.peerId) : std::nullopt;
   }
 
+  template <typename PeerIdIt>
+  void prunePeerChannels(PeerIdIt connectedPeersBegin, PeerIdIt connectedPeersEnd)
+  {
+    mpImpl->prunePeerChannels(connectedPeersBegin, connectedPeersEnd);
+  }
+
   struct GatewayObserver
   {
     using GatewayObserverAnnouncement = PeerAnnouncement;
@@ -366,6 +372,55 @@ private:
         {
           ++it;
         }
+      }
+    }
+
+    template <typename PeerIdIt>
+    void prunePeerChannels(PeerIdIt connectedPeersBegin, PeerIdIt connectedPeersEnd)
+    {
+      using namespace std;
+
+      vector<Id> removedChannelIds;
+      for (const auto& info : mChannels)
+      {
+        if (none_of(connectedPeersBegin,
+                    connectedPeersEnd,
+                    [&](const auto& peerId) { return peerId == info.channel.peerId; }))
+        {
+          removedChannelIds.push_back(info.channel.id);
+        }
+      }
+
+      auto it = remove_if(begin(mChannels),
+                          end(mChannels),
+                          [&](auto& info)
+                          {
+                            return none_of(connectedPeersBegin,
+                                           connectedPeersEnd,
+                                           [&](const auto& peerId)
+                                           { return peerId == info.channel.peerId; });
+                          });
+
+      const auto channelsChanged = it != end(mChannels);
+      mChannels.erase(it, end(mChannels));
+
+      mChannelTimeouts.erase(
+        remove_if(begin(mChannelTimeouts),
+                  end(mChannelTimeouts),
+                  [&](const auto& timeout)
+                  {
+                    const auto& id = std::get<Id>(timeout);
+                    return find(begin(removedChannelIds), end(removedChannelIds), id)
+                           != end(removedChannelIds);
+                  }),
+        end(mChannelTimeouts));
+
+      scheduleNextPruning();
+
+      if (channelsChanged)
+      {
+        pruneSendHandlers();
+        mCallback();
       }
     }
 
