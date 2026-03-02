@@ -21,6 +21,7 @@
 
 #include <ableton/discovery/AsioTypes.hpp>
 #include <ableton/util/Injected.hpp>
+#include <optional>
 
 namespace ableton
 {
@@ -52,10 +53,14 @@ class IpInterface
 public:
   using Socket = typename util::Injected<IoContext>::type::template Socket<MaxPacketSize>;
 
-  IpInterface(util::Injected<IoContext> io, const IpAddress& addr)
+  IpInterface(util::Injected<IoContext> io, const InterfaceAddress& ifAddr)
     : mIo(std::move(io))
-    , mMulticastReceiveSocket(mIo->template openMulticastSocket<MaxPacketSize>(addr))
-    , mSendSocket(mIo->template openUnicastSocket<MaxPacketSize>(addr))
+    , mMulticastReceiveSocket(
+        mIo->template openMulticastSocket<MaxPacketSize>(toIpAddress(ifAddr)))
+    , mSendSocket(mIo->template openUnicastSocket<MaxPacketSize>(toIpAddress(ifAddr)))
+    , mSubnetV4(std::holds_alternative<NetworkV4>(ifAddr.value)
+                  ? std::optional<NetworkV4>{std::get<NetworkV4>(ifAddr.value)}
+                  : std::nullopt)
   {
   }
 
@@ -66,6 +71,7 @@ public:
     : mIo(std::move(rhs.mIo))
     , mMulticastReceiveSocket(std::move(rhs.mMulticastReceiveSocket))
     , mSendSocket(std::move(rhs.mSendSocket))
+    , mSubnetV4(rhs.mSubnetV4)
   {
   }
 
@@ -92,6 +98,8 @@ public:
 
   UdpEndpoint endpoint() const { return mSendSocket.endpoint(); }
 
+  const std::optional<NetworkV4>& subnetV4() const { return mSubnetV4; }
+
 private:
   template <typename Tag, typename Handler>
   struct SocketReceiver
@@ -113,13 +121,14 @@ private:
   util::Injected<IoContext> mIo;
   Socket mMulticastReceiveSocket;
   Socket mSendSocket;
+  std::optional<NetworkV4> mSubnetV4;
 };
 
 template <std::size_t MaxPacketSize, typename IoContext>
 IpInterface<IoContext, MaxPacketSize> makeIpInterface(util::Injected<IoContext> io,
-                                                      const IpAddress& addr)
+                                                      const InterfaceAddress& ifAddr)
 {
-  return {std::move(io), addr};
+  return {std::move(io), ifAddr};
 }
 
 } // namespace discovery

@@ -22,6 +22,8 @@
 #include <ableton/discovery/AsioTypes.hpp>
 #include <ableton/util/Log.hpp>
 #include <functional>
+#include <optional>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -37,8 +39,9 @@ class Interface
 public:
   Interface() = default;
 
-  Interface(UdpEndpoint endpoint)
-    : mEndpoint(std::move(endpoint))
+  Interface(const std::string& cidr, uint16_t port)
+    : mSubnetV4(makeNetworkV4(cidr))
+    , mEndpoint(IpAddress(mSubnetV4->address()), port)
   {
   }
 
@@ -74,6 +77,8 @@ public:
 
   UdpEndpoint endpoint() const { return mEndpoint; }
 
+  const std::optional<NetworkV4>& subnetV4() const { return mSubnetV4; }
+
   using SentMessage = std::pair<std::vector<uint8_t>, UdpEndpoint>;
   std::vector<SentMessage> sentMessages;
 
@@ -81,6 +86,7 @@ private:
   using ReceiveCallback =
     std::function<void(const UdpEndpoint&, const std::vector<uint8_t>&)>;
   ReceiveCallback mCallback;
+  std::optional<NetworkV4> mSubnetV4;
   UdpEndpoint mEndpoint;
 };
 

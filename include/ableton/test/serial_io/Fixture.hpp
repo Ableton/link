@@ -47,7 +47,7 @@ public:
   Fixture(Fixture&&) = delete;
   Fixture& operator=(Fixture&&) = delete;
 
-  void setNetworkInterfaces(std::vector<discovery::IpAddress> ifAddrs)
+  void setNetworkInterfaces(std::vector<discovery::InterfaceAddress> ifAddrs)
   {
     mIfAddrs = std::move(ifAddrs);
   }
@@ -75,7 +75,7 @@ public:
 private:
   std::shared_ptr<SchedulerTree> mpScheduler;
   SchedulerTree::TimePoint mNow;
-  std::vector<discovery::IpAddress> mIfAddrs;
+  std::vector<discovery::InterfaceAddress> mIfAddrs;
 };
 
 } // namespace serial_io

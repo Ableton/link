@@ -203,7 +203,12 @@ protected:
     auto gateways = std::vector<discovery::IpAddress>();
     this->mDiscovery.withGateways(
       [&](auto begin, auto end)
-      { std::for_each(begin, end, [&](auto& it) { gateways.push_back(it.first); }); });
+      {
+        std::for_each(begin,
+                      end,
+                      [&](auto& it)
+                      { gateways.push_back(discovery::toIpAddress(it.first)); });
+      });
 
     if (mIsLinkAudioEffectivlyEnabled)
     {
@@ -221,23 +226,25 @@ protected:
     this->mDiscovery.withGateways(
       [&](auto begin, auto end)
       {
-        std::for_each(begin,
-                      end,
-                      [&](auto& gateway)
-                      {
-                        auto it = std::find_if(endpoints.begin(),
-                                               endpoints.end(),
-                                               [&](const auto& ep)
-                                               { return ep.address() == gateway.first; });
-                        if (it != endpoints.end())
-                        {
-                          gateway.second->updateAudioEndpoint(*it);
-                        }
-                        else
-                        {
-                          gateway.second->updateAudioEndpoint(std::nullopt);
-                        }
-                      });
+        std::for_each(
+          begin,
+          end,
+          [&](auto& gateway)
+          {
+            auto it = std::find_if(
+              endpoints.begin(),
+              endpoints.end(),
+              [&](const auto& ep)
+              { return ep.address() == discovery::toIpAddress(gateway.first); });
+            if (it != endpoints.end())
+            {
+              gateway.second->updateAudioEndpoint(*it);
+            }
+            else
+            {
+              gateway.second->updateAudioEndpoint(std::nullopt);
+            }
+          });
       });
     this->updateDiscovery();
   }

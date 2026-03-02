@@ -96,7 +96,7 @@ TEST_CASE("UdpMessenger")
   const auto state2 = TestNodeState{3, 10};
   const auto peerEndpoint = UdpEndpoint{makeAddress("123.123.234.234"), 1900};
   ::ableton::test::serial_io::Fixture io;
-  auto iface = test::Interface(UdpEndpoint{makeAddress("123.123.234.42"), 1234});
+  auto iface = test::Interface("123.123.234.42/24", 1234);
 
   SECTION("BroadcastsStateOnConstruction")
   {
@@ -235,6 +235,52 @@ TEST_CASE("UdpMessenger")
 
     // Received message should not be handled
     CHECK(0 == handler.peerStates.size());
+  }
+
+  SECTION("DropMessageFromDifferentSlash24")
+  {
+    // Peer IP shares the first two octets but is in a different /24 subnet
+    auto tmpMessenger = makeUdpMessenger(
+      util::injectRef(iface), TestNodeState{}, util::injectVal(io.makeIoContext()), 1, 1);
+    auto messenger = std::move(tmpMessenger);
+    auto handler = TestHandler{};
+    messenger.receive(std::ref(handler));
+
+    v1::MessageBuffer buffer;
+    const auto messageEnd =
+      v1::aliveMessage(state1.ident(), 0, makePayload(), begin(buffer));
+    iface.incomingMessage(
+      UdpEndpoint{makeAddress("123.123.235.1"), 1900}, begin(buffer), messageEnd);
+
+    CHECK(0 == handler.peerStates.size());
+  }
+
+  SECTION("AcceptMessageFromFirstAndLastUsableHostsInSlash16")
+  {
+    // Interface on a /16 subnet; peers at first and last usable host addresses
+    auto wideIface = test::Interface("123.123.123.42/16", 1234);
+    auto tmpMessenger = makeUdpMessenger(util::injectRef(wideIface),
+                                         TestNodeState{},
+                                         util::injectVal(io.makeIoContext()),
+                                         1,
+                                         1);
+    auto messenger = std::move(tmpMessenger);
+    auto handler = TestHandler{};
+
+    v1::MessageBuffer buffer;
+    auto end = v1::aliveMessage(state1.nodeId, 3, toPayload(state1), begin(buffer));
+    messenger.receive(std::ref(handler));
+    wideIface.incomingMessage(
+      UdpEndpoint{makeAddress("123.123.0.1"), 1900}, begin(buffer), end);
+
+    end = v1::aliveMessage(state2.nodeId, 3, toPayload(state2), begin(buffer));
+    messenger.receive(std::ref(handler));
+    wideIface.incomingMessage(
+      UdpEndpoint{makeAddress("123.123.255.254"), 1900}, begin(buffer), end);
+
+    REQUIRE(2 == handler.peerStates.size());
+    CHECK(state1.nodeId == handler.peerStates[0].peerState.nodeId);
+    CHECK(state2.nodeId == handler.peerStates[1].peerState.nodeId);
   }
 }
 

@@ -36,15 +36,17 @@ struct TestCallback
     addrRanges.emplace_back(begin(addrs), end(addrs));
   }
 
-  std::vector<std::vector<discovery::IpAddress>> addrRanges;
+  std::vector<std::vector<discovery::InterfaceAddress>> addrRanges;
 };
 
 } // anonymous namespace
 
 TEST_CASE("InterfaceScanner")
 {
-  const auto addr1 = discovery::makeAddress("123.123.123.1");
-  const auto addr2 = discovery::makeAddress("123.123.123.2");
+  const auto addr1 =
+    discovery::InterfaceAddress{discovery::makeNetworkV4("123.123.123.1/24")};
+  const auto addr2 =
+    discovery::InterfaceAddress{discovery::makeNetworkV4("123.123.123.2/24")};
 
   test::serial_io::Fixture io;
   auto callback = TestCallback{};

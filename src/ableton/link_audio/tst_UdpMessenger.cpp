@@ -155,8 +155,7 @@ TEST_CASE("UdpMessenger")
     discovery::UdpEndpoint{discovery::makeAddress("123.123.234.234"), 1900};
 
   ::ableton::test::serial_io::Fixture io;
-  auto pIface = std::make_shared<discovery::test::Interface>(
-    discovery::UdpEndpoint{discovery::makeAddress("123.123.234.42"), 1234});
+  auto pIface = std::make_shared<discovery::test::Interface>("123.123.234.42/24", 1234);
   TestObserver observer;
   TestHandler handler;
 

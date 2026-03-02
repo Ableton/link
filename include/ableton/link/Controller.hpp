@@ -716,8 +716,10 @@ protected:
       [peer, handler](auto begin, const auto end)
       {
         const auto addr = peer.second;
-        const auto it =
-          std::find_if(begin, end, [&addr](const auto& vt) { return vt.first == addr; });
+        const auto it = std::find_if(
+          begin,
+          end,
+          [&addr](const auto& vt) { return discovery::toIpAddress(vt.first) == addr; });
         if (it != end)
         {
           it->second->measurePeer(std::move(peer.first), std::move(handler));
@@ -786,15 +788,16 @@ protected:
   {
     GatewayPtr operator()(std::pair<NodeState, GhostXForm> state,
                           util::Injected<IoType&> io,
-                          const discovery::IpAddress& addr)
+                          const discovery::InterfaceAddress& ifAddr)
     {
-      return GatewayPtr{new ControllerGateway{
-        std::move(io),
-        addr,
-        util::injectVal(makeGatewayObserver(mpController->mPeers, addr)),
-        std::move(state.first),
-        std::move(state.second),
-        mpController->mClock}};
+      return GatewayPtr{
+        new ControllerGateway{std::move(io),
+                              ifAddr,
+                              util::injectVal(makeGatewayObserver(
+                                mpController->mPeers, discovery::toIpAddress(ifAddr))),
+                              std::move(state.first),
+                              std::move(state.second),
+                              mpController->mClock}};
     }
 
     void gatewaysChanged()

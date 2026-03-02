@@ -31,7 +31,7 @@ namespace
 
 struct Gateway
 {
-  IpAddress addr;
+  InterfaceAddress addr;
 };
 
 struct NodeState
@@ -41,7 +41,7 @@ struct NodeState
 struct Factory
 {
   template <typename IoContext>
-  Gateway operator()(NodeState, util::Injected<IoContext>, const IpAddress& addr)
+  Gateway operator()(NodeState, util::Injected<IoContext>, const InterfaceAddress& addr)
   {
     return {addr};
   }
@@ -55,7 +55,7 @@ struct Factory
 template <typename Gateways>
 void expectGateways(Gateways& gateways,
                     test::serial_io::Fixture& io,
-                    std::vector<IpAddress> addrs)
+                    std::vector<InterfaceAddress> addrs)
 
 {
   using namespace std;
@@ -81,8 +81,8 @@ void expectGateways(Gateways& gateways,
 
 TEST_CASE("PeerGateways")
 {
-  const IpAddress addr1 = makeAddress("192.192.192.1");
-  const IpAddress addr2 = makeAddress("192.192.192.2");
+  const InterfaceAddress addr1 = InterfaceAddress{makeNetworkV4("192.192.192.1/24")};
+  const InterfaceAddress addr2 = InterfaceAddress{makeNetworkV4("192.192.192.2/24")};
 
   test::serial_io::Fixture io;
   auto factory = Factory{};

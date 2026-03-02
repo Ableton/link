@@ -37,7 +37,7 @@ class Context
 {
 public:
   Context(const SchedulerTree::TimePoint& now,
-          const std::vector<discovery::IpAddress>& ifAddrs,
+          const std::vector<discovery::InterfaceAddress>& ifAddrs,
           std::shared_ptr<SchedulerTree> pScheduler)
     : mNow(now)
     , mIfAddrs(ifAddrs)
@@ -83,11 +83,11 @@ public:
 
   Log& log() { return mLog; }
 
-  std::vector<discovery::IpAddress> scanNetworkInterfaces() { return mIfAddrs; }
+  std::vector<discovery::InterfaceAddress> scanNetworkInterfaces() { return mIfAddrs; }
 
 private:
   const SchedulerTree::TimePoint& mNow;
-  const std::vector<discovery::IpAddress>& mIfAddrs;
+  const std::vector<discovery::InterfaceAddress>& mIfAddrs;
   std::shared_ptr<SchedulerTree> mpScheduler;
   Log mLog;
   SchedulerTree::TimerId mNextTimerId;

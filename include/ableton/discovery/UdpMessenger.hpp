@@ -287,13 +287,10 @@ private:
         // check if the message is coming from an endpoint that is in the same subnet as
         // the interface.
         auto ignoreIpV4Message = false;
-        if (from.address().is_v4() && mInterface->endpoint().address().is_v4())
+        if (from.address().is_v4() && mInterface->subnetV4())
         {
-          const auto subnet = LINK_ASIO_NAMESPACE::ip::make_network_v4(
-            mInterface->endpoint().address().to_v4(), 24);
-          const auto fromAddr =
-            LINK_ASIO_NAMESPACE::ip::make_network_v4(from.address().to_v4(), 32);
-          ignoreIpV4Message = !fromAddr.is_subnet_of(subnet);
+          const auto fromAddr = makeNetworkV4(from.address().to_v4(), 32);
+          ignoreIpV4Message = !fromAddr.is_subnet_of(*mInterface->subnetV4());
         }
 
         if (!ignoreIpV4Message)

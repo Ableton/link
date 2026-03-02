@@ -29,7 +29,7 @@ namespace ableton
 namespace discovery
 {
 
-// Callback takes a range of IpAddress which is
+// Callback takes a range of InterfaceAddress which is
 // guaranteed to be sorted and unique
 template <typename Callback, typename IoContext>
 class InterfaceScanner
@@ -64,7 +64,7 @@ public:
     using namespace std;
     debug(mIo->log()) << "Scanning network interfaces";
     // Rescan the hardware for available network interface addresses
-    vector<IpAddress> addrs = mIo->scanNetworkInterfaces();
+    vector<InterfaceAddress> addrs = mIo->scanNetworkInterfaces();
     // Sort and unique them to guarantee consistent comparison
     sort(begin(addrs), end(addrs));
     addrs.erase(unique(begin(addrs), end(addrs)), end(addrs));

@@ -21,7 +21,7 @@
 
 #include <ableton/discovery/AsioTypes.hpp>
 #include <iphlpapi.h>
-#include <map>
+#include <set>
 #include <stdio.h>
 #include <string>
 #include <vector>
@@ -103,10 +103,10 @@ struct ScanIpIfAddrs
 {
   // Scan active network interfaces and return corresponding addresses
   // for all ip-based interfaces.
-  std::vector<discovery::IpAddress> operator()()
+  std::vector<discovery::InterfaceAddress> operator()()
   {
-    std::vector<discovery::IpAddress> addrs;
-    std::map<std::string, discovery::IpAddress> IpInterfaceNames;
+    std::vector<discovery::InterfaceAddress> addrs;
+    std::set<std::string> IpInterfaceNames;
 
     detail::GetIfAddrs getIfAddrs;
     getIfAddrs.withIfAddrs(
@@ -130,9 +130,9 @@ struct ScanIpIfAddrs
               const auto bytes = reinterpret_cast<const char*>(&addr4->sin_addr);
               const auto ipv4address =
                 discovery::makeAddressFromBytes<discovery::IpAddressV4>(bytes);
-              addrs.emplace_back(ipv4address);
-              IpInterfaceNames.insert(
-                std::make_pair(networkInterface->AdapterName, ipv4address));
+              const auto prefix = static_cast<uint8_t>(address->OnLinkPrefixLength);
+              addrs.emplace_back(discovery::makeNetworkV4(ipv4address, prefix));
+              IpInterfaceNames.insert(networkInterface->AdapterName);
             }
           }
         }

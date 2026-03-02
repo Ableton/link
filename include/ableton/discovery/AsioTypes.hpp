@@ -20,6 +20,8 @@
 #pragma once
 
 #include <ableton/platforms/asio/AsioWrapper.hpp>
+#include <ostream>
+#include <variant>
 
 namespace ableton
 {
@@ -29,8 +31,84 @@ namespace discovery
 using IpAddress = LINK_ASIO_NAMESPACE::ip::address;
 using IpAddressV4 = LINK_ASIO_NAMESPACE::ip::address_v4;
 using IpAddressV6 = LINK_ASIO_NAMESPACE::ip::address_v6;
+using NetworkV4 = LINK_ASIO_NAMESPACE::ip::network_v4;
 using UdpSocket = LINK_ASIO_NAMESPACE::ip::udp::socket;
 using UdpEndpoint = LINK_ASIO_NAMESPACE::ip::udp::endpoint;
+
+// An interface address is either a v4 network (address + prefix length)
+// or a bare v6 address. This bundles the prefix information that was
+// previously obtained via a separate prefixLengthForAddress() call.
+// Implemented as a struct wrapping std::variant because ASIO's NetworkV4
+// does not provide operator<, which std::variant comparison requires.
+struct InterfaceAddress
+{
+  std::variant<NetworkV4, IpAddressV6> value;
+
+  InterfaceAddress() = default;
+  InterfaceAddress(NetworkV4 net)
+    : value(std::move(net))
+  {
+  }
+  InterfaceAddress(IpAddressV6 addr)
+    : value(std::move(addr))
+  {
+  }
+
+  friend bool operator==(const InterfaceAddress& a, const InterfaceAddress& b)
+  {
+    return a.value == b.value;
+  }
+  friend bool operator!=(const InterfaceAddress& a, const InterfaceAddress& b)
+  {
+    return !(a == b);
+  }
+  friend bool operator<(const InterfaceAddress& a, const InterfaceAddress& b)
+  {
+    if (a.value.index() != b.value.index())
+    {
+      return a.value.index() < b.value.index();
+    }
+    if (auto* lhs = std::get_if<NetworkV4>(&a.value))
+    {
+      const auto& rhs = std::get<NetworkV4>(b.value);
+      if (lhs->address() != rhs.address())
+      {
+        return lhs->address() < rhs.address();
+      }
+      return lhs->prefix_length() < rhs.prefix_length();
+    }
+    return std::get<IpAddressV6>(a.value) < std::get<IpAddressV6>(b.value);
+  }
+  friend std::ostream& operator<<(std::ostream& os, const InterfaceAddress& ifAddr)
+  {
+    std::visit([&os](const auto& addr) { os << addr; }, ifAddr.value);
+    return os;
+  }
+};
+
+// Extract the IpAddress from an InterfaceAddress
+inline IpAddress toIpAddress(const InterfaceAddress& ifAddr)
+{
+  return std::visit(
+    [](const auto& addr) -> IpAddress
+    {
+      if constexpr (std::is_same_v<std::decay_t<decltype(addr)>, NetworkV4>)
+      {
+        return addr.address();
+      }
+      else
+      {
+        return addr;
+      }
+    },
+    ifAddr.value);
+}
+
+template <typename... Args>
+inline NetworkV4 makeNetworkV4(Args&&... args)
+{
+  return LINK_ASIO_NAMESPACE::ip::make_network_v4(std::forward<Args>(args)...);
+}
 
 template <typename... Args>
 inline IpAddress makeAddress(Args&&... args)

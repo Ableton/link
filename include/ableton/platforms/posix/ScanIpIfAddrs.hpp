@@ -22,8 +22,8 @@
 #include <ableton/discovery/AsioTypes.hpp>
 #include <arpa/inet.h>
 #include <ifaddrs.h>
-#include <map>
 #include <net/if.h>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -76,10 +76,10 @@ struct ScanIpIfAddrs
 {
   // Scan active network interfaces and return corresponding addresses
   // for all ip-based interfaces.
-  std::vector<discovery::IpAddress> operator()()
+  std::vector<discovery::InterfaceAddress> operator()()
   {
-    std::vector<discovery::IpAddress> addrs;
-    std::map<std::string, discovery::IpAddress> IpInterfaceNames;
+    std::vector<discovery::InterfaceAddress> addrs;
+    std::set<std::string> IpInterfaceNames;
 
     detail::GetIfAddrs getIfAddrs;
     getIfAddrs.withIfAddrs(
@@ -95,8 +95,16 @@ struct ScanIpIfAddrs
             const auto bytes = reinterpret_cast<const char*>(&addr->sin_addr);
             const auto address =
               discovery::makeAddressFromBytes<discovery::IpAddressV4>(bytes);
-            addrs.emplace_back(address);
-            IpInterfaceNames.insert(std::make_pair(interface->ifa_name, address));
+            uint8_t prefix = 0;
+            if (interface->ifa_netmask)
+            {
+              const auto mask =
+                reinterpret_cast<const struct sockaddr_in*>(interface->ifa_netmask);
+              prefix =
+                static_cast<uint8_t>(__builtin_popcount(ntohl(mask->sin_addr.s_addr)));
+            }
+            addrs.emplace_back(discovery::makeNetworkV4(address, prefix));
+            IpInterfaceNames.insert(interface->ifa_name);
           }
         }
       });

@@ -33,9 +33,9 @@ namespace esp32
 // ESP32 implementation of ip interface address scanner
 struct ScanIpIfAddrs
 {
-  std::vector<discovery::IpAddress> operator()()
+  std::vector<discovery::InterfaceAddress> operator()()
   {
-    std::vector<discovery::IpAddress> addrs;
+    std::vector<discovery::InterfaceAddress> addrs;
     // Get first network interface
     esp_netif_t* esp_netif = esp_netif_next(NULL);
     while (esp_netif)
@@ -45,7 +45,10 @@ struct ScanIpIfAddrs
       {
         esp_netif_ip_info_t ip_info;
         esp_netif_get_ip_info(esp_netif, &ip_info);
-        addrs.emplace_back(::asio::ip::address_v4(ntohl(ip_info.ip.addr)));
+        const auto address = ::asio::ip::address_v4(ntohl(ip_info.ip.addr));
+        const auto prefix =
+          static_cast<uint8_t>(__builtin_popcount(ntohl(ip_info.netmask.addr)));
+        addrs.emplace_back(discovery::makeNetworkV4(address, prefix));
       }
       // Get next network interface
       esp_netif = esp_netif_next(esp_netif);

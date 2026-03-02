@@ -188,7 +188,10 @@ public:
     return socket;
   }
 
-  std::vector<::asio::ip::address> scanNetworkInterfaces() { return mScanIpIfAddrs(); }
+  std::vector<discovery::InterfaceAddress> scanNetworkInterfaces()
+  {
+    return mScanIpIfAddrs();
+  }
 
   Timer makeTimer() const { return {serviceRunner().service()}; }
 

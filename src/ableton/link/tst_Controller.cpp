@@ -100,7 +100,7 @@ struct MockIoContext
     return {};
   }
 
-  std::vector<discovery::IpAddress> scanNetworkInterfaces() { return {}; }
+  std::vector<discovery::InterfaceAddress> scanNetworkInterfaces() { return {}; }
 
   using Timer = util::test::Timer;
 

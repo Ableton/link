@@ -35,14 +35,14 @@ class Gateway
 {
 public:
   Gateway(util::Injected<IoContext> io,
-          discovery::IpAddress addr,
+          discovery::InterfaceAddress ifAddr,
           util::Injected<PeerObserver> observer,
           NodeState nodeState,
           GhostXForm ghostXForm,
           Clock clock,
           std::optional<discovery::UdpEndpoint> audioEndpoint = std::nullopt)
     : mIo(std::move(io))
-    , mMeasurement(addr,
+    , mMeasurement(discovery::toIpAddress(ifAddr),
                    nodeState.sessionId,
                    std::move(ghostXForm),
                    std::move(clock),
@@ -50,7 +50,7 @@ public:
     , moAudioEndpoint(audioEndpoint)
     , mPeerGateway(discovery::makeGateway(
         util::injectRef(*mIo),
-        std::move(addr),
+        std::move(ifAddr),
         std::move(observer),
         PeerState{std::move(nodeState), mMeasurement.endpoint(), moAudioEndpoint}))
   {

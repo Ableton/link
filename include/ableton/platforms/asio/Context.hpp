@@ -200,7 +200,10 @@ public:
     return socket;
   }
 
-  std::vector<discovery::IpAddress> scanNetworkInterfaces() { return mScanIpIfAddrs(); }
+  std::vector<discovery::InterfaceAddress> scanNetworkInterfaces()
+  {
+    return mScanIpIfAddrs();
+  }
 
   Timer makeTimer() const { return {*mpService}; }
 

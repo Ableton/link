@@ -230,7 +230,7 @@ using Gateway =
 template <typename PeerObserver, typename NodeState, typename IoContext>
 Gateway<PeerObserver, NodeState, IoContext> makeGateway(
   util::Injected<IoContext> io,
-  const IpAddress& addr,
+  const InterfaceAddress& ifAddr,
   util::Injected<PeerObserver> observer,
   NodeState state)
 {
@@ -240,7 +240,7 @@ Gateway<PeerObserver, NodeState, IoContext> makeGateway(
   const uint8_t ttl = 5;
   const uint8_t ttlRatio = 20;
 
-  auto iface = makeIpInterface<v1::kMaxMessageSize>(injectRef(*io), addr);
+  auto iface = makeIpInterface<v1::kMaxMessageSize>(injectRef(*io), ifAddr);
 
   auto messenger = makeUdpMessenger(
     injectVal(std::move(iface)), std::move(state), injectRef(*io), ttl, ttlRatio);

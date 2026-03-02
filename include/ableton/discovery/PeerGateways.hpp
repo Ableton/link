@@ -21,6 +21,7 @@
 
 #include <ableton/discovery/AsioTypes.hpp>
 #include <ableton/discovery/InterfaceScanner.hpp>
+#include <algorithm>
 #include <map>
 
 namespace ableton
@@ -39,8 +40,8 @@ public:
   using Gateway = std::invoke_result_t<FactoryType,
                                        NodeState,
                                        util::Injected<IoType&>,
-                                       const discovery::IpAddress&>;
-  using GatewayMap = std::map<IpAddress, Gateway>;
+                                       const discovery::InterfaceAddress&>;
+  using GatewayMap = std::map<InterfaceAddress, Gateway>;
 
   PeerGateways(const std::chrono::seconds rescanPeriod,
                NodeState state,
@@ -92,8 +93,13 @@ public:
   // this method can be invoked to either fix it or discard it.
   void repairGateway(const IpAddress& gatewayAddr)
   {
-    if (mpScannerCallback->mGateways.erase(gatewayAddr))
+    auto it = std::find_if(mpScannerCallback->mGateways.begin(),
+                           mpScannerCallback->mGateways.end(),
+                           [&gatewayAddr](const auto& vt)
+                           { return toIpAddress(vt.first) == gatewayAddr; });
+    if (it != mpScannerCallback->mGateways.end())
     {
+      mpScannerCallback->mGateways.erase(it);
       mpScannerCallback->mFactory->gatewaysChanged();
       // If we erased a gateway, rescan again immediately so that
       // we will re-initialize it if it's still present
@@ -116,7 +122,7 @@ private:
     {
       using namespace std;
       // Get the set of current addresses.
-      vector<IpAddress> curAddrs;
+      vector<InterfaceAddress> curAddrs;
       curAddrs.reserve(mGateways.size());
       transform(std::begin(mGateways),
                 std::end(mGateways),
@@ -125,14 +131,14 @@ private:
 
       // Now use set_difference to determine the set of addresses that
       // are new and the set of cur addresses that are no longer there
-      vector<IpAddress> newAddrs;
+      vector<InterfaceAddress> newAddrs;
       set_difference(std::begin(range),
                      std::end(range),
                      std::begin(curAddrs),
                      std::end(curAddrs),
                      back_inserter(newAddrs));
 
-      vector<IpAddress> staleAddrs;
+      vector<InterfaceAddress> staleAddrs;
       set_difference(std::begin(curAddrs),
                      std::end(curAddrs),
                      std::begin(range),
