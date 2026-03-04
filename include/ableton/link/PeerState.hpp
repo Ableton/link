@@ -99,7 +99,7 @@ struct PeerState
   static PeerState fromPayload(NodeId id, It begin, It end)
   {
     using namespace std;
-    auto peerState = PeerState{NodeState::fromPayload(std::move(id), begin, end), {}};
+    auto peerState = PeerState{NodeState::fromPayload(std::move(id), begin, end), {}, {}};
 
     discovery::parsePayload<MeasurementEndpointV4,
                             MeasurementEndpointV6,

@@ -151,21 +151,21 @@ public:
       auto pImpl = observer.mpImpl;
       auto addr = observer.mAddr;
       assert(pImpl);
-      pImpl->sawPeerOnGateway(std::move(state), std::move(addr));
+      pImpl->sawPeerOnGateway(state, std::move(addr));
     }
 
     friend void peerLeft(GatewayObserver& observer, const NodeId& id)
     {
       auto pImpl = observer.mpImpl;
       auto addr = observer.mAddr;
-      pImpl->peerLeftGateway(std::move(id), std::move(addr));
+      pImpl->peerLeftGateway(id, std::move(addr));
     }
 
     friend void peerTimedOut(GatewayObserver& observer, const NodeId& id)
     {
       auto pImpl = observer.mpImpl;
       auto addr = observer.mAddr;
-      pImpl->peerLeftGateway(std::move(id), std::move(addr));
+      pImpl->peerLeftGateway(id, std::move(addr));
     }
 
     std::shared_ptr<Impl> mpImpl;
