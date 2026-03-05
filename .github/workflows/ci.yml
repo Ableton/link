@@ -133,7 +133,7 @@ jobs:
         with:
           submodules: recursive
       - name: Build ESP-IDF
-        run: docker run --rm -v ${{ github.workspace }}:/link -w /link/examples/esp32 -e LC_ALL=C.UTF-8 espressif/idf:v5.1.1 idf.py build
+        run: docker run --rm -v ${{ github.workspace }}:/link -w /link/examples/esp32 -e LC_ALL=C.UTF-8 espressif/idf:v5.5 idf.py build
 
   check-formatting:
     runs-on: ubuntu-latest
