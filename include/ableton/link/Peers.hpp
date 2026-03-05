@@ -206,7 +206,7 @@ private:
       bool isNewSessionStartStopState =
         !sessionStartStopStateExists(peerSession, peerStartStopState);
 
-      auto peer = make_pair(std::move(peerState), std::move(gatewayAddr));
+      auto peer = make_pair(peerState, gatewayAddr);
       const auto idRange = equal_range(begin(mPeers), end(mPeers), peer, PeerIdComp{});
 
       bool didSessionMembershipChange = false;
