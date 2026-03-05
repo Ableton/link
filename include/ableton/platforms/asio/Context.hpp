@@ -27,6 +27,11 @@
 #include <thread>
 #include <utility>
 
+#if defined(__linux__)
+#include <netinet/in.h>
+#include <sys/socket.h>
+#endif
+
 namespace ableton
 {
 namespace platforms
@@ -174,6 +179,18 @@ public:
 
     if (addr.is_v4())
     {
+#if defined(__linux__) && defined(IP_MULTICAST_ALL)
+      const int disableAll = 0;
+      if (::setsockopt(socket.mpImpl->mSocket.native_handle(),
+                       IPPROTO_IP,
+                       IP_MULTICAST_ALL,
+                       &disableAll,
+                       sizeof(disableAll))
+          != 0)
+      {
+        throw std::runtime_error("Failed to set IP_MULTICAST_ALL");
+      }
+#endif
       socket.mpImpl->mSocket.set_option(
         ::LINK_ASIO_NAMESPACE::ip::multicast::outbound_interface(addr.to_v4()));
       socket.mpImpl->mSocket.bind({::LINK_ASIO_NAMESPACE::ip::address_v4::any(),
