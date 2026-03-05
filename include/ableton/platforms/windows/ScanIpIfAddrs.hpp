@@ -138,6 +138,7 @@ struct ScanIpIfAddrs
         }
       });
 
+    // Add IPv6 addresses as backup in case multicast on IPv4 fails
     getIfAddrs.withIfAddrs(
       [&](const IP_ADAPTER_ADDRESSES& interfaces)
       {
