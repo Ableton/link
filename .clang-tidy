@@ -25,6 +25,7 @@ Checks: >
   performance-move-const-arg,
   performance-move-constructor-init,
   performance-unnecessary-copy-initialization,
+  readability-avoid-const-params-in-decls,
   readability-braces-around-statements,
   readability-redundant-member-init,
   readability-redundant-string-cstr,
