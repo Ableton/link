@@ -78,12 +78,12 @@ struct TestHandler
 {
   void receiveChannelRequest(ChannelRequest request, uint8_t ttl)
   {
-    channelRequests.push_back({std::move(request), ttl});
+    channelRequests.emplace_back(std::move(request), ttl);
   }
 
   void receiveChannelRequest(ChannelStopRequest request, uint8_t ttl)
   {
-    channelStopRequests.push_back({std::move(request), ttl});
+    channelStopRequests.emplace_back(std::move(request), ttl);
   }
 
   template <typename It>

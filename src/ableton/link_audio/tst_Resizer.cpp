@@ -82,7 +82,7 @@ struct Successor
     {
       if (tempo != ranges.back().first)
       {
-        ranges.emplace_back(std::make_pair(tempo, Samples{}));
+        ranges.emplace_back(tempo, Samples{});
       }
 
       const auto numSamples = numFrames * kNumChannels;

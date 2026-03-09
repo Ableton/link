@@ -42,7 +42,7 @@ struct SessionTimelineCallback
 {
   void operator()(const SessionId& sessionId, const Timeline& timeline)
   {
-    sessionTimelines.push_back(std::make_pair(sessionId, timeline));
+    sessionTimelines.emplace_back(sessionId, timeline);
   }
 
   std::vector<std::pair<SessionId, Timeline>> sessionTimelines;
@@ -52,7 +52,7 @@ struct SessionStartStopStateCallback
 {
   void operator()(const SessionId& sessionId, const StartStopState& startStopState)
   {
-    sessionStartStopStates.push_back(std::make_pair(sessionId, startStopState));
+    sessionStartStopStates.emplace_back(sessionId, startStopState);
   }
 
   std::vector<std::pair<SessionId, StartStopState>> sessionStartStopStates;

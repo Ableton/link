@@ -50,7 +50,7 @@ void SchedulerTree::cancelTimer(const TimerId timerId)
   if (it != end(mTimers))
   {
     auto handler = std::move(it->second);
-    mPendingHandlers.push_back(
+    mPendingHandlers.emplace_back(
       [handler]()
       {
         handler(1); // truthy indicates error
@@ -78,7 +78,7 @@ void SchedulerTree::triggerTimersUntil(const TimePoint t)
            it,
            [this](const TimerMap::value_type& timer)
            {
-             mPendingHandlers.push_back(
+             mPendingHandlers.emplace_back(
                [timer]()
                {
                  timer.second(0); // 0 indicates no error
