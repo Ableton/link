@@ -22,6 +22,7 @@ Checks: >
   performance-for-range-copy,
   performance-move-constructor-init,
   performance-unnecessary-copy-initialization,
+  readability-braces-around-statements,
   readability-redundant-member-init,
   readability-redundant-string-cstr,
   readability-redundant-string-init,

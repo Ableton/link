@@ -85,7 +85,9 @@ int AudioPlatform<Link>::audioCallback(jack_nframes_t nframes)
   {
     float* buffer = static_cast<float*>(jack_port_get_buffer(mpJackPorts[k], nframes));
     for (std::size_t i = 0; i < nframes; ++i)
+    {
       buffer[i] = static_cast<float>(engine.mBuffers[k][i]);
+    }
   }
 
   return 0;
@@ -101,27 +103,49 @@ void AudioPlatform<Link>::initialize()
     std::cerr << "Could not initialize Audio Engine. ";
     std::cerr << "JACK: " << std::endl;
     if (status & JackFailure)
+    {
       std::cerr << "Overall operation failed." << std::endl;
+    }
     if (status & JackInvalidOption)
+    {
       std::cerr << "Invalid or unsupported option." << std::endl;
+    }
     if (status & JackNameNotUnique)
+    {
       std::cerr << "Client name not unique." << std::endl;
+    }
     if (status & JackServerStarted)
+    {
       std::cerr << "Server is started." << std::endl;
+    }
     if (status & JackServerFailed)
+    {
       std::cerr << "Unable to connect to server." << std::endl;
+    }
     if (status & JackServerError)
+    {
       std::cerr << "Server communication error." << std::endl;
+    }
     if (status & JackNoSuchClient)
+    {
       std::cerr << "Client does not exist." << std::endl;
+    }
     if (status & JackLoadFailure)
+    {
       std::cerr << "Unable to load internal client." << std::endl;
+    }
     if (status & JackInitFailure)
+    {
       std::cerr << "Unable to initialize client." << std::endl;
+    }
     if (status & JackShmFailure)
+    {
       std::cerr << "Unable to access shared memory." << std::endl;
+    }
     if (status & JackVersionError)
+    {
       std::cerr << "Client protocol version mismatch." << std::endl;
+    }
     std::cerr << std::endl;
     std::terminate();
   }
