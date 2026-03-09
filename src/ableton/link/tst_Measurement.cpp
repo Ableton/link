@@ -142,8 +142,8 @@ TEST_CASE("PeerMeasurement")
     discovery::parsePayload<GHostTime, HostTime>(
       result.second,
       std::end(messageBuffer),
-      [&gt](GHostTime ghostTime) { gt = std::move(ghostTime.time); },
-      [&ht](HostTime hostTime) { ht = std::move(hostTime.time); });
+      [&gt](GHostTime ghostTime) { gt = ghostTime.time; },
+      [&ht](HostTime hostTime) { ht = hostTime.time; });
 
     CHECK(v1::kPing == header.messageType);
     CHECK(std::chrono::microseconds{4} == ht);

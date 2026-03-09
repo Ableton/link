@@ -134,9 +134,9 @@ TEST_CASE("PingResponder")
     discovery::parsePayload<GHostTime, PrevGHostTime, HostTime>(
       result.second,
       std::end(messageBuffer),
-      [&ghostTime](GHostTime gt) { ghostTime = std::move(gt.time); },
-      [&prevGHostTime](PrevGHostTime gt) { prevGHostTime = std::move(gt.time); },
-      [&hostTime](HostTime ht) { hostTime = std::move(ht.time); });
+      [&ghostTime](GHostTime gt) { ghostTime = gt.time; },
+      [&prevGHostTime](PrevGHostTime gt) { prevGHostTime = gt.time; },
+      [&hostTime](HostTime ht) { hostTime = ht.time; });
 
     CHECK(v1::kPong == hdr.messageType);
     CHECK(std::chrono::microseconds{2} == hostTime);

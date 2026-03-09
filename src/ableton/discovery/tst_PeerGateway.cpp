@@ -32,7 +32,7 @@ namespace
 struct TestNodeState : std::tuple<std::string, double>
 {
   TestNodeState(std::string ident, double tempo)
-    : std::tuple<std::string, double>(std::move(ident), std::move(tempo))
+    : std::tuple<std::string, double>(std::move(ident), tempo)
   {
   }
 

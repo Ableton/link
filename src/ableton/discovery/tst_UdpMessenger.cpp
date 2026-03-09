@@ -57,15 +57,9 @@ struct TestNodeState
 
 struct TestHandler
 {
-  void operator()(PeerState<TestNodeState> state)
-  {
-    peerStates.push_back(std::move(state));
-  }
+  void operator()(PeerState<TestNodeState> state) { peerStates.push_back(state); }
 
-  void operator()(ByeBye<TestNodeState::IdType> byeBye)
-  {
-    byeByes.push_back(std::move(byeBye));
-  }
+  void operator()(ByeBye<TestNodeState::IdType> byeBye) { byeByes.push_back(byeBye); }
 
   std::vector<PeerState<TestNodeState>> peerStates;
   std::vector<ByeBye<TestNodeState::IdType>> byeByes;
