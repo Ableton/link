@@ -16,6 +16,7 @@ Checks: >
   misc-unused-alias-decls,
   misc-unused-using-decls,
   modernize-raw-string-literal,
+  modernize-use-auto,
   modernize-use-default,
   modernize-use-nullptr,
   modernize-use-override,

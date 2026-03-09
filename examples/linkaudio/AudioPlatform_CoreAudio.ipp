@@ -50,7 +50,7 @@ OSStatus AudioPlatform<Link>::audioCallback(void* inRefCon,
                                             UInt32 inNumberFrames,
                                             AudioBufferList* ioData)
 {
-  AudioEngine<Link>* engine = static_cast<AudioEngine<Link>*>(inRefCon);
+  auto engine = static_cast<AudioEngine<Link>*>(inRefCon);
 
   const auto bufferBeginAtOutput =
     engine->mLink.clock().ticksToMicros(inTimeStamp->mHostTime)
@@ -62,7 +62,7 @@ OSStatus AudioPlatform<Link>::audioCallback(void* inRefCon,
   {
     for (UInt32 j = 0; j < ioData->mNumberBuffers; ++j)
     {
-      SInt16* bufData = static_cast<SInt16*>(ioData->mBuffers[j].mData);
+      auto bufData = static_cast<SInt16*>(ioData->mBuffers[j].mData);
       bufData[i] = static_cast<SInt16>(32761. * engine->mBuffers[j][i]);
     }
   }
@@ -93,7 +93,7 @@ void AudioPlatform<Link>::streamFormatCallback(void* inRefCon,
       std::cerr << "Could not get Audio Unit stream format. " << result << std::endl;
     }
 
-    AudioPlatform<Link>* pPlatform = static_cast<AudioPlatform<Link>*>(inRefCon);
+    auto pPlatform = static_cast<AudioPlatform<Link>*>(inRefCon);
     const Float64 oldSampleRate = pPlatform->mEngine.mSampleRate;
     if (fabs(oldSampleRate - asbd.mSampleRate) > 1.)
     {
@@ -234,7 +234,7 @@ void AudioPlatform<Link>::initialize()
             << deviceLatency / mEngine.mSampleRate * 1e3 << " ms." << std::endl;
 
   using namespace std::chrono;
-  const double latency = static_cast<double>(deviceLatency) / mEngine.mSampleRate;
+  const auto latency = static_cast<double>(deviceLatency) / mEngine.mSampleRate;
   mEngine.mOutputLatency.store(duration_cast<microseconds>(duration<double>{latency}));
 
   AURenderCallbackStruct ioRemoteInput;

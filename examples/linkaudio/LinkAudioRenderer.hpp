@@ -42,7 +42,7 @@ T cubicInterpolate(const std::array<T, 4>& p, double t)
   double b = static_cast<double>(p[0]) - 2.5 * static_cast<double>(p[1])
              + 2.0 * static_cast<double>(p[2]) - 0.5 * static_cast<double>(p[3]);
   double c = -0.5 * static_cast<double>(p[0]) + 0.5 * static_cast<double>(p[2]);
-  double d = static_cast<double>(p[1]);
+  auto d = static_cast<double>(p[1]);
   return static_cast<T>(a * t * t * t + b * t * t + c * t + d);
 }
 

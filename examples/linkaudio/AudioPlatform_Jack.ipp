@@ -47,14 +47,14 @@ AudioPlatform<Link>::~AudioPlatform<Link>()
 template <typename Link>
 int AudioPlatform<Link>::audioCallback(jack_nframes_t nframes, void* pvUserData)
 {
-  AudioPlatform* pAudioPlatform = static_cast<AudioPlatform*>(pvUserData);
+  auto pAudioPlatform = static_cast<AudioPlatform*>(pvUserData);
   return pAudioPlatform->audioCallback(nframes);
 }
 
 template <typename Link>
 void AudioPlatform<Link>::latencyCallback(jack_latency_callback_mode_t, void* pvUserData)
 {
-  AudioPlatform* pAudioPlatform = static_cast<AudioPlatform*>(pvUserData);
+  auto pAudioPlatform = static_cast<AudioPlatform*>(pvUserData);
   pAudioPlatform->updateLatency();
 }
 
@@ -83,7 +83,7 @@ int AudioPlatform<Link>::audioCallback(jack_nframes_t nframes)
 
   for (std::size_t k = 0; k < 2; ++k)
   {
-    float* buffer = static_cast<float*>(jack_port_get_buffer(mpJackPorts[k], nframes));
+    auto buffer = static_cast<float*>(jack_port_get_buffer(mpJackPorts[k], nframes));
     for (std::size_t i = 0; i < nframes; ++i)
     {
       buffer[i] = static_cast<float>(engine.mBuffers[k][i]);
