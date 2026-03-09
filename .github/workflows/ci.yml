@@ -83,6 +83,28 @@ jobs:
           valgrind --leak-check=full --show-reachable=yes --gen-suppressions=all --error-exitcode=1 --track-origins=yes --suppressions=ci/memcheck.supp build/bin/LinkCoreTest
           valgrind --leak-check=full --show-reachable=yes --gen-suppressions=all --error-exitcode=1 --track-origins=yes --suppressions=ci/memcheck.supp build/bin/LinkDiscoveryTest
 
+  clang-tidy:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Set up
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake ninja-build clang-18 clang-tidy-18 libjack-dev portaudio19-dev python3
+      - name: Configure
+        env:
+          CC: clang-18
+          CXX: clang++-18
+        run: |
+          cmake -B build -GNinja . -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DLINK_BUILD_JACK=ON
+      - name: Run clang-tidy
+        env:
+          CLANG_TIDY: clang-tidy-18
+        run: run-clang-tidy -p build -quiet -warnings-as-errors='*'
+
   windows:
     strategy:
       matrix:
