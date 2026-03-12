@@ -61,7 +61,7 @@ extern "C"
    */
 
   /*! @brief The representation of an abl_link instance*/
-  typedef struct abl_link
+  typedef struct abl_link // NOLINT(modernize-use-using)
   {
     void *impl;
   } abl_link;
@@ -115,7 +115,9 @@ extern "C"
    *
    *  @discussion The callback is invoked on a Link-managed thread.
    */
-  typedef void (*abl_link_num_peers_callback)(uint64_t num_peers, void *context);
+  typedef void (*abl_link_num_peers_callback)( // NOLINT(modernize-use-using)
+    uint64_t num_peers,
+    void *context);
   void abl_link_set_num_peers_callback(
     abl_link link, abl_link_num_peers_callback callback, void *context);
 
@@ -126,7 +128,9 @@ extern "C"
    *
    *  @discussion The callback is invoked on a Link-managed thread.
    */
-  typedef void (*abl_link_tempo_callback)(double tempo, void *context);
+  typedef void (*abl_link_tempo_callback)( // NOLINT(modernize-use-using)
+    double tempo,
+    void *context);
   void abl_link_set_tempo_callback(
     abl_link link, abl_link_tempo_callback callback, void *context);
 
@@ -137,7 +141,9 @@ extern "C"
    *
    *  @discussion The callback is invoked on a Link-managed thread.
    */
-  typedef void (*abl_link_start_stop_callback)(bool is_playing, void *context);
+  typedef void (*abl_link_start_stop_callback)( // NOLINT(modernize-use-using)
+    bool is_playing,
+    void *context);
   void abl_link_set_start_stop_callback(
     abl_link link, abl_link_start_stop_callback callback, void *context);
 
@@ -163,7 +169,7 @@ extern "C"
    *  joining or leaving a Link session. After joining a Link session
    *  start/stop change requests will be communicated to all connected peers.
    */
-  typedef struct abl_link_session_state
+  typedef struct abl_link_session_state // NOLINT(modernize-use-using)
   {
     void *impl;
   } abl_link_session_state;
