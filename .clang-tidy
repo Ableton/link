@@ -2,6 +2,7 @@ Checks: >
   -*,
   bugprone-infinite-loop,
   bugprone-move-forwarding-reference,
+  bugprone-narrowing-conversions,
   bugprone-use-after-move,
   clang-analyzer-core.DivideZero,
   clang-analyzer-core.NullDereference,

@@ -148,7 +148,7 @@ void print_state_header(void)
 void print_state(state *state)
 {
   abl_link_capture_app_session_state(state->link, state->session_state);
-  const uint64_t time = abl_link_clock_micros(state->link);
+  const int64_t time = abl_link_clock_micros(state->link);
   const char *enabled = abl_link_is_enabled(state->link) ? "yes" : "no";
   const uint64_t num_peers = abl_link_num_peers(state->link);
   const char *start_stop =
@@ -198,7 +198,7 @@ void input(state *state)
 
   abl_link_capture_app_session_state(state->link, state->session_state);
   const double tempo = abl_link_tempo(state->session_state);
-  const uint64_t timestamp = abl_link_clock_micros(state->link);
+  const int64_t timestamp = abl_link_clock_micros(state->link);
   const bool enabled = abl_link_is_enabled(state->link);
   switch (in)
   {
