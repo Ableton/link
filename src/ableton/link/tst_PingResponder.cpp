@@ -74,9 +74,9 @@ struct RpFixture
     listen();
   }
 
-  discovery::test::Socket responderSocket() { return mResponder.socket(); }
+  discovery::test::Socket responderSocket() const { return mResponder.socket(); }
 
-  std::size_t numSentMessages() { return responderSocket().sentMessages.size(); }
+  std::size_t numSentMessages() const { return responderSocket().sentMessages.size(); }
 
   discovery::IpAddress address() const { return mSocket.endpoint().address(); }
 

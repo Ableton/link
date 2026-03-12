@@ -83,7 +83,7 @@ struct TFixture
     listen();
   }
 
-  discovery::test::Socket socket() { return mMeasurement.mpImpl->mSocket; }
+  discovery::test::Socket socket() const { return mMeasurement.mpImpl->mSocket; }
 
   struct StateQuery
   {
@@ -95,7 +95,7 @@ struct TFixture
         discovery::UdpEndpoint(discovery::makeAddress("127.0.0.1"), 9999);
     }
 
-    PeerState operator()() { return mState; }
+    PeerState operator()() const { return mState; }
     PeerState mState;
   };
 
