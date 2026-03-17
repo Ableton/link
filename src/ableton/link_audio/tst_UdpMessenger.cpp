@@ -248,15 +248,6 @@ TEST_CASE("UdpMessenger")
     CHECK(0 == pIface->sentMessages.size());
   }
 
-  SECTION("MovingMessengerDoesntSendByeBye")
-  {
-    messenger.sawLinkAudioEndpoint(peerId, peerEndpoint);
-
-    const auto wrapper = MessengerWrapper(std::move(messenger));
-
-    CHECK(0 == sentMessagesCount<v1::kChannelByes>(pIface));
-  }
-
   SECTION("AnnouncementSplitting")
   {
     const auto numChannels = 60;
@@ -576,6 +567,15 @@ TEST_CASE("UdpMessenger")
       numberOfByes += oChannelByes->byes.size();
     }
     CHECK(numChannels == numberOfByes);
+  }
+
+  SECTION("MovingMessengerDoesntSendByeBye")
+  {
+    messenger.sawLinkAudioEndpoint(peerId, peerEndpoint);
+
+    const auto wrapper = MessengerWrapper(std::move(messenger));
+
+    CHECK(0 == sentMessagesCount<v1::kChannelByes>(pIface));
   }
 }
 
