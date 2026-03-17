@@ -89,7 +89,7 @@ struct Measurement
       , mSessionId(state.nodeState.sessionId)
       , mCallback(std::move(callback))
       , mClock(std::move(clock))
-      , mTimer(io->makeTimer())
+      , mTimer(mIo->makeTimer())
       , mMeasurementsStarted(0)
       , mLog(channel(mIo->log(), "Measurement on gateway@" + address.to_string()))
       , mSuccess(false)
