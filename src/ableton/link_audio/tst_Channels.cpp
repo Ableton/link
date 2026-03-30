@@ -129,6 +129,16 @@ TEST_CASE("Channels")
     const auto uniqueChannels =
       channels.uniqueSessionChannels(sourceOnlyPeer.announcement.sessionId);
     CHECK(0 == uniqueChannels.size());
+
+    SECTION("PruneDisconnectedSourceOnlyPeer")
+    {
+      const auto connectedPeers = std::vector<Id>{};
+      channels.prunePeerChannels(begin(connectedPeers), end(connectedPeers));
+
+      const auto prunedHandler =
+        channels.peerSendHandler(sourceOnlyPeer.announcement.nodeId);
+      CHECK(!prunedHandler.has_value());
+    }
   }
 
   SECTION("AddChannel")

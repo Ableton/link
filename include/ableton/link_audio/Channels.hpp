@@ -357,14 +357,15 @@ private:
       scheduleNextPruning();
     }
 
-    void pruneSendHandlers()
+    template <typename PeerIdIt>
+    void prunePeerSendHandlers(PeerIdIt connectedPeersBegin, PeerIdIt connectedPeersEnd)
     {
       using namespace std;
       for (auto it = begin(mPeerSendHandlers); it != end(mPeerSendHandlers);)
       {
-        if (none_of(begin(mChannels),
-                    end(mChannels),
-                    [&](const auto& info) { return info.channel.peerId == it->first; }))
+        if (none_of(connectedPeersBegin,
+                    connectedPeersEnd,
+                    [&](const auto& peerId) { return peerId == it->first; }))
         {
           it = mPeerSendHandlers.erase(it);
         }
@@ -373,6 +374,18 @@ private:
           ++it;
         }
       }
+    }
+
+    void pruneSendHandlers()
+    {
+      using namespace std;
+      auto peerIds = vector<Id>{};
+      peerIds.reserve(mChannels.size());
+      transform(begin(mChannels),
+                end(mChannels),
+                back_inserter(peerIds),
+                [](const auto& info) { return info.channel.peerId; });
+      prunePeerSendHandlers(begin(peerIds), end(peerIds));
     }
 
     template <typename PeerIdIt>
@@ -417,9 +430,10 @@ private:
 
       scheduleNextPruning();
 
+      prunePeerSendHandlers(connectedPeersBegin, connectedPeersEnd);
+
       if (channelsChanged)
       {
-        pruneSendHandlers();
         mCallback();
       }
     }
