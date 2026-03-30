@@ -18,6 +18,7 @@
  */
 
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdint.h>
 
 #ifdef __cplusplus
@@ -345,6 +346,251 @@ extern "C"
     int64_t time,
     double beat,
     double quantum);
+
+  /*! @brief Is Link Audio enabled
+   *  Thread-safe: yes
+   *  Realtime-safe: yes
+   */
+  bool abl_link_audio_is_link_audio_enabled(struct abl_link link);
+
+  /*! @brief Enable or disable audio.
+   *  Thread-safe: yes
+   *  Realtime-safe: no
+   */
+  void abl_link_audio_enable_link_audio(struct abl_link link, bool enabled);
+
+  /*! @brief Get the local peer name for identification in the Link session.
+   *
+   *  @discussion Writes the peer name into @p buffer as a null-terminated string,
+   *  truncating if necessary. Returns the number of bytes required to store the full
+   *  name, excluding the null terminator — identical to the snprintf convention.
+   *  If the return value is >= @p buffer_size, the output was truncated.
+   *  Passing NULL or 0 for @p buffer / @p buffer_size returns the required size
+   *  without writing anything.
+   *
+   *  Thread-safe: yes
+   *  Realtime-safe: no
+   */
+  size_t abl_link_audio_peer_name(struct abl_link link, char *buffer, size_t buffer_size);
+
+  /*! @brief Change the local peer name for identification in the Link session.
+   *  Thread-safe: yes
+   *  Realtime-safe: no
+   */
+  void abl_link_audio_set_peer_name(struct abl_link link, const char *name);
+
+  /*! @brief Identifier for Link Audio channels/peers/sessions. */
+  struct abl_link_audio_channel_id
+  {
+    uint8_t bytes[8];
+  };
+
+  struct abl_link_audio_peer_id
+  {
+    uint8_t bytes[8];
+  };
+
+  struct abl_link_audio_session_id
+  {
+    uint8_t bytes[8];
+  };
+
+  /*! @brief A Link Audio channel description.
+   *
+   *  @discussion The id and peer_id are persistent for the lifetime of a channel.
+   *  The name and peer_name may change over time and are meant for display purposes.
+   */
+  struct abl_link_audio_channel
+  {
+    struct abl_link_audio_channel_id id;
+    const char *name;
+    struct abl_link_audio_peer_id peer_id;
+    const char *peer_name;
+  };
+
+  /*! @brief A list of Link Audio channels. */
+  struct abl_link_audio_channel_list
+  {
+    struct abl_link_audio_channel *channels;
+    size_t count;
+  };
+
+  /*! @brief Get the list of available Link Audio channels.
+   *  Thread-safe: yes
+   *  Realtime-safe: no
+   */
+  struct abl_link_audio_channel_list abl_link_audio_get_channels(struct abl_link link);
+
+  /*! @brief Free a channel list returned by abl_link_audio_get_channels. */
+  void abl_link_audio_free_channel_list(struct abl_link_audio_channel_list list);
+
+  /*! @brief Register a callback to be notified when the set of available
+   *  audio channels changes. This will be called when channels are discovered or
+   *  disappear and when names change.
+   *  Thread-safe: yes
+   *  Realtime-safe: no
+   *
+   *  @discussion The callback is invoked on a Link-managed thread.
+   */
+  void abl_link_audio_set_channels_changed_callback(
+    struct abl_link link, void (*callback)(void *context), void *context);
+
+  /*! @brief The representation of an abl_link_audio_sink instance */
+  struct abl_link_audio_sink
+  {
+    void *impl;
+  };
+
+  /*! @brief Construct a Link Audio sink to announce an audio channel. */
+  struct abl_link_audio_sink abl_link_audio_sink_create(
+    struct abl_link link, const char *name, size_t max_num_samples);
+
+  /*! @brief Destroy a Link Audio sink. */
+  void abl_link_audio_sink_destroy(struct abl_link_audio_sink sink);
+
+  /*! @brief Get the name of a Link Audio sink.
+   *
+   *  @discussion Writes the sink name into @p buffer as a null-terminated string,
+   *  truncating if necessary. Returns the number of bytes required to store the full
+   *  name, excluding the null terminator — identical to the snprintf convention.
+   *  If the return value is >= @p buffer_size, the output was truncated.
+   *  Passing NULL or 0 for @p buffer / @p buffer_size returns the required size
+   *  without writing anything.
+   *
+   *  Thread-safe: yes
+   *  Realtime-safe: no
+   */
+  size_t abl_link_audio_sink_name(
+    struct abl_link_audio_sink sink, char *buffer, size_t buffer_size);
+
+  /*! @brief Set the name of a Link Audio sink.
+   *  Thread-safe: yes
+   *  Realtime-safe: no
+   */
+  void abl_link_audio_sink_set_name(struct abl_link_audio_sink sink, const char *name);
+
+  /*! @brief Request a maximum buffer size for future buffers.
+   *  Thread-safe: yes
+   *  Realtime-safe: yes
+   */
+  void abl_link_audio_sink_request_max_num_samples(
+    struct abl_link_audio_sink sink, size_t num_samples);
+
+  /*! @brief Get the current maximum number of samples a buffer handle can hold.
+   *  Thread-safe: yes
+   *  Realtime-safe: yes
+   */
+  size_t abl_link_audio_sink_max_num_samples(struct abl_link_audio_sink sink);
+
+  /*! @brief Handle to a buffer for writing audio samples. */
+  struct abl_link_audio_sink_buffer_handle
+  {
+    void *impl;
+    int16_t *samples;
+    size_t max_num_samples;
+  };
+
+  /*! @brief Retain a buffer for writing audio samples. Only one buffer can be retained
+   *  at a time. The handle must not outlive the sink it was created from.
+   *  Thread-safe: no
+   *  Realtime-safe: yes
+   */
+  struct abl_link_audio_sink_buffer_handle abl_link_audio_sink_retain_buffer(
+    struct abl_link_audio_sink sink);
+
+  /*! @brief Check if a buffer handle is valid.
+   *  Thread-safe: no
+   *  Realtime-safe: yes
+   */
+  bool abl_link_audio_sink_buffer_is_valid(
+    const struct abl_link_audio_sink_buffer_handle *handle);
+
+  /*! @brief Commit a buffer after writing samples. The handle is invalid after this.
+   *  num_frames * num_channels must not exceed max_num_samples. The session state,
+   *  quantum, and beats_at_buffer_begin must match those used for rendering.
+   *  Thread-safe: no
+   *  Realtime-safe: yes
+   */
+  bool abl_link_audio_sink_buffer_commit(struct abl_link_audio_sink_buffer_handle *handle,
+    abl_link_session_state session_state,
+    double beats_at_buffer_begin,
+    double quantum,
+    size_t num_frames,
+    size_t num_channels,
+    uint32_t sample_rate);
+
+  /*! @brief Release a retained buffer without committing. The handle is invalid after
+   *  this.
+   *  Thread-safe: no
+   *  Realtime-safe: yes
+   */
+  void abl_link_audio_sink_buffer_release(
+    struct abl_link_audio_sink_buffer_handle *handle);
+
+  /*! @brief Buffer metadata for received audio. */
+  struct abl_link_audio_source_buffer_info
+  {
+    size_t num_channels;
+    size_t num_frames;
+    uint32_t sample_rate;
+    uint64_t count;
+    double session_beat_time;
+    double tempo;
+    struct abl_link_audio_session_id session_id;
+  };
+
+  /*! @brief Map the beat time at the begin of the buffer to the local Link session state.
+   *  @return True if the buffer originates from the same Link Session and out_beats is
+   *  set.
+   */
+  bool abl_link_audio_source_buffer_info_begin_beats(
+    const struct abl_link_audio_source_buffer_info *info,
+    abl_link_session_state session_state,
+    double quantum,
+    double *out_beats);
+
+  /*! @brief Map the beat time at the end of the buffer to the local Link session state.
+   *  @return True if the buffer originates from the same Link Session and out_beats is
+   *  set.
+   */
+  bool abl_link_audio_source_buffer_info_end_beats(
+    const struct abl_link_audio_source_buffer_info *info,
+    abl_link_session_state session_state,
+    double quantum,
+    double *out_beats);
+
+  /*! @brief Buffer provided to Link Audio source callbacks. */
+  struct abl_link_audio_source_buffer
+  {
+    int16_t *samples;
+    struct abl_link_audio_source_buffer_info info;
+  };
+
+  /*! @brief The representation of an abl_link_audio_source instance */
+  struct abl_link_audio_source
+  {
+    void *impl;
+  };
+
+  /*! @brief Construct a Link Audio source for a given channel.
+   *  @param callback Invoked on a Link-managed thread when a source buffer is received.
+   *                  Neither the buffer pointer nor its samples pointer remain valid
+   *                  after the callback returns.
+   */
+  struct abl_link_audio_source abl_link_audio_source_create(struct abl_link link,
+    struct abl_link_audio_channel_id channel_id,
+    void (*callback)(const struct abl_link_audio_source_buffer *buffer, void *context),
+    void *context);
+
+  /*! @brief Destroy a Link Audio source. */
+  void abl_link_audio_source_destroy(struct abl_link_audio_source source);
+
+  /*! @brief Get the channel ID of the corresponding source.
+   *  Thread-safe: yes
+   *  Realtime-safe: yes
+   */
+  struct abl_link_audio_channel_id abl_link_audio_source_id(
+    struct abl_link_audio_source source);
 
 #ifdef __cplusplus
 } // extern "C"
