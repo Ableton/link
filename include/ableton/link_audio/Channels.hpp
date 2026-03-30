@@ -336,16 +336,16 @@ private:
             *addrRange.first = std::move(channelInfo);
           }
         }
+      }
 
-        if (mPeerSendHandlers.count(nodeId) == 0)
-        {
-          mPeerSendHandlers.emplace(nodeId, PeerSendHandler{sendHandler, networkQuality});
-        }
-        else if (mPeerSendHandlers.at(nodeId).networkQuality < networkQuality)
-        {
-          mPeerSendHandlers.insert_or_assign(
-            nodeId, PeerSendHandler{sendHandler, networkQuality});
-        }
+      if (mPeerSendHandlers.count(nodeId) == 0)
+      {
+        mPeerSendHandlers.emplace(nodeId, PeerSendHandler{sendHandler, networkQuality});
+      }
+      else if (mPeerSendHandlers.at(nodeId).networkQuality < networkQuality)
+      {
+        mPeerSendHandlers.insert_or_assign(
+          nodeId, PeerSendHandler{sendHandler, networkQuality});
       }
 
       // Invoke callbacks outside the critical section

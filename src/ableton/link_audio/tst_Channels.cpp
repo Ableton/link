@@ -110,6 +110,27 @@ TEST_CASE("Channels")
     CHECK(0 == callback.mNumCalls);
   }
 
+  SECTION("PeerSendHandlerForPeerWithNoChannels")
+  {
+    const auto sourceOnlyPeer =
+      Input{{Id::random<Random>(), sessionId, {"sourceOnly"}, {}},
+            100.,
+            {},
+            {discovery::makeAddress("2.2.2.2"), 2},
+            2};
+
+    auto observer = makeGatewayObserver(channels, gateway1);
+    sawAnnouncement(observer, sourceOnlyPeer);
+
+    const auto handler = channels.peerSendHandler(sourceOnlyPeer.announcement.nodeId);
+    CHECK(handler.has_value());
+    CHECK(sourceOnlyPeer.from == handler->endpoint());
+
+    const auto uniqueChannels =
+      channels.uniqueSessionChannels(sourceOnlyPeer.announcement.sessionId);
+    CHECK(0 == uniqueChannels.size());
+  }
+
   SECTION("AddChannel")
   {
     auto observer = makeGatewayObserver(channels, gateway1);
