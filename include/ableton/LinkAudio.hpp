@@ -74,6 +74,12 @@ public:
    */
   void enableLinkAudio(bool bEnable);
 
+  /*! @brief Get the local peer name for identification in the Link session.
+   *  Thread-safe: yes
+   *  Realtime-safe: no
+   */
+  std::string peerName() const;
+
   /*! @brief Change the local peer name for identification in the Link session.
    *  Thread-safe: yes
    *  Realtime-safe: no

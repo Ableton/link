@@ -56,6 +56,12 @@ inline void BasicLinkAudio<Clock>::enableLinkAudio(const bool bEnable)
 }
 
 template <typename Clock>
+inline std::string BasicLinkAudio<Clock>::peerName() const
+{
+  return this->mController.name();
+}
+
+template <typename Clock>
 inline void BasicLinkAudio<Clock>::setPeerName(std::string name)
 {
   this->mController.setName(std::move(name));

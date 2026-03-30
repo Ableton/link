@@ -78,7 +78,7 @@ public:
     , mApiChannels({})
     , mIsLinkAudioEnabledByUser(false)
     , mIsLinkAudioEffectivlyEnabled(false)
-    , mPeerInfo{}
+    , mPeerInfo({})
     , mChannels(util::injectRef(*(this->mIo)), ChannelsChanged{this})
     , mProcessor{util::injectRef(*(this->mIo)), util::injectVal(ChannelsCallback{this})}
     , mGateways{util::injectVal(GatewayFactory{this}), util::injectRef(*(this->mIo))}
@@ -93,12 +93,16 @@ public:
 
   bool isLinkAudioEnabled() const { return mIsLinkAudioEnabledByUser; }
 
+
+  std::string name() const { return mPeerInfo.read().name; }
+
   void setName(std::string name)
   {
     this->mIo->async(
       [this, name = std::move(name)]()
       {
-        mPeerInfo.name = std::move(name);
+        mPeerInfo.update([&, name = std::move(name)](auto& pi)
+                         { pi.name = std::move(name); });
         if (this->mpSessionController)
         {
           this->mpSessionController->updateDiscoveryCallback();
@@ -170,8 +174,10 @@ protected:
 
   void updateAudioDiscovery()
   {
-    mGateways.updateAnnouncement(PeerAnnouncement{
-      this->mNodeId, this->mSessionId, mPeerInfo, mProcessor.channelAnnouncements()});
+    mGateways.updateAnnouncement(PeerAnnouncement{this->mNodeId,
+                                                  this->mSessionId,
+                                                  mPeerInfo.read(),
+                                                  mProcessor.channelAnnouncements()});
   }
 
   void updateLinkAudio()
@@ -339,7 +345,7 @@ protected:
         util::injectVal(makeGatewayObserver(mpController->mChannels, addr)),
         PeerAnnouncement{mpController->mNodeId,
                          mpController->mSessionId,
-                         mpController->mPeerInfo,
+                         mpController->mPeerInfo.read(),
                          mpController->mProcessor.channelAnnouncements()});
     }
 
@@ -372,7 +378,7 @@ protected:
   util::Locked<std::vector<typename ControllerChannels::Channel>> mApiChannels;
   std::atomic_bool mIsLinkAudioEnabledByUser;
   bool mIsLinkAudioEffectivlyEnabled;
-  PeerInfo mPeerInfo;
+  util::Locked<PeerInfo> mPeerInfo;
   ControllerChannels mChannels;
   ControllerMainProcessor mProcessor;
   PeerGateways<GatewayFactory, IoContext&> mGateways;
