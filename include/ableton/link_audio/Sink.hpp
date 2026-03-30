@@ -133,7 +133,7 @@ struct Sink
 
 private:
   util::Locked<std::string> mName;
-  std::atomic_flag mNameIsUpToDate;
+  std::atomic_flag mNameIsUpToDate = ATOMIC_FLAG_INIT;
   Id mId;
   std::atomic<size_t> mMaxNumSamples;
   Queue<Buffer<int16_t>> mQueue;
