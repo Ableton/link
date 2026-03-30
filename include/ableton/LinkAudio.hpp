@@ -108,7 +108,7 @@ public:
 
   /*! @brief Get the list of currently available audio channels in the session.
    *  Thread-safe: yes
-   *  Realtime-safe: yes
+   *  Realtime-safe: no
    */
   std::vector<Channel> channels() const;
 
