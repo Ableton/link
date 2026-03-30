@@ -34,6 +34,7 @@ jobs:
         run: |
           ./build/bin/LinkCoreTest
           ./build/bin/LinkDiscoveryTest
+          ./build/bin/LinkAudioTest
 
   linux:
     strategy:
@@ -82,6 +83,7 @@ jobs:
         run: |
           valgrind --leak-check=full --show-reachable=yes --gen-suppressions=all --error-exitcode=1 --track-origins=yes --suppressions=ci/memcheck.supp build/bin/LinkCoreTest
           valgrind --leak-check=full --show-reachable=yes --gen-suppressions=all --error-exitcode=1 --track-origins=yes --suppressions=ci/memcheck.supp build/bin/LinkDiscoveryTest
+          valgrind --leak-check=full --show-reachable=yes --gen-suppressions=all --error-exitcode=1 --track-origins=yes --suppressions=ci/memcheck.supp build/bin/LinkAudioTest
 
   windows:
     strategy:
@@ -124,6 +126,7 @@ jobs:
         run: |
           .\build\bin\${{ matrix.configuration }}\LinkCoreTest.exe
           .\build\bin\${{ matrix.configuration }}\LinkDiscoveryTest.exe
+          .\build\bin\${{ matrix.configuration }}\LinkAudioTest.exe
 
   esp-idf:
     runs-on: ubuntu-latest
