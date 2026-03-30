@@ -41,7 +41,7 @@
 
 typedef struct state
 {
-  abl_link link;
+  struct abl_link link;
   abl_link_session_state session_state;
   bool running;
   double quantum;

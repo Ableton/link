@@ -22,43 +22,44 @@
 
 extern "C"
 {
-  abl_link abl_link_create(double bpm)
+  struct abl_link abl_link_create(double bpm)
   {
-    return abl_link{reinterpret_cast<void *>(new ableton::Link(bpm))};
+    return {reinterpret_cast<void *>(new ableton::Link(bpm))};
   }
 
-  void abl_link_destroy(abl_link link)
+  void abl_link_destroy(struct abl_link link)
   {
     delete reinterpret_cast<ableton::Link *>(link.impl);
   }
 
-  bool abl_link_is_enabled(abl_link link)
+  bool abl_link_is_enabled(struct abl_link link)
   {
     return reinterpret_cast<ableton::Link *>(link.impl)->isEnabled();
   }
 
-  void abl_link_enable(abl_link link, bool enabled)
+  void abl_link_enable(struct abl_link link, bool enabled)
   {
     reinterpret_cast<ableton::Link *>(link.impl)->enable(enabled);
   }
 
-  bool abl_link_is_start_stop_sync_enabled(abl_link link)
+  bool abl_link_is_start_stop_sync_enabled(struct abl_link link)
   {
     return reinterpret_cast<ableton::Link *>(link.impl)->isStartStopSyncEnabled();
   }
 
-  void abl_link_enable_start_stop_sync(abl_link link, bool enabled)
+  void abl_link_enable_start_stop_sync(struct abl_link link, bool enabled)
   {
     reinterpret_cast<ableton::Link *>(link.impl)->enableStartStopSync(enabled);
   }
 
-  uint64_t abl_link_num_peers(abl_link link)
+  uint64_t abl_link_num_peers(struct abl_link link)
   {
     return reinterpret_cast<ableton::Link *>(link.impl)->numPeers();
   }
 
-  void abl_link_set_num_peers_callback(
-    abl_link link, abl_link_num_peers_callback callback, void *context)
+  void abl_link_set_num_peers_callback(struct abl_link link,
+    void (*callback)(uint64_t num_peers, void *context),
+    void *context)
   {
     reinterpret_cast<ableton::Link *>(link.impl)->setNumPeersCallback(
       [callback, context](std::size_t numPeers)
@@ -66,20 +67,20 @@ extern "C"
   }
 
   void abl_link_set_tempo_callback(
-    abl_link link, abl_link_tempo_callback callback, void *context)
+    struct abl_link link, void (*callback)(double tempo, void *context), void *context)
   {
     reinterpret_cast<ableton::Link *>(link.impl)->setTempoCallback(
       [callback, context](double tempo) { (*callback)(tempo, context); });
   }
 
   void abl_link_set_start_stop_callback(
-    abl_link link, abl_link_start_stop_callback callback, void *context)
+    struct abl_link link, void (*callback)(bool isPlaying, void *context), void *context)
   {
     reinterpret_cast<ableton::Link *>(link.impl)->setStartStopCallback(
       [callback, context](bool isPlaying) { (*callback)(isPlaying, context); });
   }
 
-  int64_t abl_link_clock_micros(abl_link link)
+  int64_t abl_link_clock_micros(struct abl_link link)
   {
     return reinterpret_cast<ableton::Link *>(link.impl)->clock().micros().count();
   }
@@ -96,28 +97,28 @@ extern "C"
   }
 
   void abl_link_capture_app_session_state(
-    abl_link link, abl_link_session_state session_state)
+    struct abl_link link, abl_link_session_state session_state)
   {
     *reinterpret_cast<ableton::Link::SessionState *>(session_state.impl) =
       reinterpret_cast<ableton::Link *>(link.impl)->captureAppSessionState();
   }
 
   void abl_link_commit_app_session_state(
-    abl_link link, abl_link_session_state session_state)
+    struct abl_link link, abl_link_session_state session_state)
   {
     reinterpret_cast<ableton::Link *>(link.impl)->commitAppSessionState(
       *reinterpret_cast<ableton::Link::SessionState *>(session_state.impl));
   }
 
   void abl_link_capture_audio_session_state(
-    abl_link link, abl_link_session_state session_state)
+    struct abl_link link, abl_link_session_state session_state)
   {
     *reinterpret_cast<ableton::Link::SessionState *>(session_state.impl) =
       reinterpret_cast<ableton::Link *>(link.impl)->captureAudioSessionState();
   }
 
   void abl_link_commit_audio_session_state(
-    abl_link link, abl_link_session_state session_state)
+    struct abl_link link, abl_link_session_state session_state)
   {
     reinterpret_cast<ableton::Link *>(link.impl)->commitAudioSessionState(
       *reinterpret_cast<ableton::Link::SessionState *>(session_state.impl));

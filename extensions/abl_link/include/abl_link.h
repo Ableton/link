@@ -61,52 +61,52 @@ extern "C"
    */
 
   /*! @brief The representation of an abl_link instance*/
-  typedef struct abl_link // NOLINT(modernize-use-using)
+  struct abl_link
   {
     void *impl;
-  } abl_link;
+  };
 
   /*! @brief Construct a new abl_link instance with an initial tempo.
    *  Thread-safe: yes
    *  Realtime-safe: no
    */
-  abl_link abl_link_create(double bpm);
+  struct abl_link abl_link_create(double bpm);
 
   /*! @brief Delete an abl_link instance.
    *  Thread-safe: yes
    *  Realtime-safe: no
    */
-  void abl_link_destroy(abl_link link);
+  void abl_link_destroy(struct abl_link link);
 
   /*! @brief Is Link currently enabled?
    *  Thread-safe: yes
    *  Realtime-safe: yes
    */
-  bool abl_link_is_enabled(abl_link link);
+  bool abl_link_is_enabled(struct abl_link link);
 
   /*! @brief Enable/disable Link.
    *  Thread-safe: yes
    *  Realtime-safe: no
    */
-  void abl_link_enable(abl_link link, bool enable);
+  void abl_link_enable(struct abl_link link, bool enable);
 
   /*! @brief: Is start/stop synchronization enabled?
    *  Thread-safe: yes
    *  Realtime-safe: yes
    */
-  bool abl_link_is_start_stop_sync_enabled(abl_link link);
+  bool abl_link_is_start_stop_sync_enabled(struct abl_link link);
 
   /*! @brief: Enable start/stop synchronization.
    *  Thread-safe: yes
    *  Realtime-safe: yes
    */
-  void abl_link_enable_start_stop_sync(abl_link link, bool enabled);
+  void abl_link_enable_start_stop_sync(struct abl_link link, bool enabled);
 
   /*! @brief How many peers are currently connected in a Link session?
    *  Thread-safe: yes
    *  Realtime-safe: yes
    */
-  uint64_t abl_link_num_peers(abl_link link);
+  uint64_t abl_link_num_peers(struct abl_link link);
 
   /*! @brief Register a callback to be notified when the number of
    *  peers in the Link session changes.
@@ -115,11 +115,9 @@ extern "C"
    *
    *  @discussion The callback is invoked on a Link-managed thread.
    */
-  typedef void (*abl_link_num_peers_callback)( // NOLINT(modernize-use-using)
-    uint64_t num_peers,
+  void abl_link_set_num_peers_callback(struct abl_link link,
+    void (*callback)(uint64_t num_peers, void *context),
     void *context);
-  void abl_link_set_num_peers_callback(
-    abl_link link, abl_link_num_peers_callback callback, void *context);
 
   /*! @brief Register a callback to be notified when the session
    *  tempo changes.
@@ -128,11 +126,8 @@ extern "C"
    *
    *  @discussion The callback is invoked on a Link-managed thread.
    */
-  typedef void (*abl_link_tempo_callback)( // NOLINT(modernize-use-using)
-    double tempo,
-    void *context);
   void abl_link_set_tempo_callback(
-    abl_link link, abl_link_tempo_callback callback, void *context);
+    struct abl_link link, void (*callback)(double tempo, void *context), void *context);
 
   /*! brief: Register a callback to be notified when the state of
    *  start/stop isPlaying changes.
@@ -141,17 +136,15 @@ extern "C"
    *
    *  @discussion The callback is invoked on a Link-managed thread.
    */
-  typedef void (*abl_link_start_stop_callback)( // NOLINT(modernize-use-using)
-    bool is_playing,
+  void abl_link_set_start_stop_callback(struct abl_link link,
+    void (*callback)(bool is_playing, void *context),
     void *context);
-  void abl_link_set_start_stop_callback(
-    abl_link link, abl_link_start_stop_callback callback, void *context);
 
   /*! brief: Get the current link clock time in microseconds.
    *  Thread-safe: yes
    *  Realtime-safe: yes
    */
-  int64_t abl_link_clock_micros(abl_link link);
+  int64_t abl_link_clock_micros(struct abl_link link);
 
   /*! @brief The representation of the current local state of a client in a Link Session
    *
@@ -200,7 +193,7 @@ extern "C"
    *  session_state should not be created on the audio thread.
    */
   void abl_link_capture_audio_session_state(
-    abl_link link, abl_link_session_state session_state);
+    struct abl_link link, abl_link_session_state session_state);
 
   /*! @brief Commit the given Session State to the Link session from the
    *  audio thread.
@@ -212,7 +205,7 @@ extern "C"
    *  communicated to other peers in the session.
    */
   void abl_link_commit_audio_session_state(
-    abl_link link, abl_link_session_state session_state);
+    struct abl_link link, abl_link_session_state session_state);
 
   /*! @brief Capture the current Link Session State from an application thread.
    *  Thread-safe: yes
@@ -224,7 +217,7 @@ extern "C"
    *  scope.
    */
   void abl_link_capture_app_session_state(
-    abl_link link, abl_link_session_state session_state);
+    struct abl_link link, abl_link_session_state session_state);
 
   /*! @brief Commit the given Session State to the Link session from an
    *  application thread.
@@ -236,7 +229,7 @@ extern "C"
    *  session.
    */
   void abl_link_commit_app_session_state(
-    abl_link link, abl_link_session_state session_state);
+    struct abl_link link, abl_link_session_state session_state);
 
   /*! @brief: The tempo of the timeline, in Beats Per Minute.
    *
