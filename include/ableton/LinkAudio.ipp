@@ -64,6 +64,10 @@ inline std::string BasicLinkAudio<Clock>::peerName() const
 template <typename Clock>
 inline void BasicLinkAudio<Clock>::setPeerName(std::string name)
 {
+  if (name.size() > link_audio::v1::kMaxNameSize)
+  {
+    name.resize(link_audio::v1::kMaxNameSize);
+  }
   this->mController.setName(std::move(name));
 }
 
@@ -101,7 +105,10 @@ template <typename LinkAudio>
 inline LinkAudioSink::LinkAudioSink(LinkAudio& link,
                                     std::string name,
                                     size_t maxNumSamples)
-  : mpImpl{link.mController.addSink(std::move(name), maxNumSamples)}
+  : mpImpl{link.mController.addSink(name.size() > link_audio::v1::kMaxNameSize
+                                      ? name.substr(0, link_audio::v1::kMaxNameSize)
+                                      : std::move(name),
+                                    maxNumSamples)}
 {
 }
 
@@ -112,6 +119,10 @@ inline std::string LinkAudioSink::name() const
 
 inline void LinkAudioSink::setName(std::string name)
 {
+  if (name.size() > link_audio::v1::kMaxNameSize)
+  {
+    name.resize(link_audio::v1::kMaxNameSize);
+  }
   mpImpl->setName(std::move(name));
 }
 

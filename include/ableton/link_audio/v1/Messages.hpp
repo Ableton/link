@@ -38,6 +38,7 @@ namespace v1
 static constexpr std::size_t kMaxMessageSize = 1200;
 static constexpr std::size_t kHeaderSize = 24;
 static constexpr std::size_t kMaxPayloadSize = kMaxMessageSize - kHeaderSize;
+static constexpr std::size_t kMaxNameSize = 256;
 // Utility typedef for an array of bytes of maximum message size
 using MessageBuffer = std::array<uint8_t, v1::kMaxMessageSize>;
 

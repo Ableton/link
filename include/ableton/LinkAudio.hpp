@@ -56,7 +56,7 @@ class BasicLinkAudio : public BasicLink<Clock>
 {
 public:
   /*! @brief Construct with an initial tempo and local peer name for identification in the
-   *  Link session.
+   *  Link session. Names longer than 256 characters will be truncated.
    */
   BasicLinkAudio(double bpm, std::string name);
 
@@ -81,6 +81,7 @@ public:
   std::string peerName() const;
 
   /*! @brief Change the local peer name for identification in the Link session.
+   *  Names longer than 256 characters will be truncated.
    *  Thread-safe: yes
    *  Realtime-safe: no
    */
@@ -164,7 +165,7 @@ public:
   /*! @brief Construct a LinkAudioSink with a LinkAudio instance, a name of the audio
    *  channel, and the maximum buffer size in samples. This buffer size should account for
    *  the number of channels times the number of samples per channel in one audio
-   *  callback.
+   *  callback. Names longer than 256 characters will be truncated.
    */
   template <typename LinkAudio>
   LinkAudioSink(LinkAudio& link, std::string name, size_t maxNumSamples);
@@ -180,7 +181,8 @@ public:
    */
   std::string name() const;
 
-  /*! @brief Set the name of this channel.
+  /*! @brief Set the name of this channel. Names longer than 256 characters will be
+   *  truncated.
    *  Thread-safe: no
    *  Realtime-safe: no
    */
