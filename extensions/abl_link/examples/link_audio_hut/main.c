@@ -207,7 +207,7 @@ static void update_channels(app_state *state)
 {
   const struct abl_link_audio_channel_list list =
     abl_link_audio_get_channels(state->link);
-  printf("\n\nLinkAudio channels (%zu):\n", list.count);
+  printf("\nLink Audio channels (%zu):\n", list.count);
   for (size_t i = 0; i < list.count; ++i)
   {
     printf("  %zu: %s | %s\n", i, list.channels[i].peer_name, list.channels[i].name);
@@ -278,9 +278,16 @@ int main(int argc, char **argv)
 {
   if (argc < 2)
   {
-    printf("Usage: link_audio_hut_c <name>\n");
+    printf("Usage: link_audio_hut <name>\n");
     return 1;
   }
+
+  printf(
+    "\n\n < L I N K  A U D I O  H U T >\n\n"
+    "This application creates a sink \"Sine\" that provides a sine signal to "
+    "the Link session.\nIt forwards the incoming audio of the first source in "
+    "the list of available sources to\nthe sink \"Ping-Pong\" so other peers "
+    "can receive it.\n");
 
   app_state state = {
     .link = abl_link_create(120.0),
@@ -305,9 +312,9 @@ int main(int argc, char **argv)
   abl_link_audio_set_channels_changed_callback(state.link, on_channels_changed, &state);
 
   // init sinks
-  state.sink = abl_link_audio_sink_create(state.link, "Sink", kNumFrames);
+  state.sink = abl_link_audio_sink_create(state.link, "Sine", kNumFrames);
   state.ping_pong_sink =
-    abl_link_audio_sink_create(state.link, "Ping-Pong Sink", kNumFrames * 2);
+    abl_link_audio_sink_create(state.link, "Ping-Pong", kNumFrames * 2);
 
   // init playing state
   abl_link_capture_app_session_state(state.link, state.session_state);
