@@ -35,14 +35,73 @@
 enum
 {
   kSampleRate = 48000,
-  kNumFrames = 4800
+  kNumFrames = 4800,
+  kMaxPingPongSamples = kNumFrames * 2,
+  kPingPongQueueSize = 64
 };
+
+// SPSC queue used to hand source buffers received on the Link thread
+// to the main thread for processing.
+typedef struct ping_pong_slot
+{
+  int16_t samples[kMaxPingPongSamples];
+  struct abl_link_audio_source_buffer_info info;
+} ping_pong_slot;
+
+typedef struct ping_pong_queue
+{
+  ping_pong_slot slots[kPingPongQueueSize];
+  atomic_uint_fast32_t write;
+  atomic_uint_fast32_t read;
+} ping_pong_queue;
+
+static void ping_pong_queue_push(ping_pong_queue *q,
+  const int16_t *samples,
+  const struct abl_link_audio_source_buffer_info *info)
+{
+  const size_t total_samples = info->num_frames * info->num_channels;
+  if (total_samples > kMaxPingPongSamples)
+  {
+    return;
+  }
+
+  const uint_fast32_t write = atomic_load_explicit(&q->write, memory_order_relaxed);
+  const uint_fast32_t read = atomic_load_explicit(&q->read, memory_order_acquire);
+  if (write - read >= (uint_fast32_t)kPingPongQueueSize)
+  {
+    return;
+  }
+
+  ping_pong_slot *slot = &q->slots[write & (kPingPongQueueSize - 1)];
+  memcpy(slot->samples, samples, total_samples * sizeof(int16_t));
+  slot->info = *info;
+
+  atomic_store_explicit(&q->write, write + 1, memory_order_release);
+}
+
+static const ping_pong_slot *ping_pong_queue_peek(const ping_pong_queue *q)
+{
+  const uint_fast32_t read = atomic_load_explicit(&q->read, memory_order_relaxed);
+  const uint_fast32_t write = atomic_load_explicit(&q->write, memory_order_acquire);
+  if (read == write)
+  {
+    return NULL;
+  }
+  return &q->slots[read & (kPingPongQueueSize - 1)];
+}
+
+static void ping_pong_queue_pop(ping_pong_queue *q)
+{
+  const uint_fast32_t read = atomic_load_explicit(&q->read, memory_order_relaxed);
+  atomic_store_explicit(&q->read, read + 1, memory_order_release);
+}
 
 typedef struct app_state
 {
   struct abl_link link;
   struct abl_link_audio_sink sink;
   struct abl_link_audio_sink ping_pong_sink;
+  ping_pong_queue ping_pong;
   struct abl_link_audio_source source;
   struct abl_link_audio_channel_id source_channel_id;
   abl_link_session_state session_state;
@@ -82,42 +141,66 @@ static void on_channels_changed(void *context)
 static void on_source_buffer(
   const struct abl_link_audio_source_buffer *buffer, void *context)
 {
+  // NOTE — this is a test/demo implementation, not a model for production code. The
+  // source callback runs on a Link-managed thread, but ABLLinkCaptureAppSessionState is
+  // not safe to call concurrently. For the ease of the example, we cache the incoming
+  // audio and pass it to the ping pong source on the main thread. A production LinkKit
+  // client should hand the samples to the audio thread and align and process the audio
+  // according to the applications needs.
+
   app_state *state = (app_state *)context;
-
   atomic_fetch_add(&state->received_buffers, 1);
+  ping_pong_queue_push(&state->ping_pong, buffer->samples, &buffer->info);
+}
 
-  struct abl_link_audio_sink_buffer_handle handle =
-    abl_link_audio_sink_retain_buffer(state->ping_pong_sink);
-  if (!abl_link_audio_sink_buffer_is_valid(&handle))
+static void process_ping_pong(app_state *state)
+{
+  while (true)
   {
-    abl_link_audio_sink_buffer_release(&handle);
-    return;
+    const ping_pong_slot *slot = ping_pong_queue_peek(&state->ping_pong);
+    if (slot == NULL)
+    {
+      return;
+    }
+
+    const size_t num_frames = slot->info.num_frames;
+    const size_t num_channels = slot->info.num_channels;
+    const size_t total_samples = num_frames * num_channels;
+
+    struct abl_link_audio_sink_buffer_handle handle =
+      abl_link_audio_sink_retain_buffer(state->ping_pong_sink);
+    if (!abl_link_audio_sink_buffer_is_valid(&handle))
+    {
+      abl_link_audio_sink_buffer_release(&handle);
+      ping_pong_queue_pop(&state->ping_pong);
+      continue;
+    }
+
+    if (handle.max_num_samples < total_samples)
+    {
+      abl_link_audio_sink_buffer_release(&handle);
+      abl_link_audio_sink_request_max_num_samples(state->ping_pong_sink, total_samples);
+      ping_pong_queue_pop(&state->ping_pong);
+      continue;
+    }
+
+    abl_link_capture_audio_session_state(state->link, state->ping_pong_session_state);
+
+    double begin_beats;
+    if (!abl_link_audio_source_buffer_info_begin_beats(
+          &slot->info, state->ping_pong_session_state, state->quantum, &begin_beats))
+    {
+      abl_link_audio_sink_buffer_release(&handle);
+      ping_pong_queue_pop(&state->ping_pong);
+      continue;
+    }
+
+    memcpy(handle.samples, slot->samples, total_samples * sizeof(int16_t));
+    abl_link_audio_sink_buffer_commit(&handle, state->ping_pong_session_state,
+      begin_beats, state->quantum, num_frames, num_channels, slot->info.sample_rate);
+
+    ping_pong_queue_pop(&state->ping_pong);
   }
-
-  const size_t num_frames = buffer->info.num_frames;
-  const size_t num_channels = buffer->info.num_channels;
-  const size_t total_samples = num_frames * num_channels;
-
-  if (handle.max_num_samples < total_samples)
-  {
-    abl_link_audio_sink_buffer_release(&handle);
-    abl_link_audio_sink_request_max_num_samples(state->ping_pong_sink, total_samples);
-    return;
-  }
-
-  abl_link_capture_audio_session_state(state->link, state->ping_pong_session_state);
-
-  double begin_beats;
-  if (!abl_link_audio_source_buffer_info_begin_beats(
-        &buffer->info, state->ping_pong_session_state, state->quantum, &begin_beats))
-  {
-    abl_link_audio_sink_buffer_release(&handle);
-    return;
-  }
-
-  memcpy(handle.samples, buffer->samples, total_samples * sizeof(int16_t));
-  abl_link_audio_sink_buffer_commit(&handle, state->ping_pong_session_state, begin_beats,
-    state->quantum, num_frames, num_channels, buffer->info.sample_rate);
 }
 
 static void update_channels(app_state *state)
@@ -251,6 +334,7 @@ int main(int argc, char **argv)
     }
 
     process_audio(&state, current_time_micros);
+    process_ping_pong(&state);
 
     if (atomic_exchange(&state.channels_dirty, false))
     {
