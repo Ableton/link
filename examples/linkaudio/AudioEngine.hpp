@@ -21,6 +21,7 @@
 
 // Make sure to define this before <cmath> is included for Windows
 #define _USE_MATH_DEFINES
+#include <array>
 #include <atomic>
 #include <iostream>
 #include <math.h>
@@ -52,12 +53,22 @@ public:
 
   struct EngineData
   {
-    double requestedTempo;
-    bool requestStart;
-    bool requestStop;
-    double quantum;
-    bool startStopSyncOn;
+    double requestedTempo = 0;
+    bool requestStart = false;
+    bool requestStop = false;
+    double quantum = 4;
+    bool startStopSyncOn = false;
   };
+
+  struct EngineDataSignals
+  {
+    std::atomic<double> requestedTempo{0};
+    std::atomic<bool> requestStart{false};
+    std::atomic<bool> requestStop{false};
+    std::atomic<double> quantum{4};
+    std::atomic<bool> startStopSyncOn{false};
+  };
+
 
   void setNumFrames(std::size_t size);
   void setSampleRate(double sampleRate);
@@ -72,11 +83,9 @@ public:
   double mSampleRate;
   std::atomic<std::chrono::microseconds> mOutputLatency;
   std::array<std::vector<double>, 2> mBuffers;
-  EngineData mSharedEngineData;
-  EngineData mLockfreeEngineData;
+  EngineDataSignals mEngineDataSignals;
   std::chrono::microseconds mTimeAtLastClick;
   bool mIsPlaying;
-  std::mutex mEngineDataGuard;
 
   LinkAudioRenderer<Link> mLinkAudioRenderer;
 };

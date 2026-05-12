@@ -37,8 +37,6 @@ AudioEngine<Link>::AudioEngine(Link& link)
   : mLink(link)
   , mSampleRate(44100.)
   , mOutputLatency(std::chrono::microseconds{0})
-  , mSharedEngineData({0., false, false, 4., false})
-  , mLockfreeEngineData(mSharedEngineData)
   , mTimeAtLastClick{}
   , mIsPlaying(false)
   , mLinkAudioRenderer(mLink, mSampleRate)
@@ -52,15 +50,13 @@ AudioEngine<Link>::AudioEngine(Link& link)
 template <typename Link>
 void AudioEngine<Link>::startPlaying()
 {
-  std::lock_guard<std::mutex> lock(mEngineDataGuard);
-  mSharedEngineData.requestStart = true;
+  mEngineDataSignals.requestStart = true;
 }
 
 template <typename Link>
 void AudioEngine<Link>::stopPlaying()
 {
-  std::lock_guard<std::mutex> lock(mEngineDataGuard);
-  mSharedEngineData.requestStop = true;
+  mEngineDataSignals.requestStop = true;
 }
 
 template <typename Link>
@@ -73,27 +69,25 @@ template <typename Link>
 double AudioEngine<Link>::beatTime() const
 {
   const auto sessionState = mLink.captureAppSessionState();
-  return sessionState.beatAtTime(mLink.clock().micros(), mSharedEngineData.quantum);
+  return sessionState.beatAtTime(mLink.clock().micros(), mEngineDataSignals.quantum);
 }
 
 template <typename Link>
 void AudioEngine<Link>::setTempo(double tempo)
 {
-  std::lock_guard<std::mutex> lock(mEngineDataGuard);
-  mSharedEngineData.requestedTempo = tempo;
+  mEngineDataSignals.requestedTempo = tempo;
 }
 
 template <typename Link>
 double AudioEngine<Link>::quantum() const
 {
-  return mSharedEngineData.quantum;
+  return mEngineDataSignals.quantum;
 }
 
 template <typename Link>
 void AudioEngine<Link>::setQuantum(double quantum)
 {
-  std::lock_guard<std::mutex> lock(mEngineDataGuard);
-  mSharedEngineData.quantum = quantum;
+  mEngineDataSignals.quantum = quantum;
 }
 
 template <typename Link>
@@ -125,21 +119,12 @@ template <typename Link>
 typename AudioEngine<Link>::EngineData AudioEngine<Link>::pullEngineData()
 {
   auto engineData = EngineData{};
-  if (mEngineDataGuard.try_lock())
-  {
-    engineData.requestedTempo = mSharedEngineData.requestedTempo;
-    mSharedEngineData.requestedTempo = 0;
-    engineData.requestStart = mSharedEngineData.requestStart;
-    mSharedEngineData.requestStart = false;
-    engineData.requestStop = mSharedEngineData.requestStop;
-    mSharedEngineData.requestStop = false;
 
-    mLockfreeEngineData.quantum = mSharedEngineData.quantum;
-    mLockfreeEngineData.startStopSyncOn = mSharedEngineData.startStopSyncOn;
-
-    mEngineDataGuard.unlock();
-  }
-  engineData.quantum = mLockfreeEngineData.quantum;
+  engineData.requestedTempo = mEngineDataSignals.requestedTempo.exchange(0.);
+  engineData.requestStart = mEngineDataSignals.requestStart.exchange(false);
+  engineData.requestStop = mEngineDataSignals.requestStop.exchange(false);
+  engineData.startStopSyncOn = mEngineDataSignals.startStopSyncOn.load();
+  engineData.quantum = mEngineDataSignals.quantum.load();
 
   return engineData;
 }
