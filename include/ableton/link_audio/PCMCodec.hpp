@@ -71,7 +71,7 @@ struct PCMEncoder
 template <typename SampleFormat, typename Successor>
 struct PCMDecoder
 {
-  PCMDecoder(util::Injected<Successor> successor, size_t cacheSize)
+  PCMDecoder(util::Injected<Successor> successor, uint32_t cacheSize)
     : mBuffer(cacheSize)
     , mSuccessor(std::move(successor))
   {
