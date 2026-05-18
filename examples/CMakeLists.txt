@@ -102,6 +102,11 @@ endfunction()
 function(configure_linkhut_audio_sources target)
   if(APPLE)
     target_link_libraries(${target} "-framework AudioUnit")
+    if(${CMAKE_CXX_COMPILER_ID} MATCHES Clang)
+      target_compile_options(${target} PRIVATE
+        "-Wno-function-effects"
+      )
+    endif()
     target_compile_definitions(${target} PRIVATE
       -DLINKHUT_AUDIO_PLATFORM_COREAUDIO=1
     )
