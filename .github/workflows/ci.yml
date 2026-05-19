@@ -12,12 +12,12 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: macos-14
+          - os: macos-15
             configuration: Debug
-            xcode-version: 15.4.0
-          - os: macos-14
+            xcode-version: 16.4
+          - os: macos-26
             configuration: Release
-            xcode-version: 16.2.0
+            xcode-version: 26.4.1
       fail-fast: false
     runs-on: ${{ matrix.os }}
     steps:
