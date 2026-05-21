@@ -168,7 +168,7 @@ inline bool LinkAudioSink::BufferHandle::commit(const SessionState& sessionState
                                                 const uint32_t sampleRate)
 {
   const auto result = static_cast<bool>(*this) && (numChannels == 1 || numChannels == 2)
-                      && maxNumSamples >= numFrames * numChannels;
+                      && sampleRate > 0 && maxNumSamples >= numFrames * numChannels;
 
   if (result && mpBuffer)
   {

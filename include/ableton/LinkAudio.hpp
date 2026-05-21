@@ -244,7 +244,7 @@ public:
      *  @param numFrames Number of frames written. numFrames * numChannels may not exceed
      *  maxNumSamples.
      *  @param numChannels Number of channels. Can be 1 for mono or 2 for stereo.
-     *  @param sampleRate Sample rate in Hz.
+     *  @param sampleRate Sample rate in Hz. Must be greater than 0.
      *  @return True if the buffer was successfully committed.
      *
      *  Thread-safe: no

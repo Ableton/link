@@ -89,6 +89,25 @@ TEST_CASE("AudioBuffer")
       AudioBuffer::fromNetworkByteStream(deserialized, bytes.begin(), bytes.end()));
   }
 
+  SECTION("InvalidSampleRate")
+  {
+    auto buffer =
+      AudioBuffer{Id::random<Random>(),
+                  Id::random<Random>(),
+                  std::vector<AudioBuffer::Chunk>{{9977, 2, Beats{23.}, Tempo(120.)}},
+                  Codec::kPCM_i16,
+                  0,
+                  4,
+                  16,
+                  {{1, 2, 3, 4, 5, 6, 7, 8}}};
+    auto deserialized = AudioBuffer{};
+    auto bytes = std::vector<uint8_t>(sizeInByteStream(buffer));
+    CHECK(bytes.end() == toNetworkByteStream(buffer, bytes.begin()));
+    CHECK_THROWS_WITH(
+      AudioBuffer::fromNetworkByteStream(deserialized, bytes.begin(), bytes.end()),
+      "Invalid sample rate.");
+  }
+
   SECTION("EmptyChunks")
   {
     auto buffer = AudioBuffer{Id::random<Random>(),

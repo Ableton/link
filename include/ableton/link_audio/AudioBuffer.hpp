@@ -182,6 +182,11 @@ struct AudioBuffer
       discovery::Deserialize<uint32_t>::fromNetworkByteStream(codecEnd, end);
     audioBuffer.sampleRate = sampleRate;
 
+    if (sampleRate == 0)
+    {
+      throw runtime_error("Invalid sample rate.");
+    }
+
     auto [numChannels, numChannelsEnd] =
       discovery::Deserialize<uint8_t>::fromNetworkByteStream(sampleRateEnd, end);
     audioBuffer.numChannels = numChannels;
