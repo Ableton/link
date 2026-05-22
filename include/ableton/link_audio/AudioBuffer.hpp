@@ -200,8 +200,12 @@ struct AudioBuffer
       discovery::Deserialize<uint16_t>::fromNetworkByteStream(numChannelsEnd, end);
     audioBuffer.numBytes = numBytes;
 
-    if (codec == Codec::kPCM_i16
-        && audioBuffer.numFrames() * numChannels * sizeof(int16_t) != numBytes)
+    if (numBytes > kMaxAudioBytes)
+    {
+      throw range_error("Byte count exceeds maximum.");
+    }
+
+    if (audioBuffer.numFrames() * numChannels * sizeof(int16_t) != numBytes)
     {
       throw range_error("Byte count / frame count mismatch.");
     }

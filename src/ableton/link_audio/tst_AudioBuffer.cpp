@@ -20,6 +20,7 @@
 #include <ableton/link_audio/AudioBuffer.hpp>
 #include <ableton/platforms/stl/Random.hpp>
 #include <ableton/test/CatchWrapper.hpp>
+#include <cstring>
 
 namespace ableton
 {
@@ -142,6 +143,27 @@ TEST_CASE("AudioBuffer")
     CHECK_THROWS_WITH(
       AudioBuffer::fromNetworkByteStream(deserialized, bytes.begin(), bytes.end()),
       "Unknown codec.");
+  }
+
+  SECTION("NumBytesExceedsMax")
+  {
+    const auto buffer = makeBuffer();
+    const auto headerSize = sizeInByteStream(buffer) - buffer.numBytes;
+    const auto oversized = static_cast<uint16_t>(AudioBuffer::kMaxAudioBytes + 1);
+    auto bytes = std::vector<uint8_t>(headerSize + oversized, 0u);
+    toNetworkByteStream(buffer, bytes.begin());
+
+    const auto numBytesOffset = discovery::sizeInByteStream(buffer.channelId)
+                                + discovery::sizeInByteStream(buffer.sessionId)
+                                + discovery::sizeInByteStream(buffer.chunks)
+                                + sizeof(uint8_t) + sizeof(uint32_t) + sizeof(uint8_t);
+    const auto oversizedBE = htons(oversized);
+    std::memcpy(bytes.data() + numBytesOffset, &oversizedBE, sizeof(uint16_t));
+
+    auto deserialized = AudioBuffer{};
+    CHECK_THROWS_WITH(
+      AudioBuffer::fromNetworkByteStream(deserialized, bytes.begin(), bytes.end()),
+      "Byte count exceeds maximum.");
   }
 
   SECTION("MultipleChunks")
