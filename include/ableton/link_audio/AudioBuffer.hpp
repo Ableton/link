@@ -120,8 +120,8 @@ struct AudioBuffer
            + discovery::sizeInByteStream(buffer.chunks)
            + discovery::sizeInByteStream(static_cast<uint8_t>(buffer.codec))
            + discovery::sizeInByteStream(static_cast<uint32_t>(buffer.sampleRate))
-           + discovery::sizeInByteStream(static_cast<int8_t>(buffer.numChannels))
-           + discovery::sizeInByteStream(static_cast<int16_t>(buffer.numBytes))
+           + discovery::sizeInByteStream(static_cast<uint8_t>(buffer.numChannels))
+           + discovery::sizeInByteStream(static_cast<uint16_t>(buffer.numBytes))
            + static_cast<uint32_t>(buffer.numBytes);
   }
 
