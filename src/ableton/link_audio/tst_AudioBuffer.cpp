@@ -113,6 +113,22 @@ TEST_CASE("AudioBuffer")
       makeBuffer({}, 2, 44100, 0, {{}}), "Invalid audio buffer: no chunks.");
   }
 
+  SECTION("ZeroNumChannels")
+  {
+    checkThrowsWith(makeBuffer({{9977, 0, Beats{23.}, Tempo(120.)}}, 0, 44100, 0, {{}}),
+                    "Invalid channel count.");
+  }
+
+  SECTION("TooManyChannels")
+  {
+    checkThrowsWith(makeBuffer({{9977, 2, Beats{23.}, Tempo(120.)}},
+                               3,
+                               44100,
+                               12,
+                               {{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}}),
+                    "Invalid channel count.");
+  }
+
   SECTION("UnknownCodec")
   {
     const auto buffer = makeBuffer();

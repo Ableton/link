@@ -191,6 +191,11 @@ struct AudioBuffer
       discovery::Deserialize<uint8_t>::fromNetworkByteStream(sampleRateEnd, end);
     audioBuffer.numChannels = numChannels;
 
+    if (numChannels != 1 && numChannels != 2)
+    {
+      throw runtime_error("Invalid channel count.");
+    }
+
     auto [numBytes, numBytesEnd] =
       discovery::Deserialize<uint16_t>::fromNetworkByteStream(numChannelsEnd, end);
     audioBuffer.numBytes = numBytes;
