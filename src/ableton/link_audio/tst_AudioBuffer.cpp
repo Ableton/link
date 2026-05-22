@@ -25,133 +25,104 @@ namespace ableton
 {
 namespace link_audio
 {
+namespace
+{
+
+using Random = ableton::platforms::stl::Random;
+
+AudioBuffer makeBuffer(
+  std::vector<AudioBuffer::Chunk> chunks = {{9977, 2, Beats{23.}, Tempo(120.)}},
+  uint8_t numChannels = 2,
+  uint32_t sampleRate = 44100,
+  uint16_t numBytes = 8,
+  AudioBuffer::Bytes bytes = {{1, 2, 3, 4, 5, 6, 7, 8}},
+  Codec codec = Codec::kPCM_i16)
+{
+  return AudioBuffer{Id::random<Random>(),
+                     Id::random<Random>(),
+                     std::move(chunks),
+                     codec,
+                     sampleRate,
+                     numChannels,
+                     numBytes,
+                     bytes};
+}
+
+std::vector<uint8_t> serialize(const AudioBuffer& buffer)
+{
+  auto bytes = std::vector<uint8_t>(sizeInByteStream(buffer));
+  REQUIRE(bytes.end() == toNetworkByteStream(buffer, bytes.begin()));
+  return bytes;
+}
+
+void checkRoundTrip(const AudioBuffer& buffer)
+{
+  const auto bytes = serialize(buffer);
+  auto deserialized = AudioBuffer{};
+  const auto deserializedEnd =
+    AudioBuffer::fromNetworkByteStream(deserialized, bytes.begin(), bytes.end());
+  CHECK(bytes.end() == deserializedEnd);
+  CHECK(buffer == deserialized);
+}
+
+void checkThrowsWith(const AudioBuffer& buffer, const char* msg)
+{
+  const auto bytes = serialize(buffer);
+  auto deserialized = AudioBuffer{};
+  CHECK_THROWS_WITH(
+    AudioBuffer::fromNetworkByteStream(deserialized, bytes.begin(), bytes.end()), msg);
+}
+
+void checkThrows(const AudioBuffer& buffer)
+{
+  const auto bytes = serialize(buffer);
+  auto deserialized = AudioBuffer{};
+  CHECK_THROWS(
+    AudioBuffer::fromNetworkByteStream(deserialized, bytes.begin(), bytes.end()));
+}
+
+} // namespace
 
 TEST_CASE("AudioBuffer")
 {
-  using Random = ableton::platforms::stl::Random;
-
   SECTION("ValidBuffer")
   {
-    auto buffer =
-      AudioBuffer{Id::random<Random>(),
-                  Id::random<Random>(),
-                  std::vector<AudioBuffer::Chunk>{{9977, 2, Beats{23.}, Tempo(120.)}},
-                  Codec::kPCM_i16,
-                  44100,
-                  4,
-                  16,
-                  {{1, 2, 3, 4, 5, 6, 7, 8}}};
-    const auto size = sizeInByteStream(buffer);
-    auto bytes = std::vector<uint8_t>(size);
-
-    CHECK(bytes.end() == toNetworkByteStream(buffer, bytes.begin()));
-
-    auto deserialized = AudioBuffer{};
-    auto deserializedEnd =
-      AudioBuffer::fromNetworkByteStream(deserialized, bytes.begin(), bytes.end());
-
-    CHECK(bytes.end() == deserializedEnd);
-    CHECK(buffer == deserialized);
+    checkRoundTrip(makeBuffer());
   }
 
   SECTION("InvalidNumBytes")
   {
-    auto buffer = AudioBuffer{Id::random<Random>(),
-                              Id::random<Random>(),
-                              {},
-                              Codec::kPCM_i16,
-                              44100,
-                              2,
-                              1,
-                              {{1, 2, 3, 4}}};
-    auto deserialized = AudioBuffer{};
-    auto bytes = std::vector<uint8_t>(sizeInByteStream(buffer));
-    CHECK(bytes.end() == toNetworkByteStream(buffer, bytes.begin()));
-    CHECK_THROWS(
-      AudioBuffer::fromNetworkByteStream(deserialized, bytes.begin(), bytes.end()));
+    checkThrows(makeBuffer({}, 2, 44100, 1, {{1, 2, 3, 4}}));
   }
 
   SECTION("InvalidNumFrames")
   {
-    auto buffer =
-      AudioBuffer{Id::random<Random>(),
-                  Id::random<Random>(),
-                  std::vector<AudioBuffer::Chunk>{{346, 222, Beats{23.}, Tempo(120.)}},
-                  Codec::kPCM_i16,
-                  44100,
-                  2,
-                  2,
-                  {{1, 2, 3, 4}}};
-    auto deserialized = AudioBuffer{};
-    auto bytes = std::vector<uint8_t>(sizeInByteStream(buffer));
-    CHECK(bytes.end() == toNetworkByteStream(buffer, bytes.begin()));
-    CHECK_THROWS(
-      AudioBuffer::fromNetworkByteStream(deserialized, bytes.begin(), bytes.end()));
+    checkThrows(
+      makeBuffer({{346, 222, Beats{23.}, Tempo(120.)}}, 2, 44100, 2, {{1, 2, 3, 4}}));
   }
 
   SECTION("InvalidSampleRate")
   {
-    auto buffer =
-      AudioBuffer{Id::random<Random>(),
-                  Id::random<Random>(),
-                  std::vector<AudioBuffer::Chunk>{{9977, 2, Beats{23.}, Tempo(120.)}},
-                  Codec::kPCM_i16,
-                  0,
-                  4,
-                  16,
-                  {{1, 2, 3, 4, 5, 6, 7, 8}}};
-    auto deserialized = AudioBuffer{};
-    auto bytes = std::vector<uint8_t>(sizeInByteStream(buffer));
-    CHECK(bytes.end() == toNetworkByteStream(buffer, bytes.begin()));
-    CHECK_THROWS_WITH(
-      AudioBuffer::fromNetworkByteStream(deserialized, bytes.begin(), bytes.end()),
-      "Invalid sample rate.");
+    checkThrowsWith(
+      makeBuffer({{9977, 2, Beats{23.}, Tempo(120.)}}, 2, 0), "Invalid sample rate.");
   }
 
   SECTION("EmptyChunks")
   {
-    auto buffer = AudioBuffer{Id::random<Random>(),
-                              Id::random<Random>(),
-                              std::vector<AudioBuffer::Chunk>{},
-                              Codec::kPCM_i16,
-                              44100,
-                              2,
-                              0,
-                              {{}}};
-    auto deserialized = AudioBuffer{};
-    auto bytes = std::vector<uint8_t>(sizeInByteStream(buffer));
-    CHECK(bytes.end() == toNetworkByteStream(buffer, bytes.begin()));
-    CHECK_THROWS_WITH(
-      AudioBuffer::fromNetworkByteStream(deserialized, bytes.begin(), bytes.end()),
-      "Invalid audio buffer: no chunks.");
+    checkThrowsWith(
+      makeBuffer({}, 2, 44100, 0, {{}}), "Invalid audio buffer: no chunks.");
   }
-
 
   SECTION("MultipleChunks")
   {
-    auto buffer = AudioBuffer{
-      Id::random<Random>(),
-      Id::random<Random>(),
-      std::vector<AudioBuffer::Chunk>{{12345, 5, Beats{0.0}, Tempo(120.0)},
-                                      {12346, 2, Beats{2.5}, Tempo(160.0)},
-                                      {12347, 3, Beats{5.2}, Tempo(100.0)}},
-      Codec::kPCM_i16,
-      48000,
+    checkRoundTrip(makeBuffer(
+      {{12345, 5, Beats{0.0}, Tempo(120.0)},
+       {12346, 2, Beats{2.5}, Tempo(160.0)},
+       {12347, 3, Beats{5.2}, Tempo(100.0)}},
       2,
+      48000,
       40,
-      {{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20}}};
-
-    const auto size = sizeInByteStream(buffer);
-    auto bytes = std::vector<uint8_t>(size);
-
-    CHECK(bytes.end() == toNetworkByteStream(buffer, bytes.begin()));
-
-    auto deserialized = AudioBuffer{};
-    auto deserializedEnd =
-      AudioBuffer::fromNetworkByteStream(deserialized, bytes.begin(), bytes.end());
-
-    CHECK(bytes.end() == deserializedEnd);
-    CHECK(buffer == deserialized);
+      {{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20}}));
   }
 }
 
