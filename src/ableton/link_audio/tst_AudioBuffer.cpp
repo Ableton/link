@@ -113,6 +113,21 @@ TEST_CASE("AudioBuffer")
       makeBuffer({}, 2, 44100, 0, {{}}), "Invalid audio buffer: no chunks.");
   }
 
+  SECTION("UnknownCodec")
+  {
+    const auto buffer = makeBuffer();
+    auto bytes = serialize(buffer);
+    const auto codecOffset = discovery::sizeInByteStream(buffer.channelId)
+                             + discovery::sizeInByteStream(buffer.sessionId)
+                             + discovery::sizeInByteStream(buffer.chunks);
+    bytes[codecOffset] = 42;
+
+    auto deserialized = AudioBuffer{};
+    CHECK_THROWS_WITH(
+      AudioBuffer::fromNetworkByteStream(deserialized, bytes.begin(), bytes.end()),
+      "Unknown codec.");
+  }
+
   SECTION("MultipleChunks")
   {
     checkRoundTrip(makeBuffer(

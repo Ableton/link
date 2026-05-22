@@ -173,9 +173,9 @@ struct AudioBuffer
       discovery::Deserialize<uint8_t>::fromNetworkByteStream(chunksEnd, end);
     audioBuffer.codec = static_cast<Codec>(codec);
 
-    if (codec == Codec::kInvalid)
+    if (codec != Codec::kPCM_i16)
     {
-      throw runtime_error("Invalid codec.");
+      throw runtime_error("Unknown codec.");
     }
 
     auto [sampleRate, sampleRateEnd] =
