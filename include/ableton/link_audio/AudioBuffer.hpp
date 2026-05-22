@@ -26,6 +26,7 @@
 #include <ableton/link_audio/v1/Messages.hpp>
 #include <algorithm>
 #include <array>
+#include <cmath>
 #include <numeric>
 #include <tuple>
 #include <vector>
@@ -167,6 +168,15 @@ struct AudioBuffer
     if (chunks.empty())
     {
       throw runtime_error("Invalid audio buffer: no chunks.");
+    }
+
+    for (const auto& chunk : chunks)
+    {
+      const auto bpm = chunk.tempo.bpm();
+      if (!std::isfinite(bpm) || bpm <= 0.0)
+      {
+        throw runtime_error("Invalid tempo.");
+      }
     }
 
     auto [codec, codecEnd] =

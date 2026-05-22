@@ -21,6 +21,7 @@
 #include <ableton/platforms/stl/Random.hpp>
 #include <ableton/test/CatchWrapper.hpp>
 #include <cstring>
+#include <limits>
 
 namespace ableton
 {
@@ -164,6 +165,21 @@ TEST_CASE("AudioBuffer")
     CHECK_THROWS_WITH(
       AudioBuffer::fromNetworkByteStream(deserialized, bytes.begin(), bytes.end()),
       "Byte count exceeds maximum.");
+  }
+
+  SECTION("InvalidTempoZeroMicrosPerBeat")
+  {
+    checkThrowsWith(
+      makeBuffer({{9977, 2, Beats{23.}, Tempo(std::chrono::microseconds{0})}}),
+      "Invalid tempo.");
+  }
+
+  SECTION("InvalidTempoNaN")
+  {
+    checkThrowsWith(
+      makeBuffer(
+        {{9977, 2, Beats{23.}, Tempo(std::numeric_limits<double>::quiet_NaN())}}),
+      "Invalid tempo.");
   }
 
   SECTION("MultipleChunks")
