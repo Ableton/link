@@ -109,6 +109,9 @@ source_group("Test Utils" FILES
 function(configure_link_test_executable target)
   target_link_libraries(${target} Catch::Catch Ableton::Link)
   target_compile_definitions(${target} PRIVATE -DCATCH_CONFIG_ENABLE_BENCHMARKING=1)
+  if(ANDROID)
+    target_link_libraries(${target} log) # Needed by Catch
+  endif()
 endfunction()
 
 # For the LinkCore test suite, we add header dependencies individually so that

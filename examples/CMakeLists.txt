@@ -184,14 +184,16 @@ set(linkhut_SOURCES
   linkhut/main.cpp
 )
 
-add_executable(LinkHut
-  ${linkhut_HEADERS}
-  ${linkhut_SOURCES}
-  ${linkhut_audio_SOURCES}
-)
-configure_linkhut_audio_sources(LinkHut)
-configure_linkhut_executable(LinkHut)
-source_group("LinkHut" FILES ${linkhut_HEADERS} ${linkhut_SOURCES})
+if(linkhut_audio_SOURCES)
+  add_executable(LinkHut
+    ${linkhut_HEADERS}
+    ${linkhut_SOURCES}
+    ${linkhut_audio_SOURCES}
+  )
+  configure_linkhut_audio_sources(LinkHut)
+  configure_linkhut_executable(LinkHut)
+  source_group("LinkHut" FILES ${linkhut_HEADERS} ${linkhut_SOURCES})
+endif()
 
 #  _     _       _        _             _ _       _   _       _
 # | |   (_)_ __ | | __   / \  _   _  __| (_) ___ | | | |_   _| |_
@@ -204,14 +206,16 @@ set(linkaudiohut_SOURCES
   linkaudiohut/main.cpp
 )
 
-add_executable(LinkAudioHut
-  ${linkhut_HEADERS}
-  ${linkaudiohut_SOURCES}
-  ${linkhut_audio_SOURCES}
-)
-configure_linkhut_audio_sources(LinkAudioHut)
-configure_linkhut_executable(LinkAudioHut)
-source_group("LinkAudioHut" FILES ${linkhut_HEADERS} ${linkaudioshut_SOURCES})
+if(linkhut_audio_SOURCES)
+  add_executable(LinkAudioHut
+    ${linkhut_HEADERS}
+    ${linkaudiohut_SOURCES}
+    ${linkhut_audio_SOURCES}
+  )
+  configure_linkhut_audio_sources(LinkAudioHut)
+  configure_linkhut_executable(LinkAudioHut)
+  source_group("LinkAudioHut" FILES ${linkhut_HEADERS} ${linkaudioshut_SOURCES})
+endif()
 
 
 #  _     _       _    _   _       _   ____  _ _            _

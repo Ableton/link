@@ -24,16 +24,24 @@ function(ConfigureAbletonLink PATH_TO_LINK)
       INTERFACE_COMPILE_DEFINITIONS
       LINK_PLATFORM_WINDOWS=1
     )
-    elseif(CMAKE_SYSTEM_NAME MATCHES "Linux|kFreeBSD|GNU")
+    elseif(CMAKE_SYSTEM_NAME MATCHES "Linux|kFreeBSD|GNU|Android")
       set_property(TARGET Ableton::Link APPEND PROPERTY
         INTERFACE_COMPILE_DEFINITIONS
         LINK_PLATFORM_LINUX=1
     )
-    set_property(TARGET Ableton::Link APPEND PROPERTY
-    INTERFACE_LINK_LIBRARIES
-      atomic
-      pthread
-    )
+    if(ANDROID)
+      # On Android, pthread is part of libc; there is no separate libpthread.
+      set_property(TARGET Ableton::Link APPEND PROPERTY
+      INTERFACE_LINK_LIBRARIES
+        atomic
+      )
+    else()
+      set_property(TARGET Ableton::Link APPEND PROPERTY
+      INTERFACE_LINK_LIBRARIES
+        atomic
+        pthread
+      )
+    endif()
   endif()
 
   include(${PATH_TO_LINK}/cmake_include/ConfigureAsioStandalone.cmake)

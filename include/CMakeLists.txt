@@ -142,7 +142,7 @@ elseif(UNIX)
       ${link_platform_DIR}/darwin/ThreadFactory.hpp
       ${link_platform_DIR}/stl/Random.hpp
     )
-  elseif(CMAKE_SYSTEM_NAME MATCHES "Linux|kFreeBSD|GNU")
+  elseif(CMAKE_SYSTEM_NAME MATCHES "Linux|kFreeBSD|GNU|Android")
     set(link_platform_HEADERS
       ${link_platform_HEADERS}
       ${link_platform_DIR}/linux/Clock.hpp
@@ -150,7 +150,7 @@ elseif(UNIX)
       ${link_platform_DIR}/stl/Clock.hpp
       ${link_platform_DIR}/stl/Random.hpp
       )
-      if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+      if(${CMAKE_SYSTEM_NAME} MATCHES "Linux|Android")
         set(link_platform_HEADERS
           ${link_platform_HEADERS}
           ${link_platform_DIR}/linux/ThreadFactory.hpp
