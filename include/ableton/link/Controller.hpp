@@ -168,13 +168,14 @@ public:
         JoinSessionCallback{this},
         util::injectRef(*mIo),
         mClock)
-    , mDiscovery(
-        std::make_pair(
-          NodeState{
-            mNodeId, mSessionId, mSessionState.timeline, mSessionState.startStopState},
-          mSessionState.ghostXForm),
-        util::injectVal(GatewayFactory{this}),
-        util::injectRef(*mIo))
+    , mDiscovery(std::make_pair(NodeState{mNodeId,
+                                          mSessionId,
+                                          mSessionState.timeline,
+                                          mSessionState.startStopState,
+                                          mSessionState.arrangementTimeline},
+                                mSessionState.ghostXForm),
+                 util::injectVal(GatewayFactory{this}),
+                 util::injectRef(*mIo))
     , mRtClientStateSetter(*this)
   {
   }
@@ -334,10 +335,14 @@ protected:
   void updateDiscovery()
   {
     // Push the change to the discovery service
-    mDiscovery.updateNodeState(std::make_pair(
-      NodeState{
-        mNodeId, mSessionId, mSessionState.timeline, mSessionState.startStopState},
-      mSessionState.ghostXForm));
+    std::lock_guard<std::mutex> lock(mSessionStateGuard);
+    mDiscovery.updateNodeState(
+      std::make_pair(NodeState{mNodeId,
+                               mSessionId,
+                               mSessionState.timeline,
+                               mSessionState.startStopState,
+                               mSessionState.arrangementTimeline},
+                     mSessionState.ghostXForm));
   }
 
   void updateSessionTiming(Timeline newTimeline, const GhostXForm newXForm)

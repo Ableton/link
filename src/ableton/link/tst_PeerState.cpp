@@ -36,7 +36,12 @@ TEST_CASE("PeerState")
   const auto timeline = Timeline{Tempo{60.}, Beats{1.}, std::chrono::microseconds{100}};
   const auto startStop =
     StartStopState{true, Beats{1234.}, std::chrono::microseconds{5678}};
-  const auto nodeState = NodeState{nodeId, nodeId, timeline, startStop};
+  const auto nodeState = NodeState{
+    nodeId,
+    nodeId,
+    timeline,
+    startStop,
+    ArrangementTimeline{Beats{42.}, Beats{40.}, std::chrono::microseconds{6789}}};
 
   SECTION("V4RoundtripByteStreamEncoding")
   {

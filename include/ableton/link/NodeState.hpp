@@ -20,10 +20,14 @@
 #pragma once
 
 #include <ableton/discovery/Payload.hpp>
+#include <ableton/link/ArrangementTimeline.hpp>
 #include <ableton/link/NodeId.hpp>
 #include <ableton/link/SessionId.hpp>
 #include <ableton/link/StartStopState.hpp>
 #include <ableton/link/Timeline.hpp>
+
+#include <chrono>
+#include <optional>
 
 namespace ableton
 {
@@ -32,36 +36,81 @@ namespace link
 
 struct NodeState
 {
-  using Payload =
-    decltype(discovery::makePayload(Timeline{}, SessionMembership{}, StartStopState{}));
+  struct OptionalArrangementTimelineEntry
+  {
+    static const std::int32_t key = ArrangementTimeline::key;
+
+    std::optional<ArrangementTimeline> value;
+
+    friend std::uint32_t sizeInByteStream(const OptionalArrangementTimelineEntry& entry)
+    {
+      return entry.value ? sizeInByteStream(*entry.value) : 0;
+    }
+
+    template <typename It>
+    friend It toNetworkByteStream(const OptionalArrangementTimelineEntry& entry, It out)
+    {
+      return entry.value ? toNetworkByteStream(*entry.value, std::move(out)) : out;
+    }
+
+    template <typename It>
+    static std::pair<OptionalArrangementTimelineEntry, It> fromNetworkByteStream(It begin,
+                                                                                 It end)
+    {
+      auto result = ArrangementTimeline::fromNetworkByteStream(std::move(begin), end);
+      return std::make_pair(OptionalArrangementTimelineEntry{std::move(result.first)},
+                            std::move(result.second));
+    }
+  };
+
+  using Payload = decltype(discovery::makePayload(Timeline{},
+                                                  SessionMembership{},
+                                                  StartStopState{},
+                                                  OptionalArrangementTimelineEntry{}));
 
   NodeId ident() const { return nodeId; }
 
   friend bool operator==(const NodeState& lhs, const NodeState& rhs)
   {
-    return std::tie(lhs.nodeId, lhs.sessionId, lhs.timeline, lhs.startStopState)
-           == std::tie(rhs.nodeId, rhs.sessionId, rhs.timeline, rhs.startStopState);
+    return std::tie(lhs.nodeId,
+                    lhs.sessionId,
+                    lhs.timeline,
+                    lhs.startStopState,
+                    lhs.arrangementTimeline)
+           == std::tie(rhs.nodeId,
+                       rhs.sessionId,
+                       rhs.timeline,
+                       rhs.startStopState,
+                       rhs.arrangementTimeline);
   }
 
   friend Payload toPayload(const NodeState& state)
   {
     return discovery::makePayload(
-      state.timeline, SessionMembership{state.sessionId}, state.startStopState);
+      state.timeline,
+      SessionMembership{state.sessionId},
+      state.startStopState,
+      OptionalArrangementTimelineEntry{state.arrangementTimeline});
   }
 
   template <typename It>
   static NodeState fromPayload(NodeId nodeId, It begin, It end)
   {
     using namespace std;
-    auto nodeState = NodeState{std::move(nodeId), {}, {}, {}};
-    discovery::parsePayload<Timeline, SessionMembership, StartStopState>(
+    auto nodeState = NodeState{std::move(nodeId), {}, {}, {}, std::nullopt};
+    discovery::parsePayload<Timeline,
+                            SessionMembership,
+                            StartStopState,
+                            OptionalArrangementTimelineEntry>(
       std::move(begin),
       std::move(end),
       [&nodeState](Timeline tl) { nodeState.timeline = std::move(tl); },
       [&nodeState](SessionMembership membership)
       { nodeState.sessionId = std::move(membership.sessionId); },
       [&nodeState](StartStopState ststst)
-      { nodeState.startStopState = std::move(ststst); });
+      { nodeState.startStopState = std::move(ststst); },
+      [&nodeState](OptionalArrangementTimelineEntry entry)
+      { nodeState.arrangementTimeline = std::move(entry.value); });
     return nodeState;
   }
 
@@ -69,6 +118,7 @@ struct NodeState
   SessionId sessionId;
   Timeline timeline;
   StartStopState startStopState;
+  std::optional<ArrangementTimeline> arrangementTimeline;
 };
 
 } // namespace link

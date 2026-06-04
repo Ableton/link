@@ -99,7 +99,8 @@ TEST_CASE("Peers")
     PeerState{{NodeId::random<Random>(),
                NodeId::random<Random>(),
                Timeline{Tempo{60.}, Beats{1.}, std::chrono::microseconds{1234}},
-               StartStopState{false, Beats{0.}, std::chrono::microseconds{2345}}},
+               StartStopState{false, Beats{0.}, std::chrono::microseconds{2345}},
+               {}},
               {},
               {}};
 
@@ -107,6 +108,7 @@ TEST_CASE("Peers")
     PeerState{{NodeId::random<Random>(),
                NodeId::random<Random>(),
                Timeline{Tempo{120.}, Beats{10.}, std::chrono::microseconds{500}},
+               {},
                {}},
               {},
               {}};
@@ -115,6 +117,7 @@ TEST_CASE("Peers")
     PeerState{{NodeId::random<Random>(),
                NodeId::random<Random>(),
                Timeline{Tempo{100.}, Beats{4.}, std::chrono::microseconds{100}},
+               {},
                {}},
               {},
               {}};
