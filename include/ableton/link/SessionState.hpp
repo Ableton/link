@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include <ableton/link/ArrangementTimeline.hpp>
 #include <ableton/link/SessionId.hpp>
 #include <ableton/link/StartStopState.hpp>
 #include <ableton/link/Timeline.hpp>
@@ -34,11 +35,15 @@ namespace link
 using OptionalTimeline = std::optional<Timeline>;
 using OptionalStartStopState = std::optional<StartStopState>;
 using OptionalClientStartStopState = std::optional<ClientStartStopState>;
+using OptionalArrangementTimeline = std::optional<ArrangementTimeline>;
+using OptionalClientArrangementTimeline = std::optional<ClientArrangementTimeline>;
+using OptionalApiArrangementTimeline = std::optional<ApiArrangementTimeline>;
 
 struct SessionState
 {
   Timeline timeline;
   StartStopState startStopState;
+  OptionalArrangementTimeline arrangementTimeline;
   GhostXForm ghostXForm;
 };
 
@@ -46,8 +51,8 @@ struct ClientState
 {
   friend bool operator==(const ClientState& lhs, const ClientState& rhs)
   {
-    return std::tie(lhs.timeline, lhs.startStopState)
-           == std::tie(rhs.timeline, rhs.startStopState);
+    return std::tie(lhs.timeline, lhs.startStopState, lhs.arrangementTimeline)
+           == std::tie(rhs.timeline, rhs.startStopState, rhs.arrangementTimeline);
   }
 
   friend bool operator!=(const ClientState& lhs, const ClientState& rhs)
@@ -58,6 +63,7 @@ struct ClientState
   Timeline timeline;
   SessionId timelineSessionId;
   ClientStartStopState startStopState;
+  OptionalClientArrangementTimeline arrangementTimeline;
 };
 
 struct ControllerClientState
@@ -95,14 +101,17 @@ struct RtClientState
   Timeline timeline;
   SessionId timelineSessionId;
   ClientStartStopState startStopState;
+  OptionalClientArrangementTimeline arrangementTimeline;
   std::chrono::microseconds timelineTimestamp;
   std::chrono::microseconds startStopStateTimestamp;
+  std::chrono::microseconds arrangementTimelineTimestamp;
 };
 
 struct IncomingClientState
 {
   OptionalTimeline timeline;
   OptionalClientStartStopState startStopState;
+  OptionalClientArrangementTimeline arrangementTimeline;
   std::chrono::microseconds timelineTimestamp;
 };
 
@@ -110,8 +119,14 @@ struct ApiState
 {
   friend bool operator==(const ApiState& lhs, const ApiState& rhs)
   {
-    return std::tie(lhs.timeline, lhs.timelineSessionId, lhs.startStopState)
-           == std::tie(rhs.timeline, rhs.timelineSessionId, rhs.startStopState);
+    return std::tie(lhs.timeline,
+                    lhs.timelineSessionId,
+                    lhs.startStopState,
+                    lhs.arrangementTimeline)
+           == std::tie(rhs.timeline,
+                       rhs.timelineSessionId,
+                       rhs.startStopState,
+                       rhs.arrangementTimeline);
   }
 
   friend bool operator!=(const ApiState& lhs, const ApiState& rhs)
@@ -122,6 +137,7 @@ struct ApiState
   Timeline timeline;
   SessionId timelineSessionId;
   ApiStartStopState startStopState;
+  OptionalApiArrangementTimeline arrangementTimeline;
 };
 
 } // namespace link

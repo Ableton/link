@@ -36,7 +36,7 @@ LinkSessionState makeSessionState(const double bpm = 120.,
 {
   const auto tl =
     link::Timeline{link::Tempo{bpm}, link::Beats{0.}, std::chrono::microseconds{0}};
-  return LinkSessionState{{tl, {}, {}}, bRespectQuantum};
+  return LinkSessionState{{tl, {}, {}, {}}, bRespectQuantum};
 }
 
 } // namespace
@@ -128,7 +128,7 @@ TEST_CASE("SessionState")
     for (auto tempo = 20.; tempo < 999.; tempo += 0.8)
     {
       const auto tl = Timeline{Tempo{tempo}, Beats{12345678.}, microseconds{1234567}};
-      auto sessionState = LinkSessionState({{tl, {}, {}}, false});
+      auto sessionState = LinkSessionState({{tl, {}, {}, {}}, false});
       sessionState.forceBeatAtTime(beats, time, quantum);
 
       CHECK(beats >= sessionState.beatAtTime(time, quantum));

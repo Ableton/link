@@ -173,7 +173,7 @@ void testSetAndGetClientState(SetClientStateFunctionT setClientState,
   const auto initialStartStopState = std::optional<ClientStartStopState>{
     ClientStartStopState{false, kAnyTime, clock.micros()}};
   const auto initialClientState =
-    IncomingClientState{initialTimeline, initialStartStopState, clock.micros()};
+    IncomingClientState{initialTimeline, initialStartStopState, {}, clock.micros()};
 
   setClientState(controller, initialClientState);
 
@@ -188,9 +188,10 @@ void testSetAndGetClientState(SetClientStateFunctionT setClientState,
     // StartStopState - don't advance clock
     const auto outdatedStartStopState = std::optional<ClientStartStopState>{
       ClientStartStopState{false, kAnyTime, clock.micros()}};
-    setClientState(controller,
-                   IncomingClientState{
-                     std::optional<Timeline>{}, outdatedStartStopState, clock.micros()});
+    setClientState(
+      controller,
+      IncomingClientState{
+        std::optional<Timeline>{}, outdatedStartStopState, {}, clock.micros()});
     CHECK(initialClientState == getClientState(controller));
   }
 
@@ -200,9 +201,10 @@ void testSetAndGetClientState(SetClientStateFunctionT setClientState,
   {
     const auto outdatedStartStopState = std::optional<ClientStartStopState>{
       ClientStartStopState{false, kAnyTime, microseconds{0}}};
-    setClientState(controller,
-                   IncomingClientState{
-                     std::optional<Timeline>{}, outdatedStartStopState, clock.micros()});
+    setClientState(
+      controller,
+      IncomingClientState{
+        std::optional<Timeline>{}, outdatedStartStopState, {}, clock.micros()});
     CHECK(initialClientState == getClientState(controller));
   }
 
@@ -211,6 +213,7 @@ void testSetAndGetClientState(SetClientStateFunctionT setClientState,
     setClientState(controller,
                    IncomingClientState{std::optional<Timeline>{},
                                        std::optional<ClientStartStopState>{},
+                                       {},
                                        clock.micros()});
     CHECK(initialClientState == getClientState(controller));
   }
@@ -222,7 +225,7 @@ void testSetAndGetClientState(SetClientStateFunctionT setClientState,
     const auto expectedStartStopState = std::optional<ClientStartStopState>{
       ClientStartStopState{false, kAnyTime, clock.micros()}};
     const auto expectedClientState =
-      IncomingClientState{expectedTimeline, expectedStartStopState, clock.micros()};
+      IncomingClientState{expectedTimeline, expectedStartStopState, {}, clock.micros()};
     setClientState(controller, expectedClientState);
     CHECK(expectedClientState == getClientState(controller));
   }
@@ -253,7 +256,8 @@ void testCallbackInvocation(SetClientStateFunctionT setClientState)
     std::optional<Timeline>{Timeline{initialTempo, Beats{0.}, kAnyTime}};
   const auto initialStartStopState = std::optional<ClientStartStopState>{
     ClientStartStopState{initialIsPlaying, kAnyTime, clock.micros()}};
-  setClientState(controller, {initialTimeline, initialStartStopState, clock.micros()});
+  setClientState(
+    controller, {initialTimeline, initialStartStopState, {}, clock.micros()});
 
   SECTION("Callbacks are called when setting new client state")
   {
@@ -270,7 +274,7 @@ void testCallbackInvocation(SetClientStateFunctionT setClientState)
         std::optional<Timeline>{Timeline{initialTempo, Beats{1.}, kAnyTime}};
       const auto startStopState = std::optional<ClientStartStopState>{
         ClientStartStopState{initialIsPlaying, kAnyTime, clock.micros()}};
-      setClientState(controller, {timeline, startStopState, clock.micros()});
+      setClientState(controller, {timeline, startStopState, {}, clock.micros()});
       CHECK(tempoCallback.tempos.empty());
       CHECK(startStopStateCallback.startStopStates.empty());
     }
@@ -397,10 +401,10 @@ TEST_CASE("Controller")
     const auto initialStartStopState = std::optional<ClientStartStopState>{
       ClientStartStopState{true, kAnyTime, clock.micros()}};
     const auto initialState =
-      IncomingClientState{initialTimeline, initialStartStopState, clock.micros()};
+      IncomingClientState{initialTimeline, initialStartStopState, {}, clock.micros()};
 
     controller.setClientStateRtSafe(
-      {initialTimeline, initialStartStopState, clock.micros()});
+      {initialTimeline, initialStartStopState, {}, clock.micros()});
     REQUIRE(initialState == controller.clientState());
     REQUIRE(initialState == controller.clientStateRtSafe());
 
@@ -410,9 +414,9 @@ TEST_CASE("Controller")
     const auto newStartStopState = std::optional<ClientStartStopState>{
       ClientStartStopState{false, kAnyTime, clock.micros()}};
     const auto newState =
-      IncomingClientState{newTimeline, newStartStopState, clock.micros()};
+      IncomingClientState{newTimeline, newStartStopState, {}, clock.micros()};
 
-    controller.setClientState({newTimeline, newStartStopState, clock.micros()});
+    controller.setClientState({newTimeline, newStartStopState, {}, clock.micros()});
     clock.advance(milliseconds{500});
     CHECK(newState == controller.clientState());
     CHECK(initialState == controller.clientStateRtSafe());

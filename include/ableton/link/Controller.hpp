@@ -55,6 +55,7 @@ inline SessionState initSessionState(const Tempo tempo, const Clock& clock)
   using namespace std::chrono;
   return {clampTempo(Timeline{tempo, Beats{0.}, microseconds{0}}),
           StartStopState{false, Beats{0.}, microseconds{0}},
+          std::nullopt,
           initXForm(clock)};
 }
 
@@ -64,7 +65,8 @@ inline ClientState initClientState(const SessionState& sessionState, SessionId s
   return {
     Timeline{sessionState.timeline.tempo, sessionState.timeline.beatOrigin, hostTime},
     std::move(sessionId),
-    ClientStartStopState{sessionState.startStopState.isPlaying, hostTime, hostTime}};
+    ClientStartStopState{sessionState.startStopState.isPlaying, hostTime, hostTime},
+    std::nullopt};
 }
 
 inline RtClientState initRtClientState(const ClientState& clientState)
@@ -73,6 +75,8 @@ inline RtClientState initRtClientState(const ClientState& clientState)
   return {clientState.timeline,
           clientState.timelineSessionId,
           clientState.startStopState,
+          clientState.arrangementTimeline,
+          microseconds{0},
           microseconds{0},
           microseconds{0}};
 }

@@ -50,7 +50,7 @@ inline link::IncomingClientState toIncomingClientState(
                                             state.startStopState.time,
                                             timestamp}}
       : link::OptionalClientStartStopState{};
-  return {timeline, startStopState, timestamp};
+  return {timeline, startStopState, {}, timestamp};
 }
 
 } // namespace detail
