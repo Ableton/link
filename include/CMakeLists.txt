@@ -10,6 +10,7 @@ project(LinkCore)
 
 set(link_core_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ableton/link)
 set(link_core_HEADERS
+  ${link_core_DIR}/ArrangementTimeline.hpp
   ${link_core_DIR}/Beats.hpp
   ${link_core_DIR}/ClientSessionTimelines.hpp
   ${link_core_DIR}/Controller.hpp
