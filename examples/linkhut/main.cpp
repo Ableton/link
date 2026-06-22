@@ -74,6 +74,7 @@ void clearLine()
   std::cout.fill(' ');
 }
 
+
 void printHelp()
 {
   std::cout << std::endl << " < L I N K  H U T >" << std::endl << std::endl;
@@ -83,14 +84,16 @@ void printHelp()
   std::cout << "  decrease / increase tempo: w / e" << std::endl;
   std::cout << "  decrease / increase quantum: r / t" << std::endl;
   std::cout << "  enable / disable start stop sync: s" << std::endl;
+  std::cout << "  enable / disable arrangement sync: d" << std::endl;
+  std::cout << "  jump arrangement beat time to 0: j" << std::endl;
   std::cout << "  quit: q" << std::endl << std::endl;
 }
 
 void printStateHeader()
 {
-  std::cout
-    << "enabled | num peers | quantum | start stop sync | tempo   | beats   | metro"
-    << std::endl;
+  std::cout << "enabled | num peers | quantum | start stop sync | arr sync | tempo   | "
+               "beats   | metro"
+            << std::endl;
 }
 
 void printState(const std::chrono::microseconds time,
@@ -98,18 +101,21 @@ void printState(const std::chrono::microseconds time,
                 const bool linkEnabled,
                 const std::size_t numPeers,
                 const double quantum,
-                const bool startStopSyncOn)
+                const bool startStopSyncOn,
+                const bool arrangementSyncOn)
 {
   using namespace std;
   const auto enabled = linkEnabled ? "yes" : "no";
   const auto beats = sessionState.beatAtTime(time, quantum);
   const auto phase = sessionState.phaseAtTime(time, quantum);
   const auto startStop = startStopSyncOn ? "yes" : "no";
+  const auto arrSync = arrangementSyncOn ? "yes" : "no";
   const auto isPlaying = sessionState.isPlaying() ? "[playing]" : "[stopped]";
   cout << defaultfloat << left << setw(7) << enabled << " | " << setw(9) << numPeers
        << " | " << setw(7) << quantum << " | " << setw(3) << startStop << " " << setw(11)
-       << isPlaying << " | " << fixed << setw(7) << sessionState.tempo() << " | " << fixed
-       << setprecision(2) << setw(7) << beats << " | ";
+       << isPlaying << " | " << setw(8) << arrSync << " | " << fixed << setw(7)
+       << sessionState.tempo() << " | " << fixed << setprecision(2) << setw(7) << beats
+       << " | ";
   for (int i = 0; i < ceil(quantum); ++i)
   {
     if (i < phase)
@@ -170,6 +176,12 @@ void input(State& state)
     case 's':
       engine.setStartStopSyncEnabled(!engine.isStartStopSyncEnabled());
       break;
+    case 'd':
+      engine.setArrangementSyncEnabled(!engine.isArrangementSyncEnabled());
+      break;
+    case 'j':
+      engine.requestBeatTimeJump();
+      break;
     case ' ':
       if (engine.isPlaying())
       {
@@ -205,7 +217,8 @@ int main(int, char**)
                state.link.isEnabled(),
                state.link.numPeers(),
                state.audioPlatform.mEngine.quantum(),
-               state.audioPlatform.mEngine.isStartStopSyncEnabled());
+               state.audioPlatform.mEngine.isStartStopSyncEnabled(),
+               state.audioPlatform.mEngine.isArrangementSyncEnabled());
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
   }
 

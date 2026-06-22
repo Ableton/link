@@ -50,6 +50,9 @@ public:
   void setQuantum(double quantum);
   bool isStartStopSyncEnabled() const;
   void setStartStopSyncEnabled(bool enabled);
+  bool isArrangementSyncEnabled() const;
+  void setArrangementSyncEnabled(bool enabled);
+  void requestBeatTimeJump();
 
   struct EngineData
   {
@@ -58,6 +61,7 @@ public:
     bool requestStop = false;
     double quantum = 4;
     bool startStopSyncOn = false;
+    bool requestBeatTimeJump = false;
   };
 
   struct EngineDataSignals
@@ -67,6 +71,7 @@ public:
     std::atomic<bool> requestStop{false};
     std::atomic<double> quantum{4};
     std::atomic<bool> startStopSyncOn{false};
+    std::atomic<bool> requestBeatTimeJump{false};
   };
 
 

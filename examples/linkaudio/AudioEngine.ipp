@@ -102,6 +102,24 @@ void AudioEngine<Link>::setStartStopSyncEnabled(const bool enabled)
 }
 
 template <typename Link>
+bool AudioEngine<Link>::isArrangementSyncEnabled() const
+{
+  return mLink.isArrangementSyncEnabled();
+}
+
+template <typename Link>
+void AudioEngine<Link>::setArrangementSyncEnabled(const bool enabled)
+{
+  mLink.enableArrangementSync(enabled);
+}
+
+template <typename Link>
+void AudioEngine<Link>::requestBeatTimeJump()
+{
+  mEngineDataSignals.requestBeatTimeJump = true;
+}
+
+template <typename Link>
 void AudioEngine<Link>::setNumFrames(std::size_t size)
 {
   mBuffers[0] = std::vector<double>(size, 0.);
@@ -124,6 +142,7 @@ typename AudioEngine<Link>::EngineData AudioEngine<Link>::pullEngineData()
   engineData.requestStop = mEngineDataSignals.requestStop.exchange(false);
   engineData.startStopSyncOn = mEngineDataSignals.startStopSyncOn.load();
   engineData.quantum = mEngineDataSignals.quantum.load();
+  engineData.requestBeatTimeJump = mEngineDataSignals.requestBeatTimeJump.exchange(false);
 
   return engineData;
 }
@@ -146,6 +165,8 @@ void AudioEngine<Link>::renderMetronomeIntoBuffer(
   // The number of microseconds that elapse between samples
   const auto microsPerSample = 1e6 / mSampleRate;
 
+  const auto arrangementSyncOn = mLink.isArrangementSyncEnabled();
+
   for (std::size_t i = 0; i < numSamples; ++i)
   {
     double amplitude = 0.;
@@ -154,9 +175,19 @@ void AudioEngine<Link>::renderMetronomeIntoBuffer(
       beginHostTime + microseconds(llround(static_cast<double>(i) * microsPerSample));
     const auto lastSampleHostTime = hostTime - microseconds(llround(microsPerSample));
 
-    // Only make sound for positive beat magnitudes. Negative beat
-    // magnitudes are count-in beats.
-    if (sessionState.beatAtTime(hostTime, quantum) >= 0.)
+    // Only make sound once transport has started.
+    // With arrangement sync the shared launch point is timeForArrangementIsPlaying(): the
+    // beat is
+    // absolute, so deferral is driven by that quantized launch time (the same deferred
+    // start behaviour as start/stop sync). Without it, timeForIsPlaying() is the raw
+    // start time and the in-phase start beat is derived via beatAtTime() >= 0
+    // (quantization lives in the beat mapping); negative beats before beat 0 are the
+    // count-in.
+    const auto launchStarted = arrangementSyncOn
+                                 ? hostTime >= sessionState.timeForArrangementIsPlaying()
+                                 : (hostTime >= sessionState.timeForIsPlaying()
+                                    && sessionState.beatAtTime(hostTime, quantum) >= 0.);
+    if (launchStarted)
     {
       // If the phase wraps around between the last sample and the
       // current one with respect to a 1 beat quantum, then a click
@@ -216,8 +247,7 @@ void AudioEngine<Link>::audioCallback(const std::chrono::microseconds hostTime,
 
   if (!mIsPlaying && sessionState.isPlaying())
   {
-    // Reset the timeline so that beat 0 corresponds to the time when transport starts
-    sessionState.requestBeatAtStartPlayingTime(0, engineData.quantum);
+    sessionState.requestBeatAtStartPlayingTime(0., engineData.quantum);
     mIsPlaying = true;
   }
   else if (mIsPlaying && !sessionState.isPlaying())
@@ -229,6 +259,13 @@ void AudioEngine<Link>::audioCallback(const std::chrono::microseconds hostTime,
   {
     // Set the newly requested tempo from the beginning of this buffer
     sessionState.setTempo(engineData.requestedTempo, hostTime);
+  }
+
+  if (engineData.requestBeatTimeJump)
+  {
+    // Non-quantized jump of the shared arrangement timeline to beat 0. This is a no-op
+    // unless arrangement sync is enabled, so without it the local timeline is untouched.
+    sessionState.setArrangementBeatAtTime(0., hostTime);
   }
 
   // Timeline modifications are complete, commit the results

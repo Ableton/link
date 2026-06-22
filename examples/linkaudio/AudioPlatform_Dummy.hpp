@@ -75,6 +75,18 @@ class AudioPlatform
 
     void setStartStopSyncEnabled(bool enabled) { mLink.enableStartStopSync(enabled); }
 
+    bool isArrangementSyncEnabled() const { return mLink.isArrangementSyncEnabled(); }
+
+    void setArrangementSyncEnabled(bool enabled) { mLink.enableArrangementSync(enabled); }
+
+    void requestBeatTimeJump()
+    {
+      const auto beat = static_cast<double>(rand() % 64);
+      auto sessionState = mLink.captureAppSessionState();
+      sessionState.forceBeatAtTime(beat, now(), mQuantum);
+      mLink.commitAppSessionState(sessionState);
+    }
+
   private:
     std::chrono::microseconds now() const { return mLink.clock().micros(); }
 
