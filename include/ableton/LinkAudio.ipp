@@ -21,8 +21,38 @@
 
 #include <string>
 
+#include <ableton/link/Phase.hpp>
+
 namespace ableton
 {
+
+namespace detail
+{
+
+template <typename SessionState>
+inline link::Beats sessionTimelineBeatAtLocalBeat(const SessionState& sessionState,
+                                                  const double beat,
+                                                  const double quantum)
+{
+  const auto time = sessionState.timeAtBeat(beat, quantum);
+  const auto& state = linkApiState(sessionState);
+  return link::toPhaseEncodedBeats(state.timeline, time, link::Beats{quantum});
+}
+
+template <typename SessionState>
+inline link::Beats localBeatAtGlobalBeat(const SessionState& sessionState,
+                                         const link::Beats globalBeat,
+                                         const double quantum)
+{
+  const auto& state = linkApiState(sessionState);
+  const auto localPhaseBeat =
+    link_audio::beatAtGlobalBeat(state.timeline, globalBeat, link::Beats{quantum});
+  const auto time =
+    link::fromPhaseEncodedBeats(state.timeline, localPhaseBeat, link::Beats{quantum});
+  return link::Beats{sessionState.beatAtTime(time, quantum)};
+}
+
+} // namespace detail
 
 template <typename Clock>
 inline BasicLinkAudio<Clock>::BasicLinkAudio(const double bpm, std::string name)
@@ -174,9 +204,11 @@ inline bool LinkAudioSink::BufferHandle::commit(const SessionState& sessionState
   {
     if (auto pSink = mpSink.lock())
     {
+      const auto sessionTimelineBeat =
+        detail::sessionTimelineBeatAtLocalBeat(sessionState, beatsAtBufferBegin, quantum);
       pSink->releaseAndCommitBuffer(detail::linkApiState(sessionState).timeline,
                                     detail::linkApiState(sessionState).timelineSessionId,
-                                    beatsAtBufferBegin,
+                                    sessionTimelineBeat.floating(),
                                     quantum,
                                     numFrames,
                                     numChannels,
@@ -199,8 +231,8 @@ inline std::optional<double> LinkAudioSource::BufferHandle::Info::beginBeats(
     return std::nullopt;
   }
 
-  return link_audio::beatAtGlobalBeat(
-           state.timeline, link::Beats{sessionBeatTime}, link::Beats{quantum})
+  return detail::localBeatAtGlobalBeat(
+           sessionState, link::Beats{sessionBeatTime}, quantum)
     .floating();
 }
 
@@ -219,8 +251,7 @@ inline std::optional<double> LinkAudioSource::BufferHandle::Info::endBeats(
     static_cast<double>(numFrames) / static_cast<double>(sampleRate);
   const auto beatsPerSecond = tempo / 60.0;
   const auto endBeats = link::Beats{sessionBeatTime + durationSeconds * beatsPerSecond};
-  return link_audio::beatAtGlobalBeat(state.timeline, endBeats, link::Beats{quantum})
-    .floating();
+  return detail::localBeatAtGlobalBeat(sessionState, endBeats, quantum).floating();
 }
 
 

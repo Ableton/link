@@ -45,6 +45,9 @@ namespace ableton
  *  transport start/stop state of Link is optional for every peer.
  *  The transport start/stop state is only shared with other peers when
  *  start/stop synchronization is enabled.
+ *  On top of start/stop sychronization, arrangement synchronization allows
+ *  peers to share arrangement beat times with other peers that have the
+ *  feature enabled.
  *
  *  A Link instance is initially disabled after construction, which
  *  means that it will not communicate on the network. Once enabled,
@@ -109,10 +112,26 @@ public:
   bool isStartStopSyncEnabled() const;
 
   /*! @brief: Enable start/stop synchronization.
+   *
+   *  Disabling start/stop synchronization also disables arrangement synchronization.
    *  Thread-safe: yes
    *  Realtime-safe: yes
    */
   void enableStartStopSync(bool bEnable);
+
+  /*! @brief: Is arrangement synchronization enabled?
+   *  Thread-safe: yes
+   *  Realtime-safe: yes
+   */
+  bool isArrangementSyncEnabled() const;
+
+  /*! @brief: Enable arrangement synchronization.
+   *
+   *  Enabling arrangement synchronization also enables start/stop synchronization.
+   *  Thread-safe: yes
+   *  Realtime-safe: yes
+   */
+  void enableArrangementSync(bool bEnable);
 
   /*! @brief How many peers are currently connected in a Link session?
    *  Thread-safe: yes
@@ -243,7 +262,9 @@ public:
   class SessionState
   {
   public:
-    SessionState(const link::ApiState state, const bool bRespectQuantum);
+    SessionState(const link::ApiState state,
+                 const bool bRespectQuantum,
+                 const bool bArrangementSyncEnabled);
 
     bool operator==(const SessionState& other) const;
     bool operator!=(const SessionState& other) const;
@@ -269,6 +290,9 @@ public:
      *  the provided quantum is shared among all session
      *  peers. For non-negative beat values, the following
      *  property holds: fmod(beatAtTime(t, q), q) == phaseAtTime(t, q)
+     *  When arrangement synchronization is enabled this beat time is
+     *  shared with all other peers that have arrangement synchronization
+     *  enabled.
      */
     double beatAtTime(std::chrono::microseconds time, double quantum) const;
 
@@ -319,6 +343,9 @@ public:
      *  session. The client only needs to invoke this method to
      *  achieve this behavior and should not need to explicitly check
      *  the number of peers.
+     *
+     *  With arrangement synchronization enabled the requested beat time
+     *  is shared with other peers that have the feature enabled.
      */
     void requestBeatAtTime(double beat, std::chrono::microseconds time, double quantum);
 
@@ -342,33 +369,76 @@ public:
      *  application layer when implementing such a feature so that
      *  users do not accidentally disrupt Link sessions that they may
      *  join.
+     *
+     *  This always re-maps the local timeline. When arrangement synchronization is
+     *  enabled it additionally moves the shared arrangement beat to the same position, so
+     *  peers with arrangement sync follow the jump. The arrangement jump is immediate and
+     *  non-quantized and preserves the current launch time, so it does not restart
+     *  transport.
      */
     void forceBeatAtTime(double beat, std::chrono::microseconds time, double quantum);
 
     /*! @brief: Set if transport should be playing or stopped, taking effect
      *  at the given time.
+     *  Peers that have arrangement sync enabled share the start/stop state with peers
+     *  that only have start/stop synchronization enabled.
+     *  When changing the start/stop state from a peer that does not have arrangement
+     *  synchronization enabled, the state is not shared with peers that have
+     *  arrangement synchronization enabled.
      */
     void setIsPlaying(bool isPlaying, std::chrono::microseconds time);
 
     /*! @brief: Is transport playing? */
     bool isPlaying() const;
 
-    /*! @brief: Get the time at which a transport start/stop occurs */
+    /*! @brief: Get the time at which a transport start/stop occurs.
+     *
+     *  This is the raw time at which the start/stop command is executed, with the same
+     *  semantics for start/stop and arrangement synchronization.
+     */
     std::chrono::microseconds timeForIsPlaying() const;
+
+    /*! @brief: Get the time at which arrangement transport actually starts.
+     *
+     *  @discussion: Only meaningful when arrangement synchronization is enabled. Unlike
+     *  timeForIsPlaying() (the raw start-command time), this is the quantized launch time
+     *  at which this peer, and all peers with arrangement sync and the same quantum,
+     *  begin playing. It is shared across peers, so it enables the same deferred start
+     *  behaviour as start/stop synchronization. When no arrangement is present it falls
+     *  back to timeForIsPlaying().
+     */
+    std::chrono::microseconds timeForArrangementIsPlaying() const;
 
     /*! @brief: Convenience function to attempt to map the given beat to the time
      *  when transport is starting to play in context of the given quantum.
-     *  This function evaluates to a no-op if isPlaying() equals false.
+     *  This function works with start/stop and arrangement synchronization.
+     *  It evaluates to a no-op if isPlaying() equals false.
      */
     void requestBeatAtStartPlayingTime(double beat, double quantum);
 
     /*! @brief: Convenience function to start or stop transport at a given time and
      *  attempt to map the given beat to this time in context of the given quantum.
+     *  This function works with start/stop and arrangement synchronization.
      */
     void setIsPlayingAndRequestBeatAtTime(bool isPlaying,
                                           std::chrono::microseconds time,
                                           double beat,
                                           double quantum);
+
+    /*! @brief: Map the given arrangement beat to the given time.
+     *
+     *  @discussion: Only meaningful when arrangement synchronization is enabled; it is
+     *  a no-op on the values reported by beatAtTime/phaseAtTime/timeAtBeat while
+     *  arrangement sync is disabled.
+     *
+     *  DANGER: Arrangement synchronization lets peers share an absolute beat time. This
+     *  method performs an immediate, non-quantized jump: after it is called,
+     *  beatAtTime(time) == beat. It is intended for beat-time jumps while transport is
+     *  playing, where peers should follow even off the quantum grid. To start transport
+     *  quantized, use setIsPlayingAndRequestBeatAtTime, which snaps the start onto the
+     *  shared session phase grid.
+     */
+    void setArrangementBeatAtTime(double beat, std::chrono::microseconds time);
 
   private:
     template <typename SessionState>
@@ -378,6 +448,7 @@ public:
     link::ApiState mOriginalState;
     link::ApiState mState;
     bool mbRespectQuantum;
+    bool mbArrangementSyncEnabled;
   };
 
 protected:

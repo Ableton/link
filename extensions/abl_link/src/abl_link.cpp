@@ -152,7 +152,7 @@ extern "C"
   abl_link_session_state abl_link_create_session_state(void)
   {
     return abl_link_session_state{reinterpret_cast<void *>(
-      new ableton::Link::SessionState{ableton::link::ApiState{}, {}})};
+      new ableton::Link::SessionState{ableton::link::ApiState{}, {}, {}})};
   }
 
   void abl_link_destroy_session_state(abl_link_session_state session_state)

@@ -28,29 +28,69 @@ namespace detail
 
 template <typename Clock>
 inline typename BasicLink<Clock>::SessionState toSessionState(
-  const link::ClientState& state, const bool isConnected)
+  const link::ClientState& state,
+  const bool isConnected,
+  const bool isArrangementSyncEnabled)
 {
+  const auto arrangementTimeline =
+    state.arrangementTimeline
+      ? link::OptionalApiArrangementTimeline{link::ApiArrangementTimeline{
+          state.arrangementTimeline->beatOrigin, state.arrangementTimeline->launchTime}}
+      : link::OptionalApiArrangementTimeline{};
   return {{state.timeline,
            state.timelineSessionId,
-           {state.startStopState.isPlaying, state.startStopState.time}},
-          isConnected};
+           {state.startStopState.isPlaying, state.startStopState.time},
+           arrangementTimeline},
+          isConnected,
+          isArrangementSyncEnabled};
 }
 
 inline link::IncomingClientState toIncomingClientState(
   const link::ApiState& state,
   const link::ApiState& originalState,
-  const std::chrono::microseconds timestamp)
+  const std::chrono::microseconds timestamp,
+  const bool isArrangementSyncEnabled)
 {
   const auto timeline = originalState.timeline != state.timeline
                           ? link::OptionalTimeline{state.timeline}
                           : link::OptionalTimeline{};
+  const auto startStopChanged = originalState.startStopState != state.startStopState;
   const auto startStopState =
-    originalState.startStopState != state.startStopState
-      ? link::OptionalClientStartStopState{{state.startStopState.isPlaying,
-                                            state.startStopState.time,
-                                            timestamp}}
-      : link::OptionalClientStartStopState{};
-  return {timeline, startStopState, {}, timestamp};
+    startStopChanged ? link::OptionalClientStartStopState{{state.startStopState.isPlaying,
+                                                           state.startStopState.time,
+                                                           timestamp}}
+                     : link::OptionalClientStartStopState{};
+  const auto arrangementChanged =
+    originalState.arrangementTimeline != state.arrangementTimeline;
+  auto arrangementTimeline =
+    arrangementChanged && state.arrangementTimeline
+      ? link::OptionalClientArrangementTimeline{link::ClientArrangementTimeline{
+          state.arrangementTimeline->beatOrigin,
+          state.arrangementTimeline->launchTime,
+          timestamp}}
+      : link::OptionalClientArrangementTimeline{};
+  if (startStopChanged && state.arrangementTimeline)
+  {
+    arrangementTimeline =
+      link::ClientArrangementTimeline{state.arrangementTimeline->beatOrigin,
+                                      state.arrangementTimeline->launchTime,
+                                      timestamp};
+  }
+  else if (startStopChanged && !state.startStopState.isPlaying
+           && isArrangementSyncEnabled)
+  {
+    // We are stopping with arrangement sync enabled but have no arrangement of our own
+    // — e.g. we enabled arrangement sync after joining an already-playing session, so we
+    // never received one. Synthesize an arrangement that matches the current client
+    // timeline (origin 0: the arrangement beat tracks the timeline beat, a no-op for us)
+    // so the stop still carries an arrangement and other arrangement peers follow it.
+    // The Controller remaps it into the session domain like any other client
+    // arrangement; if our client timeline carries a folded arrangement offset the remap
+    // reconstructs the shared origin, otherwise the arrangement stays continuous.
+    arrangementTimeline = link::ClientArrangementTimeline{
+      link::Beats{0.}, state.startStopState.time, timestamp};
+  }
+  return {timeline, startStopState, arrangementTimeline, timestamp};
 }
 
 } // namespace detail
@@ -103,6 +143,18 @@ inline void BasicLink<Clock>::enableStartStopSync(bool bEnable)
 }
 
 template <typename Clock>
+inline bool BasicLink<Clock>::isArrangementSyncEnabled() const
+{
+  return mController.isArrangementSyncEnabled();
+}
+
+template <typename Clock>
+inline void BasicLink<Clock>::enableArrangementSync(bool bEnable)
+{
+  mController.enableArrangementSync(bEnable);
+}
+
+template <typename Clock>
 inline std::size_t BasicLink<Clock>::numPeers() const
 {
   return mController.numPeers();
@@ -142,48 +194,56 @@ template <typename Clock>
 inline typename BasicLink<Clock>::SessionState BasicLink<
   Clock>::captureAudioSessionState() const
 {
-  return detail::toSessionState<Clock>(mController.clientStateRtSafe(), numPeers() > 0);
+  return detail::toSessionState<Clock>(mController.clientStateRtSafe(),
+                                       numPeers() > 0,
+                                       mController.isArrangementSyncEnabled());
 }
 
 template <typename Clock>
 inline void BasicLink<Clock>::commitAudioSessionState(
   const typename BasicLink<Clock>::SessionState state)
 {
-  mController.setClientStateRtSafe(
-    detail::toIncomingClientState(state.mState, state.mOriginalState, mClock.micros()));
+  mController.setClientStateRtSafe(detail::toIncomingClientState(
+    state.mState, state.mOriginalState, mClock.micros(), state.mbArrangementSyncEnabled));
 }
 
 template <typename Clock>
 inline typename BasicLink<Clock>::SessionState BasicLink<Clock>::captureAppSessionState()
   const
 {
-  return detail::toSessionState<Clock>(mController.clientState(), numPeers() > 0);
+  return detail::toSessionState<Clock>(
+    mController.clientState(), numPeers() > 0, mController.isArrangementSyncEnabled());
 }
 
 template <typename Clock>
 inline void BasicLink<Clock>::commitAppSessionState(
   const typename BasicLink<Clock>::SessionState state)
 {
-  mController.setClientState(
-    detail::toIncomingClientState(state.mState, state.mOriginalState, mClock.micros()));
+  mController.setClientState(detail::toIncomingClientState(
+    state.mState, state.mOriginalState, mClock.micros(), state.mbArrangementSyncEnabled));
 }
 
 // Link::SessionState
 
 template <typename Clock>
 inline BasicLink<Clock>::SessionState::SessionState(const link::ApiState state,
-                                                    const bool bRespectQuantum)
+                                                    const bool bRespectQuantum,
+                                                    const bool bArrangementSyncEnabled)
   : mOriginalState(state)
   , mState(state)
   , mbRespectQuantum(bRespectQuantum)
+  , mbArrangementSyncEnabled(bArrangementSyncEnabled)
 {
 }
 
 template <typename Clock>
 inline bool BasicLink<Clock>::SessionState::operator==(const SessionState& other) const
 {
-  return std::tie(mOriginalState, mState, mbRespectQuantum)
-         == std::tie(other.mOriginalState, other.mState, other.mbRespectQuantum);
+  return std::tie(mOriginalState, mState, mbRespectQuantum, mbArrangementSyncEnabled)
+         == std::tie(other.mOriginalState,
+                     other.mState,
+                     other.mbRespectQuantum,
+                     other.mbArrangementSyncEnabled);
 }
 
 template <typename Clock>
@@ -212,6 +272,23 @@ template <typename Clock>
 inline double BasicLink<Clock>::SessionState::beatAtTime(
   const std::chrono::microseconds time, const double quantum) const
 {
+  if (mbArrangementSyncEnabled && mState.arrangementTimeline)
+  {
+    // Arrangement sync shares an absolute beat allowing non-quantized jumps
+    const auto arrangementBeat =
+      mState.timeline.toBeats(time) - mState.arrangementTimeline->beatOrigin;
+    if (isPlaying())
+    {
+      return arrangementBeat.floating();
+    }
+
+    // While stopped we keep the arrangement beat's magnitude but realign its phase
+    const auto sessionBeat =
+      link::toPhaseEncodedBeats(mState.timeline, time, link::Beats{quantum});
+    return link::closestPhaseMatch(arrangementBeat, sessionBeat, link::Beats{quantum})
+      .floating();
+  }
+
   return link::toPhaseEncodedBeats(mState.timeline, time, link::Beats{quantum})
     .floating();
 }
@@ -228,6 +305,19 @@ template <typename Clock>
 inline std::chrono::microseconds BasicLink<Clock>::SessionState::timeAtBeat(
   const double beat, const double quantum) const
 {
+  if (mbArrangementSyncEnabled && mState.arrangementTimeline)
+  {
+    const auto arrangementSessionBeat =
+      link::Beats{beat} + mState.arrangementTimeline->beatOrigin;
+    if (isPlaying())
+    {
+      return mState.timeline.fromBeats(arrangementSessionBeat);
+    }
+
+    const auto sessionPhaseTarget = link::Beats{beat} + mState.timeline.beatOrigin;
+    return mState.timeline.fromBeats(link::closestPhaseMatch(
+      arrangementSessionBeat, sessionPhaseTarget, link::Beats{quantum}));
+  }
   return link::fromPhaseEncodedBeats(
     mState.timeline, link::Beats{beat}, link::Beats{quantum});
 }
@@ -238,11 +328,34 @@ inline void BasicLink<Clock>::SessionState::requestBeatAtTime(
 {
   if (mbRespectQuantum)
   {
-    time = timeAtBeat(
-      link::nextPhaseMatch(
-        link::Beats{beatAtTime(time, quantum)}, link::Beats{beat}, link::Beats{quantum})
-        .floating(),
-      quantum);
+    if (mbArrangementSyncEnabled)
+    {
+      // Ignore request when playing
+      if (mOriginalState.startStopState.isPlaying)
+      {
+        return;
+      }
+
+      // Quantized start
+      const auto sessionBeat =
+        link::toPhaseEncodedBeats(mState.timeline, time, link::Beats{quantum});
+      const auto quantizedBeat =
+        link::nextPhaseMatch(sessionBeat, link::Beats{beat}, link::Beats{quantum});
+      time =
+        link::fromPhaseEncodedBeats(mState.timeline, quantizedBeat, link::Beats{quantum});
+
+      setArrangementBeatAtTime(beat, time);
+      mState.arrangementTimeline->launchTime = time;
+      return;
+    }
+    else
+    {
+      time = timeAtBeat(
+        link::nextPhaseMatch(
+          link::Beats{beatAtTime(time, quantum)}, link::Beats{beat}, link::Beats{quantum})
+          .floating(),
+        quantum);
+    }
   }
   forceBeatAtTime(beat, time, quantum);
 }
@@ -265,15 +378,22 @@ template <typename Clock>
 inline void BasicLink<Clock>::SessionState::forceBeatAtTime(
   const double beat, std::chrono::microseconds time, const double quantum)
 {
+  // forceBeatAtTime always rudely re-maps the local timeline, regardless of arrangement
+  // sync.
   forceBeatAtTimeImpl(mState.timeline, link::Beats{beat}, time, link::Beats{quantum});
 
   // Due to quantization errors the resulting BeatTime at 'time' after forcing can be
   // bigger than 'beat' which then violates intended behavior of the API and can lead
-  // i.e. to missing a downbeat. Thus we have to shift the timeline forwards.
-  if (beatAtTime(time, quantum) > beat)
+  // i.e. to missing a downbeat. Thus we have to shift the timeline forwards. This checks
+  // the plain timeline we just forced; while an arrangement is active beatAtTime would
+  // instead read through the arrangement origin.
+  if (link::toPhaseEncodedBeats(mState.timeline, time, link::Beats{quantum})
+      > link::Beats{beat})
   {
     forceBeatAtTimeImpl(mState.timeline, link::Beats{beat}, ++time, link::Beats{quantum});
   }
+
+  setArrangementBeatAtTime(beat, time);
 }
 
 template <typename Clock>
@@ -296,6 +416,14 @@ inline std::chrono::microseconds BasicLink<Clock>::SessionState::timeForIsPlayin
 }
 
 template <typename Clock>
+inline std::chrono::microseconds BasicLink<
+  Clock>::SessionState::timeForArrangementIsPlaying() const
+{
+  return mState.arrangementTimeline ? mState.arrangementTimeline->launchTime
+                                    : timeForIsPlaying();
+}
+
+template <typename Clock>
 inline void BasicLink<Clock>::SessionState::requestBeatAtStartPlayingTime(
   const double beat, const double quantum)
 {
@@ -311,6 +439,21 @@ inline void BasicLink<Clock>::SessionState::setIsPlayingAndRequestBeatAtTime(
 {
   mState.startStopState = {isPlaying, time};
   requestBeatAtStartPlayingTime(beat, quantum);
+}
+
+template <typename Clock>
+inline void BasicLink<Clock>::SessionState::setArrangementBeatAtTime(
+  const double beat, const std::chrono::microseconds time)
+{
+  if (mbArrangementSyncEnabled)
+  {
+    // Allows non-quantized jump. A jump only moves the origin; it must not restart
+    // transport, so the existing launch point is preserved.
+    const auto launchTime =
+      mState.arrangementTimeline ? mState.arrangementTimeline->launchTime : time;
+    mState.arrangementTimeline = link::ApiArrangementTimeline{
+      mState.timeline.toBeats(time) - link::Beats{beat}, launchTime};
+  }
 }
 
 } // namespace ableton
