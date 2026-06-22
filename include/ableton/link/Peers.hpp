@@ -34,8 +34,10 @@ namespace link
 // SessionTimelineCallback is invoked with a session id and a timeline
 // whenever a new combination of these values is seen
 //
-// SessionStartStopStateCallback is invoked with a session id and a startStopState
-// whenever a new combination of these values is seen
+// SessionStartStopStateCallback is invoked with a session id, a startStopState and an
+// optional arrangementTimeline whenever a new combination of these values is seen. Both
+// values originate from the same peer state, so the callee can tell whether a start/stop
+// arrived together with an arrangement or without an attached arrangement.
 
 template <typename IoContext,
           typename SessionMembershipCallback,
@@ -201,10 +203,14 @@ private:
       const auto peerSession = peerState.sessionId();
       const auto peerTimeline = peerState.timeline();
       const auto peerStartStopState = peerState.startStopState();
+      const auto peerArrangementTimeline = peerState.arrangementTimeline();
 
       bool isNewSessionTimeline = !sessionTimelineExists(peerSession, peerTimeline);
       bool isNewSessionStartStopState =
         !sessionStartStopStateExists(peerSession, peerStartStopState);
+      bool isNewSessionArrangementTimeline =
+        peerArrangementTimeline
+        && !sessionArrangementTimelineExists(peerSession, peerArrangementTimeline);
 
       auto peer = make_pair(peerState, gatewayAddr);
       const auto idRange = equal_range(begin(mPeers), end(mPeers), peer, PeerIdComp{});
@@ -251,9 +257,13 @@ private:
       // A new timeline can cause a session Id change which will prevent processing the
       // new start stop state. By handling the start stop state after the timeline we
       // assure that the start stop state is processed with the correct session Id.
-      if (isNewSessionStartStopState)
+      //
+      // The arrangement timeline is delivered in the same callback so the Controller can
+      // tell whether a start/stop arrived together with an arrangement.
+      if (isNewSessionStartStopState || isNewSessionArrangementTimeline)
       {
-        mSessionStartStopStateCallback(peerSession, peerStartStopState);
+        mSessionStartStopStateCallback(
+          peerSession, peerStartStopState, peerArrangementTimeline);
       }
 
       if (didSessionMembershipChange)
@@ -325,6 +335,16 @@ private:
       return hasPeerWith(sessionId,
                          [&](const PeerState& peerState)
                          { return peerState.startStopState() == startStopState; });
+    }
+
+    bool sessionArrangementTimelineExists(
+      const SessionId& sessionId,
+      const std::optional<ArrangementTimeline>& arrangementTimeline)
+    {
+      return hasPeerWith(
+        sessionId,
+        [&](const PeerState& peerState)
+        { return peerState.arrangementTimeline() == arrangementTimeline; });
     }
 
     struct PeerIdComp

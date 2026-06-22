@@ -63,6 +63,11 @@ struct PeerState
 
   StartStopState startStopState() const { return nodeState.startStopState; }
 
+  std::optional<ArrangementTimeline> arrangementTimeline() const
+  {
+    return nodeState.arrangementTimeline;
+  }
+
   friend bool operator==(const PeerState& lhs, const PeerState& rhs)
   {
     return lhs.nodeState == rhs.nodeState

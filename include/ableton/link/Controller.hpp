@@ -747,7 +747,9 @@ protected:
 
   struct SessionStartStopStateCallback
   {
-    void operator()(SessionId sessionId, StartStopState startStopState)
+    void operator()(SessionId sessionId,
+                    StartStopState startStopState,
+                    std::optional<ArrangementTimeline>)
     {
       mController.handleStartStopStateFromSession(sessionId, startStopState);
     }

@@ -50,12 +50,17 @@ struct SessionTimelineCallback
 
 struct SessionStartStopStateCallback
 {
-  void operator()(const SessionId& sessionId, const StartStopState& startStopState)
+  void operator()(const SessionId& sessionId,
+                  const StartStopState& startStopState,
+                  const std::optional<ArrangementTimeline>& arrangementTimeline)
   {
     sessionStartStopStates.emplace_back(sessionId, startStopState);
+    sessionArrangementTimelines.emplace_back(sessionId, arrangementTimeline);
   }
 
   std::vector<std::pair<SessionId, StartStopState>> sessionStartStopStates;
+  std::vector<std::pair<SessionId, std::optional<ArrangementTimeline>>>
+    sessionArrangementTimelines;
 };
 
 struct AudioEndpointCallback
@@ -157,6 +162,31 @@ TEST_CASE("Peers")
       {make_pair(fooPeer.sessionId(), fooPeer.timeline())}, sessions);
     expectStartStopStates(
       {make_pair(fooPeer.sessionId(), fooPeer.startStopState())}, startStops);
+    CHECK(std::vector<std::pair<SessionId, std::optional<ArrangementTimeline>>>{
+            make_pair(fooPeer.sessionId(), std::optional<ArrangementTimeline>{})}
+          == startStops.sessionArrangementTimelines);
+  }
+
+  SECTION("ArrangementTimelineCallbackFiresForPeerWithArrangement")
+  {
+    const auto arrangement =
+      ArrangementTimeline{Beats{5.}, Beats{4.}, std::chrono::microseconds{999}};
+    const auto arrPeer =
+      PeerState{{NodeId::random<Random>(),
+                 NodeId::random<Random>(),
+                 Timeline{Tempo{120.}, Beats{2.}, std::chrono::microseconds{10}},
+                 {},
+                 arrangement},
+                {},
+                {}};
+
+    auto observer = makeGatewayObserver(peers, gateway1);
+    sawPeer(observer, arrPeer);
+    io.flush();
+
+    CHECK(std::vector<std::pair<SessionId, std::optional<ArrangementTimeline>>>{make_pair(
+            arrPeer.sessionId(), std::optional<ArrangementTimeline>{arrangement})}
+          == startStops.sessionArrangementTimelines);
   }
 
   SECTION("AddAndRemovePeer")
