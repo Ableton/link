@@ -332,6 +332,20 @@ TEST_CASE("Controller")
     CHECK(!controller.isStartStopSyncEnabled());
   }
 
+  SECTION("EnableArrangementSyncEnablesStartStopSync")
+  {
+    MockController controller(
+      Tempo{100.0}, [](std::size_t) {}, [](Tempo) {}, [](bool) {}, MockClock{});
+
+    controller.enableArrangementSync(true);
+    CHECK(controller.isStartStopSyncEnabled());
+    CHECK(controller.isArrangementSyncEnabled());
+
+    controller.enableStartStopSync(false);
+    CHECK(!controller.isStartStopSyncEnabled());
+    CHECK(!controller.isArrangementSyncEnabled());
+  }
+
   SECTION("SetAndGetClientStateThreadSafe")
   {
     testSetAndGetClientState(

@@ -155,6 +155,7 @@ public:
     , mSessionPeerCounter(*this, std::move(peerCallback))
     , mEnabled(false)
     , mStartStopSyncEnabled(false)
+    , mArrangementSyncEnabled(false)
     , mIo(IoContext{UdpSendExceptionHandler{this}})
     , mPeers(util::injectRef(*mIo),
              SessionMembershipCallback{this},
@@ -197,9 +198,28 @@ public:
 
   bool isEnabled() const { return mEnabled; }
 
-  void enableStartStopSync(const bool bEnable) { mStartStopSyncEnabled = bEnable; }
+  void enableStartStopSync(const bool bEnable)
+  {
+    if (!bEnable)
+    {
+      enableArrangementSync(false);
+    }
+    mStartStopSyncEnabled = bEnable;
+  }
 
   bool isStartStopSyncEnabled() const { return mStartStopSyncEnabled; }
+
+  void enableArrangementSync(const bool bEnable)
+  {
+    if (bEnable)
+    {
+      mStartStopSyncEnabled = true;
+    }
+
+    mArrangementSyncEnabled = bEnable;
+  }
+
+  bool isArrangementSyncEnabled() const { return mArrangementSyncEnabled; }
 
   std::size_t numPeers() const { return mSessionPeerCounter.mSessionPeerCount; }
 
@@ -850,6 +870,8 @@ protected:
   std::atomic<bool> mEnabled;
 
   std::atomic<bool> mStartStopSyncEnabled;
+
+  std::atomic<bool> mArrangementSyncEnabled;
 
   util::Injected<IoContext> mIo;
   std::atomic<bool> mIoStopped{false};
