@@ -477,5 +477,104 @@ TEST_CASE("Controller")
   }
 }
 
+TEST_CASE("ArrangementTimelineSessionMapping")
+{
+  using namespace std::chrono;
+
+  const auto sessionTimeline = Timeline{Tempo{120.}, Beats{0.}, microseconds{0}};
+
+  SECTION("ClientToSessionRoundTripIsIdentity")
+  {
+    const auto clientTimeline = Timeline{Tempo{120.}, Beats{7.}, microseconds{3000}};
+    const auto xForm = GhostXForm{1.0, microseconds{250}};
+    const auto client =
+      ClientArrangementTimeline{Beats{42.5}, microseconds{1500}, microseconds{2000}};
+
+    const auto session = detail::mapArrangementTimelineFromClientToSession(
+      client, sessionTimeline, clientTimeline, xForm);
+    const auto back = detail::mapArrangementTimelineFromSessionToClient(
+      session, sessionTimeline, clientTimeline, xForm);
+
+    CHECK(client.beatOrigin.floating()
+          == Approx(back.beatOrigin.floating()).margin(1e-6));
+    CHECK(client.timestamp == back.timestamp);
+  }
+
+  SECTION("AbsoluteArrangementBeatIsSharedAcrossPeers")
+  {
+    const auto clientA = Timeline{Tempo{120.}, Beats{10.}, microseconds{0}};
+    const auto clientB = Timeline{Tempo{120.}, Beats{-3.}, microseconds{0}};
+    const auto xFormA = GhostXForm{1.0, microseconds{100}};
+    const auto xFormB = GhostXForm{1.0, microseconds{-50}};
+
+    const auto hostA = microseconds{500000};
+    const auto arrangementBeat = 8.0;
+
+    const auto originA = clientA.toBeats(hostA) - Beats{arrangementBeat};
+    const auto session = detail::mapArrangementTimelineFromClientToSession(
+      {originA, hostA, hostA}, sessionTimeline, clientA, xFormA);
+
+    const auto clientArrangementB = detail::mapArrangementTimelineFromSessionToClient(
+      session, sessionTimeline, clientB, xFormB);
+
+    const auto ghost = xFormA.hostToGhost(hostA);
+    const auto hostB = xFormB.ghostToHost(ghost);
+    const auto beatOnB =
+      (clientB.toBeats(hostB) - clientArrangementB.beatOrigin).floating();
+
+    CHECK(beatOnB == Approx(arrangementBeat).margin(1e-6));
+  }
+
+  SECTION("AdoptingSharedArrangementGivesSameBeatAcrossPeers")
+  {
+    const auto clientA = Timeline{Tempo{120.}, Beats{10.3}, microseconds{0}};
+    const auto clientB = Timeline{Tempo{120.}, Beats{2.7}, microseconds{0}};
+    const auto xForm = GhostXForm{1.0, microseconds{0}};
+    const auto t = microseconds{1234567};
+
+    CHECK(clientA.toBeats(t).floating()
+          != Approx(clientB.toBeats(t).floating()).margin(1e-6));
+
+    const auto sessionZero =
+      ArrangementTimeline{Beats{0.}, Beats{0.}, xForm.hostToGhost(t)};
+    const auto a = detail::mapArrangementTimelineFromSessionToClient(
+      sessionZero, sessionTimeline, clientA, xForm);
+    const auto b = detail::mapArrangementTimelineFromSessionToClient(
+      sessionZero, sessionTimeline, clientB, xForm);
+    const auto beatA = (clientA.toBeats(t) - a.beatOrigin).floating();
+    const auto beatB = (clientB.toBeats(t) - b.beatOrigin).floating();
+    CHECK(beatA == Approx(beatB).margin(1e-6));
+  }
+
+  SECTION("SharedArrangementStaysSyncedAcrossTempoChange")
+  {
+    const auto xForm = GhostXForm{1.0, microseconds{0}}; // ghost == host
+    const auto clientA0 = Timeline{Tempo{120.}, Beats{10.}, microseconds{0}};
+    const auto clientB0 = Timeline{Tempo{120.}, Beats{2.}, microseconds{0}};
+    const auto shared = ArrangementTimeline{Beats{17.}, Beats{17.}, microseconds{500000}};
+
+    const auto beatAt =
+      [&](const Timeline& session, const Timeline& client, const microseconds host)
+    {
+      const auto ca =
+        detail::mapArrangementTimelineFromSessionToClient(shared, session, client, xForm);
+      return (client.toBeats(host) - ca.beatOrigin).floating();
+    };
+
+    const auto host = microseconds{3000000};
+    CHECK(beatAt(sessionTimeline, clientA0, host)
+          == Approx(beatAt(sessionTimeline, clientB0, host)).margin(1e-6));
+
+    const auto sessionNew = Timeline{Tempo{130.}, Beats{50.}, microseconds{0}};
+    const auto clientA1 =
+      updateClientTimelineFromSession(clientA0, sessionNew, microseconds{2500000}, xForm);
+    const auto clientB1 =
+      updateClientTimelineFromSession(clientB0, sessionNew, microseconds{2600000}, xForm);
+
+    CHECK(beatAt(sessionNew, clientA1, host)
+          == Approx(beatAt(sessionNew, clientB1, host)).margin(1e-6));
+  }
+}
+
 } // namespace link
 } // namespace ableton

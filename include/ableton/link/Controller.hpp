@@ -95,6 +95,14 @@ inline ClientStartStopState selectPreferredStartStopState(
            : currentStartStopState;
 }
 
+inline bool startStopCarriesArrangement(
+  const std::optional<ArrangementTimeline>& arrangementTimeline,
+  const StartStopState& startStopState)
+{
+  return arrangementTimeline
+         && arrangementTimeline->timestamp >= startStopState.timestamp;
+}
+
 inline ClientStartStopState mapStartStopStateFromSessionToClient(
   const StartStopState& sessionStartStopState,
   const Timeline& sessionTimeline,
@@ -128,6 +136,20 @@ inline ArrangementTimeline mapArrangementTimelineFromClientToSession(
     sessionTimeline.toBeats(ghostTimestamp) - clientTimeline.toBeats(client.timestamp);
   const auto launchBeats = sessionTimeline.toBeats(xForm.hostToGhost(client.launchTime));
   return {client.beatOrigin + magnitudeOffset, launchBeats, ghostTimestamp};
+}
+
+inline ClientArrangementTimeline mapArrangementTimelineFromSessionToClient(
+  const ArrangementTimeline& session,
+  const Timeline& sessionTimeline,
+  const Timeline& clientTimeline,
+  const GhostXForm& xForm)
+{
+  const auto hostTimestamp = xForm.ghostToHost(session.timestamp);
+  const auto magnitudeOffset =
+    sessionTimeline.toBeats(session.timestamp) - clientTimeline.toBeats(hostTimestamp);
+  const auto launchTime =
+    xForm.ghostToHost(sessionTimeline.fromBeats(session.launchBeats));
+  return {session.beatOrigin - magnitudeOffset, launchTime, hostTimestamp};
 }
 
 } // namespace detail
@@ -423,15 +445,28 @@ protected:
                                             mClock.micros(),
                                             mSessionState.ghostXForm);
           clientState.timelineSessionId = mSessionId;
-          // Don't pass the start stop state to the client when start stop sync is
-          // disabled or when we have a default constructed start stop state
-          if (mStartStopSyncEnabled && mSessionState.startStopState != StartStopState{})
+
+          if (mStartStopSyncEnabled && mSessionState.startStopState != StartStopState{}
+              && (!mArrangementSyncEnabled
+                  || detail::startStopCarriesArrangement(
+                    mSessionState.arrangementTimeline, mSessionState.startStopState)))
           {
             std::lock_guard<std::mutex> startStopStateLock(mSessionStateGuard);
             clientState.startStopState =
               detail::mapStartStopStateFromSessionToClient(mSessionState.startStopState,
                                                            mSessionState.timeline,
                                                            mSessionState.ghostXForm);
+          }
+
+          if (mSessionState.arrangementTimeline && clientState.arrangementTimeline)
+          {
+            std::lock_guard<std::mutex> arrangementLock(mSessionStateGuard);
+            clientState.arrangementTimeline =
+              detail::mapArrangementTimelineFromSessionToClient(
+                *mSessionState.arrangementTimeline,
+                mSessionState.timeline,
+                clientState.timeline,
+                mSessionState.ghostXForm);
           }
         });
 
@@ -453,33 +488,104 @@ protected:
 
   void resetSessionStartStopState() { mSessionState.startStopState = StartStopState{}; }
 
-  void handleStartStopStateFromSession(SessionId sessionId, StartStopState startStopState)
+  void handleStartStopStateFromSession(
+    SessionId sessionId,
+    StartStopState startStopState,
+    std::optional<ArrangementTimeline> arrangementTimeline)
   {
     debug(mIo->log()) << "Received start stop state. isPlaying: "
                       << startStopState.isPlaying
                       << ", beats: " << startStopState.beats.floating()
                       << ", time: " << startStopState.timestamp.count()
+                      << ", hasArrangement: " << arrangementTimeline.has_value()
                       << " for session: " << sessionId;
-    if (sessionId == mSessionId
-        && startStopState.timestamp > mSessionState.startStopState.timestamp)
+
+    if (sessionId != mSessionId)
+    {
+      return;
+    }
+
+    const auto isNewStartStopState =
+      startStopState.timestamp > mSessionState.startStopState.timestamp;
+    const auto isCurrentStartStopState = startStopState == mSessionState.startStopState;
+
+    // Transport propagation is asymmetric: a start-stop-only peer must NOT change the
+    // transport of a peer that has arrangement sync enabled. Start-stop from arrangement
+    // propagates to start stop only peers.
+    const auto adoptStartStopToClient =
+      (isNewStartStopState
+       || (isCurrentStartStopState && arrangementTimeline
+           && arrangementTimeline->timestamp == startStopState.timestamp))
+      && mStartStopSyncEnabled
+      && (!mArrangementSyncEnabled
+          || detail::startStopCarriesArrangement(arrangementTimeline, startStopState));
+
+    const auto isNewArrangementTimeline =
+      arrangementTimeline
+      && (!mSessionState.arrangementTimeline
+          || arrangementTimeline->timestamp
+               > mSessionState.arrangementTimeline->timestamp);
+
+    if (isNewStartStopState)
     {
       mSessionState.startStopState = startStopState;
+    }
 
-      // Always propagate the session start stop state so even a client that doesn't have
-      // the feature enabled can function as a relay.
+    if (isNewArrangementTimeline)
+    {
+      std::lock_guard<std::mutex> lock(mSessionStateGuard);
+      mSessionState.arrangementTimeline = arrangementTimeline;
+    }
+
+    if (isNewStartStopState || isNewArrangementTimeline)
+    {
+      // Always relay so even a client that doesn't have the feature enabled can function
+      // as a relay and forward the change to the rest of the session.
       mpSessionController->updateDiscoveryCallback();
 
-      if (mStartStopSyncEnabled)
-      {
-        mClientState.update(
-          [&](ClientState& clientState)
+      mClientState.update(
+        [&](ClientState& clientState)
+        {
+          if (adoptStartStopToClient)
           {
             clientState.startStopState = detail::mapStartStopStateFromSessionToClient(
               startStopState, mSessionState.timeline, mSessionState.ghostXForm);
-          });
+          }
+          if (isNewArrangementTimeline && mArrangementSyncEnabled)
+          {
+            clientState.arrangementTimeline =
+              detail::mapArrangementTimelineFromSessionToClient(*arrangementTimeline,
+                                                                mSessionState.timeline,
+                                                                clientState.timeline,
+                                                                mSessionState.ghostXForm);
+          }
+        });
+
+      if (adoptStartStopToClient)
+      {
         invokeStartStopStateCallbackIfChanged();
       }
     }
+  }
+
+  void resetSessionArrangementTimeline()
+  {
+    mSessionState.arrangementTimeline = std::nullopt;
+  }
+
+  void reanchorSessionArrangementTimeline()
+  {
+    mClientState.update(
+      [&](ClientState& clientState)
+      {
+        if (clientState.arrangementTimeline)
+        {
+          clientState.timeline.beatOrigin =
+            clientState.timeline.beatOrigin - clientState.arrangementTimeline->beatOrigin;
+          clientState.arrangementTimeline = std::nullopt;
+        }
+      });
+    resetSessionArrangementTimeline();
   }
 
   void handleClientState(const IncomingClientState clientState)
@@ -602,6 +708,12 @@ protected:
     }
 
     updateSessionTiming(session.timeline, session.measurement.xform);
+
+    if (sessionIdChanged)
+    {
+      reanchorSessionArrangementTimeline();
+    }
+
     mpSessionController->updateDiscoveryCallback();
 
     if (sessionIdChanged)
@@ -631,6 +743,7 @@ protected:
     resetSessionStartStopState();
 
     updateSessionTiming(newTl, xform);
+    reanchorSessionArrangementTimeline();
     mpSessionController->updateDiscoveryCallback();
 
     mSessions.resetSession({mNodeId, newTl, {xform, hostTime}});
@@ -749,9 +862,10 @@ protected:
   {
     void operator()(SessionId sessionId,
                     StartStopState startStopState,
-                    std::optional<ArrangementTimeline>)
+                    std::optional<ArrangementTimeline> arrangementTimeline)
     {
-      mController.handleStartStopStateFromSession(sessionId, startStopState);
+      mController.handleStartStopStateFromSession(
+        sessionId, std::move(startStopState), std::move(arrangementTimeline));
     }
 
     Controller& mController;
