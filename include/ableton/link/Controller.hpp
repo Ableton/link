@@ -117,6 +117,19 @@ inline StartStopState mapStartStopStateFromClientToSession(
   return StartStopState{clientStartStopState.isPlaying, sessionBeats, timestamp};
 }
 
+inline ArrangementTimeline mapArrangementTimelineFromClientToSession(
+  const ClientArrangementTimeline& client,
+  const Timeline& sessionTimeline,
+  const Timeline& clientTimeline,
+  const GhostXForm& xForm)
+{
+  const auto ghostTimestamp = xForm.hostToGhost(client.timestamp);
+  const auto magnitudeOffset =
+    sessionTimeline.toBeats(ghostTimestamp) - clientTimeline.toBeats(client.timestamp);
+  const auto launchBeats = sessionTimeline.toBeats(xForm.hostToGhost(client.launchTime));
+  return {client.beatOrigin + magnitudeOffset, launchBeats, ghostTimestamp};
+}
+
 } // namespace detail
 
 // function types corresponding to the Controller callback type params
@@ -246,6 +259,10 @@ public:
             clientState.startStopState, *newClientState.startStopState);
           clientState.startStopState = *newClientState.startStopState;
         }
+        if (newClientState.arrangementTimeline)
+        {
+          clientState.arrangementTimeline = *newClientState.arrangementTimeline;
+        }
       });
     mIo->async([this, newClientState] { handleClientState(newClientState); });
   }
@@ -266,8 +283,11 @@ public:
         now - mRtClientState.timelineTimestamp > detail::kLocalModGracePeriod;
       const auto startStopStateGracePeriodOver =
         now - mRtClientState.startStopStateTimestamp > detail::kLocalModGracePeriod;
+      const auto arrangementTimelineGracePeriodOver =
+        now - mRtClientState.arrangementTimelineTimestamp > detail::kLocalModGracePeriod;
 
-      if (timelineGracePeriodOver || startStopStateGracePeriodOver)
+      if (timelineGracePeriodOver || startStopStateGracePeriodOver
+          || arrangementTimelineGracePeriodOver)
       {
         const auto clientState = mClientState.getRt();
 
@@ -281,18 +301,25 @@ public:
         {
           mRtClientState.startStopState = clientState.startStopState;
         }
+
+        if (arrangementTimelineGracePeriodOver)
+        {
+          mRtClientState.arrangementTimeline = clientState.arrangementTimeline;
+        }
       }
     }
 
     return {mRtClientState.timeline,
             mRtClientState.timelineSessionId,
-            mRtClientState.startStopState};
+            mRtClientState.startStopState,
+            mRtClientState.arrangementTimeline};
   }
 
   // should only be called from the audio thread
   void setClientStateRtSafe(IncomingClientState newClientState)
   {
-    if (!newClientState.timeline && !newClientState.startStopState)
+    if (!newClientState.timeline && !newClientState.startStopState
+        && !newClientState.arrangementTimeline)
     {
       return;
     }
@@ -325,6 +352,11 @@ public:
     {
       mRtClientState.startStopState = *newClientState.startStopState;
       mRtClientState.startStopStateTimestamp = makeRtTimestamp(now);
+    }
+    if (newClientState.arrangementTimeline)
+    {
+      mRtClientState.arrangementTimeline = *newClientState.arrangementTimeline;
+      mRtClientState.arrangementTimelineTimestamp = makeRtTimestamp(now);
     }
   }
 
@@ -486,6 +518,39 @@ protected:
             currentClientState.startStopState = *clientState.startStopState;
           });
 
+        // Transport propagation to arrangement peers is asymmetric: they adopt a
+        // start/stop only when it carries an arrangement with the same timestamp.
+        // If we committed a start/stop without a respective client arrangement,
+        // refresh the timestamp of our lingering session arrangement so the broadcast
+        // still carries it and other arrangement peers follow the change.
+        if (mArrangementSyncEnabled && !clientState.arrangementTimeline
+            && mSessionState.arrangementTimeline)
+        {
+          std::lock_guard<std::mutex> lock(mSessionStateGuard);
+          mSessionState.arrangementTimeline->timestamp =
+            mSessionState.startStopState.timestamp;
+        }
+
+        mustUpdateDiscovery = true;
+      }
+    }
+
+    if (mArrangementSyncEnabled && clientState.arrangementTimeline)
+    {
+      const auto clientTimeline = mClientState.get().timeline;
+      const auto mapped = detail::mapArrangementTimelineFromClientToSession(
+        *clientState.arrangementTimeline,
+        mSessionState.timeline,
+        clientTimeline,
+        mSessionState.ghostXForm);
+      // Prevent updating with an outdated arrangement timeline
+      if (!mSessionState.arrangementTimeline
+          || mapped.timestamp > mSessionState.arrangementTimeline->timestamp)
+      {
+        {
+          std::lock_guard<std::mutex> lock(mSessionStateGuard);
+          mSessionState.arrangementTimeline = mapped;
+        }
         mustUpdateDiscovery = true;
       }
     }
@@ -513,6 +578,10 @@ protected:
           *clientState.startStopState = detail::selectPreferredStartStopState(
             currentClientState.startStopState, *clientState.startStopState);
           currentClientState.startStopState = *clientState.startStopState;
+        }
+        if (clientState.arrangementTimeline)
+        {
+          currentClientState.arrangementTimeline = *clientState.arrangementTimeline;
         }
       });
 
@@ -615,7 +684,13 @@ protected:
         mStartStopStateBuffer.write(*clientState.startStopState);
       }
 
-      if (clientState.timeline || clientState.startStopState)
+      if (clientState.arrangementTimeline)
+      {
+        mArrangementTimelineBuffer.write(*clientState.arrangementTimeline);
+      }
+
+      if (clientState.timeline || clientState.startStopState
+          || clientState.arrangementTimeline)
       {
         mCallbackDispatcher.invoke();
       }
@@ -654,14 +729,19 @@ protected:
       {
         clientState.startStopState = sss;
       }
+      if (auto atl = mArrangementTimelineBuffer.readNew())
+      {
+        clientState.arrangementTimeline = atl;
+      }
       return clientState;
     }
 
     Controller& mController;
-    // Use separate TripleBuffers for the Timeline and the StartStopState so we read the
-    // latest set value from either optional.
+    // Use separate TripleBuffers for the Timeline, StartStopState and Arrangement so we
+    // read the latest set value from either optional.
     util::TripleBuffer<std::pair<std::chrono::microseconds, Timeline>> mTimelineBuffer;
     util::TripleBuffer<ClientStartStopState> mStartStopStateBuffer;
+    util::TripleBuffer<ClientArrangementTimeline> mArrangementTimelineBuffer;
     CallbackDispatcher mCallbackDispatcher;
   };
 

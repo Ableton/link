@@ -382,6 +382,42 @@ TEST_CASE("Controller")
       });
   }
 
+  SECTION("ArrangementTimelinePersistsAcrossRecapture")
+  {
+    using namespace std::chrono;
+    auto clock = MockClock{};
+    MockController controller(
+      Tempo{120.0}, [](std::size_t) {}, [](Tempo) {}, [](bool) {}, clock);
+    clock.advance(microseconds{1});
+
+    const auto origin = Beats{42.5};
+    const auto arrangement =
+      std::optional<ClientArrangementTimeline>{{origin, clock.micros(), clock.micros()}};
+    const auto incoming = IncomingClientState{std::optional<Timeline>{},
+                                              std::optional<ClientStartStopState>{},
+                                              arrangement,
+                                              clock.micros()};
+
+    SECTION("Rt-safe")
+    {
+      controller.setClientStateRtSafe(incoming);
+      REQUIRE(controller.clientStateRtSafe().arrangementTimeline);
+      REQUIRE(controller.clientState().arrangementTimeline);
+      CHECK(origin == controller.clientStateRtSafe().arrangementTimeline->beatOrigin);
+      CHECK(origin == controller.clientState().arrangementTimeline->beatOrigin);
+    }
+
+    SECTION("App")
+    {
+      controller.setClientState(incoming);
+      REQUIRE(controller.clientState().arrangementTimeline);
+      CHECK(origin == controller.clientState().arrangementTimeline->beatOrigin);
+      clock.advance(seconds{2}); // Longer than grace period
+      REQUIRE(controller.clientStateRtSafe().arrangementTimeline);
+      CHECK(origin == controller.clientStateRtSafe().arrangementTimeline->beatOrigin);
+    }
+  }
+
   SECTION("CallbacksCalledBySettingClientStateThreadSafe")
   {
     testCallbackInvocation([](MockController& controller, IncomingClientState clientState)
