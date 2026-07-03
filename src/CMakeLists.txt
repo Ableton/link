@@ -53,6 +53,7 @@ set(link_core_test_SOURCES
   ableton/link/tst_PeerState.cpp
   ableton/link/tst_Phase.cpp
   ableton/link/tst_PingResponder.cpp
+  ableton/link/tst_SessionState.cpp
   ableton/link/tst_StartStopState.cpp
   ableton/link/tst_Tempo.cpp
   ableton/link/tst_Timeline.cpp

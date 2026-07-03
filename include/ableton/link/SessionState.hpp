@@ -20,10 +20,13 @@
 #pragma once
 
 #include <ableton/link/ArrangementTimeline.hpp>
+#include <ableton/link/GhostXForm.hpp>
 #include <ableton/link/SessionId.hpp>
 #include <ableton/link/StartStopState.hpp>
 #include <ableton/link/Timeline.hpp>
 #include <ableton/util/TripleBuffer.hpp>
+#include <atomic>
+#include <cstdint>
 #include <mutex>
 #include <optional>
 
@@ -64,6 +67,19 @@ struct ClientState
   SessionId timelineSessionId;
   ClientStartStopState startStopState;
   OptionalClientArrangementTimeline arrangementTimeline;
+  std::int64_t arrangementGenerationStamp{0};
+};
+
+struct RtClientState
+{
+  Timeline timeline;
+  SessionId timelineSessionId;
+  ClientStartStopState startStopState;
+  OptionalClientArrangementTimeline arrangementTimeline;
+  std::chrono::microseconds timelineTimestamp;
+  std::chrono::microseconds startStopStateTimestamp;
+  std::chrono::microseconds arrangementTimelineTimestamp;
+  std::int64_t arrangementGenerationStamp{0};
 };
 
 struct ControllerClientState
@@ -90,21 +106,56 @@ struct ControllerClientState
 
   ClientState getRt() const { return mRtState.read(); }
 
+  void invalidateArrangement() { mArrangementGeneration.fetch_add(1); }
+
+  template <typename TState>
+  void stampArrangement(TState& state, const ClientArrangementTimeline& atl) const
+  {
+    state.arrangementTimeline = atl;
+    state.arrangementGenerationStamp = mArrangementGeneration;
+  }
+
+  static void mirrorArrangement(RtClientState& to, const ClientState& from)
+  {
+    to.arrangementTimeline = from.arrangementTimeline;
+    to.arrangementGenerationStamp = from.arrangementGenerationStamp;
+  }
+
+  template <typename TState>
+  bool isArrangementValid(const TState& state) const
+  {
+    return state.arrangementTimeline
+           && state.arrangementGenerationStamp == mArrangementGeneration;
+  }
+
+  template <typename TState>
+  bool isArrangementStale(const TState& state) const
+  {
+    return state.arrangementTimeline && !isArrangementValid(state);
+  }
+
+  template <typename TState>
+  ClientState resolve(const TState& state) const
+  {
+    auto result = ClientState{state.timeline,
+                              state.timelineSessionId,
+                              state.startStopState,
+                              state.arrangementTimeline,
+                              state.arrangementGenerationStamp};
+    if (result.arrangementTimeline && !isArrangementValid(result))
+    {
+      result.timeline.beatOrigin =
+        result.timeline.beatOrigin - result.arrangementTimeline->beatOrigin;
+      result.arrangementTimeline = std::nullopt;
+    }
+    return result;
+  }
+
 private:
   mutable std::mutex mMutex;
   ClientState mState;
   mutable util::TripleBuffer<ClientState> mRtState;
-};
-
-struct RtClientState
-{
-  Timeline timeline;
-  SessionId timelineSessionId;
-  ClientStartStopState startStopState;
-  OptionalClientArrangementTimeline arrangementTimeline;
-  std::chrono::microseconds timelineTimestamp;
-  std::chrono::microseconds startStopStateTimestamp;
-  std::chrono::microseconds arrangementTimelineTimestamp;
+  std::atomic<std::int64_t> mArrangementGeneration{0};
 };
 
 struct IncomingClientState

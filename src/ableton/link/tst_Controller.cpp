@@ -418,6 +418,242 @@ TEST_CASE("Controller")
     }
   }
 
+  SECTION("ArrangementSyncToggleFoldsOriginToKeepBeatContinuous")
+  {
+    using namespace std::chrono;
+    auto clock = MockClock{};
+    MockController controller(
+      Tempo{120.0}, [](std::size_t) {}, [](Tempo) {}, [](bool) {}, clock);
+    clock.advance(microseconds{1});
+
+    controller.enableArrangementSync(true);
+
+    const auto origin = Beats{37.};
+    controller.setClientState(IncomingClientState{
+      std::optional<Timeline>{},
+      std::optional<ClientStartStopState>{},
+      std::optional<ClientArrangementTimeline>{{origin, clock.micros(), clock.micros()}},
+      clock.micros()});
+    REQUIRE(controller.clientState().arrangementTimeline);
+    REQUIRE(origin == controller.clientState().arrangementTimeline->beatOrigin);
+    const auto beatOriginWhileEnabled = controller.clientState().timeline.beatOrigin;
+
+    controller.enableArrangementSync(false);
+
+    CHECK(!controller.clientState().arrangementTimeline);
+    CHECK(beatOriginWhileEnabled - origin
+          == controller.clientState().timeline.beatOrigin);
+
+    controller.enableArrangementSync(true);
+    CHECK(!controller.clientState().arrangementTimeline);
+    CHECK(beatOriginWhileEnabled - origin
+          == controller.clientState().timeline.beatOrigin);
+
+    const auto newOrigin = Beats{11.};
+    controller.setClientState(
+      IncomingClientState{std::optional<Timeline>{},
+                          std::optional<ClientStartStopState>{},
+                          std::optional<ClientArrangementTimeline>{
+                            {newOrigin, clock.micros(), clock.micros()}},
+                          clock.micros()});
+    REQUIRE(controller.clientState().arrangementTimeline);
+    CHECK(newOrigin == controller.clientState().arrangementTimeline->beatOrigin);
+  }
+
+  SECTION("ClientStateRtSafeFoldsConsistentlyAcrossSplitGracePeriods")
+  {
+    using namespace std::chrono;
+    auto clock = MockClock{};
+    MockController controller(
+      Tempo{120.0}, [](std::size_t) {}, [](Tempo) {}, [](bool) {}, clock);
+    controller.enable(true);
+    controller.enableArrangementSync(true);
+
+    clock.advance(microseconds{1});
+
+    controller.setClientStateRtSafe(IncomingClientState{
+      std::optional<Timeline>{Timeline{Tempo{120.}, Beats{5.}, clock.micros()}},
+      std::optional<ClientStartStopState>{},
+      {},
+      clock.micros()});
+
+    clock.advance(milliseconds{500});
+    controller.setClientStateRtSafe(
+      IncomingClientState{std::optional<Timeline>{},
+                          std::optional<ClientStartStopState>{},
+                          std::optional<ClientArrangementTimeline>{
+                            {Beats{2.}, clock.micros(), clock.micros()}},
+                          clock.micros()});
+
+    controller.setClientState(IncomingClientState{
+      std::optional<Timeline>{Timeline{Tempo{120.}, Beats{9.}, clock.micros()}},
+      std::optional<ClientStartStopState>{},
+      std::optional<ClientArrangementTimeline>{
+        {Beats{6.}, clock.micros(), clock.micros()}},
+      clock.micros()});
+
+    controller.enableArrangementSync(false);
+
+    clock.advance(milliseconds{700});
+
+    const auto rtState = controller.clientStateRtSafe();
+    const auto appState = controller.clientState();
+
+    CHECK(!appState.arrangementTimeline);
+    CHECK(!rtState.arrangementTimeline);
+    CHECK(appState.timeline.beatOrigin == rtState.timeline.beatOrigin);
+  }
+
+  SECTION("ContinuousTimelinePushesDoNotStarveArrangementOrStartStop")
+  {
+    using namespace std::chrono;
+    auto clock = MockClock{};
+    MockController controller(
+      Tempo{120.0}, [](std::size_t) {}, [](Tempo) {}, [](bool) {}, clock);
+    controller.enable(true);
+    controller.enableArrangementSync(true);
+
+    clock.advance(microseconds{1});
+
+    const auto pushTimeline = [&]
+    {
+      controller.setClientStateRtSafe(IncomingClientState{
+        std::optional<Timeline>{Timeline{Tempo{120.}, Beats{0.}, clock.micros()}},
+        std::optional<ClientStartStopState>{},
+        {},
+        clock.micros()});
+    };
+
+    pushTimeline();
+
+    const auto networkOrigin = Beats{17.};
+    controller.setClientState(
+      IncomingClientState{std::optional<Timeline>{},
+                          std::optional<ClientStartStopState>{
+                            ClientStartStopState{true, clock.micros(), clock.micros()}},
+                          std::optional<ClientArrangementTimeline>{
+                            {networkOrigin, clock.micros(), clock.micros()}},
+                          clock.micros()});
+
+    for (auto i = 0; i < 20; ++i)
+    {
+      clock.advance(milliseconds{100});
+      pushTimeline();
+    }
+
+    const auto rtState = controller.clientStateRtSafe();
+    REQUIRE(rtState.arrangementTimeline);
+    CHECK(networkOrigin.floating()
+          == Approx(rtState.arrangementTimeline->beatOrigin.floating()).margin(1e-6));
+    CHECK(rtState.startStopState.isPlaying);
+  }
+
+  SECTION("PushingFoldedTimelineBackDoesNotDoubleFold")
+  {
+    using namespace std::chrono;
+    auto clock = MockClock{};
+    MockController controller(
+      Tempo{120.0}, [](std::size_t) {}, [](Tempo) {}, [](bool) {}, clock);
+    clock.advance(microseconds{1});
+    controller.enableArrangementSync(true);
+
+    const auto arrangementOrigin = Beats{4.};
+    controller.setClientState(
+      IncomingClientState{std::optional<Timeline>{},
+                          std::optional<ClientStartStopState>{},
+                          std::optional<ClientArrangementTimeline>{
+                            {arrangementOrigin, clock.micros(), clock.micros()}},
+                          clock.micros()});
+
+    const auto beatOriginBeforeDisable = controller.clientState().timeline.beatOrigin;
+    controller.enableArrangementSync(false);
+
+    const auto foldedState = controller.clientState();
+    REQUIRE(!foldedState.arrangementTimeline);
+    const auto foldedOrigin = foldedState.timeline.beatOrigin;
+    REQUIRE(foldedOrigin == beatOriginBeforeDisable - arrangementOrigin);
+
+    controller.setClientState(IncomingClientState{
+      std::optional<Timeline>{Timeline{Tempo{120.}, foldedOrigin, clock.micros()}},
+      std::optional<ClientStartStopState>{},
+      {},
+      clock.micros()});
+
+    CHECK(!controller.clientState().arrangementTimeline);
+    CHECK(foldedOrigin == controller.clientState().timeline.beatOrigin);
+  }
+
+  SECTION("PushingFoldedTimelineBackRtSafeDoesNotDoubleFold")
+  {
+    using namespace std::chrono;
+    auto clock = MockClock{};
+    MockController controller(
+      Tempo{120.0}, [](std::size_t) {}, [](Tempo) {}, [](bool) {}, clock);
+    controller.enable(true);
+    controller.enableArrangementSync(true);
+
+    clock.advance(microseconds{1});
+
+    const auto arrangementOrigin = Beats{4.};
+    controller.setClientStateRtSafe(
+      IncomingClientState{std::optional<Timeline>{},
+                          std::optional<ClientStartStopState>{},
+                          std::optional<ClientArrangementTimeline>{
+                            {arrangementOrigin, clock.micros(), clock.micros()}},
+                          clock.micros()});
+
+    const auto beatOriginBeforeDisable =
+      controller.clientStateRtSafe().timeline.beatOrigin;
+    controller.enableArrangementSync(false);
+
+    const auto foldedState = controller.clientStateRtSafe();
+    REQUIRE(!foldedState.arrangementTimeline);
+    const auto foldedOrigin = foldedState.timeline.beatOrigin;
+    REQUIRE(foldedOrigin == beatOriginBeforeDisable - arrangementOrigin);
+
+    controller.setClientStateRtSafe(IncomingClientState{
+      std::optional<Timeline>{Timeline{Tempo{120.}, foldedOrigin, clock.micros()}},
+      std::optional<ClientStartStopState>{},
+      {},
+      clock.micros()});
+
+    CHECK(!controller.clientStateRtSafe().arrangementTimeline);
+    CHECK(foldedOrigin == controller.clientStateRtSafe().timeline.beatOrigin);
+  }
+
+  SECTION("RtArrangementConvergesWhenAppArrangementAlreadyCleared")
+  {
+    using namespace std::chrono;
+    auto clock = MockClock{};
+    MockController controller(
+      Tempo{120.0}, [](std::size_t) {}, [](Tempo) {}, [](bool) {}, clock);
+    controller.enable(true);
+    controller.enableArrangementSync(true);
+
+    clock.advance(microseconds{1});
+
+    // RT-safe sets arrangement; app thread never does. After disable, RT has a stale
+    // arrangement but app has none. mustRtArrangementFollowTimeline drives convergence
+    // once the timeline grace period expires.
+    const auto arrangementOrigin = Beats{5.};
+    controller.setClientStateRtSafe(
+      IncomingClientState{std::optional<Timeline>{},
+                          std::optional<ClientStartStopState>{},
+                          std::optional<ClientArrangementTimeline>{
+                            {arrangementOrigin, clock.micros(), clock.micros()}},
+                          clock.micros()});
+
+    controller.enableArrangementSync(false);
+
+    clock.advance(milliseconds{1100});
+
+    const auto rtState = controller.clientStateRtSafe();
+    const auto appState = controller.clientState();
+    CHECK(!rtState.arrangementTimeline);
+    CHECK(!appState.arrangementTimeline);
+    CHECK(rtState.timeline.beatOrigin == appState.timeline.beatOrigin);
+  }
+
   SECTION("CallbacksCalledBySettingClientStateThreadSafe")
   {
     testCallbackInvocation([](MockController& controller, IncomingClientState clientState)
@@ -497,6 +733,7 @@ TEST_CASE("ArrangementTimelineSessionMapping")
 
     CHECK(client.beatOrigin.floating()
           == Approx(back.beatOrigin.floating()).margin(1e-6));
+    CHECK(client.launchTime == back.launchTime);
     CHECK(client.timestamp == back.timestamp);
   }
 
@@ -574,6 +811,153 @@ TEST_CASE("ArrangementTimelineSessionMapping")
     CHECK(beatAt(sessionNew, clientA1, host)
           == Approx(beatAt(sessionNew, clientB1, host)).margin(1e-6));
   }
+}
+
+namespace
+{
+// Exposes the outgoing session state for inspection.
+struct ObservableController : MockController
+{
+  using MockController::handleStartStopStateFromSession;
+  using MockController::MockController;
+  using MockController::sessionState;
+
+  SessionId sessionId() const { return mSessionId; }
+};
+} // namespace
+
+TEST_CASE("ArrangementPeerStopCarriesArrangementAfterSyncToggle")
+{
+  using namespace std::chrono;
+
+  auto clock = MockClock{};
+  ObservableController controller(
+    Tempo{120.0}, [](std::size_t) {}, [](Tempo) {}, [](bool) {}, clock);
+  clock.advance(microseconds{1});
+
+  controller.enableArrangementSync(true);
+
+  // Establish a playing arrangement.
+  controller.setClientState(
+    IncomingClientState{std::optional<Timeline>{},
+                        std::optional<ClientStartStopState>{
+                          ClientStartStopState{true, clock.micros(), clock.micros()}},
+                        std::optional<ClientArrangementTimeline>{
+                          {Beats{20.}, clock.micros(), clock.micros()}},
+                        clock.micros()});
+
+  const auto sessionArrangementTimeline = controller.sessionState().arrangementTimeline;
+  const auto sessionStartStopState = controller.sessionState().startStopState;
+  REQUIRE(sessionArrangementTimeline);
+  REQUIRE(sessionStartStopState.isPlaying);
+  const auto sessionOrigin = sessionArrangementTimeline->beatOrigin;
+  const auto staleTimestamp = sessionArrangementTimeline->timestamp;
+
+  // Toggle arrangement sync off and on. The client arrangement is folded away and is not
+  // resurrected on re-enable (ArrangementSyncToggleFoldsOriginToKeepBeatContinuous).
+  controller.enableArrangementSync(false);
+  controller.enableArrangementSync(true);
+  REQUIRE(!controller.clientState().arrangementTimeline);
+
+  // Stop without committing a new client arrangement.
+  clock.advance(milliseconds{500});
+  controller.setClientState(
+    IncomingClientState{std::optional<Timeline>{},
+                        std::optional<ClientStartStopState>{
+                          ClientStartStopState{false, clock.micros(), clock.micros()}},
+                        {},
+                        clock.micros()});
+
+  const auto sss = controller.sessionState().startStopState;
+  const auto arr = controller.sessionState().arrangementTimeline;
+  REQUIRE(arr);
+  CHECK(!sss.isPlaying);
+  // The stop carries a same-timestamp arrangement, so arrangement peers adopt it
+  // (startCarriesArrangement == arr.timestamp >= startStopState.timestamp).
+  CHECK(arr->timestamp == sss.timestamp);
+  CHECK(arr->timestamp > staleTimestamp);
+  // Only the timestamp is refreshed; the origin is untouched.
+  CHECK(arr->beatOrigin == sessionOrigin);
+}
+
+TEST_CASE("ArrangementJumpAfterSyncToggleLandsOnTheRequestedBeat")
+{
+  using namespace std::chrono;
+
+  auto clock = MockClock{};
+  ObservableController controller(
+    Tempo{120.0}, [](std::size_t) {}, [](Tempo) {}, [](bool) {}, clock);
+  clock.advance(microseconds{1});
+
+  controller.enableArrangementSync(true);
+
+  // Establish a playing arrangement at origin 20.
+  controller.setClientState(
+    IncomingClientState{std::optional<Timeline>{},
+                        std::optional<ClientStartStopState>{
+                          ClientStartStopState{true, clock.micros(), clock.micros()}},
+                        std::optional<ClientArrangementTimeline>{
+                          {Beats{20.}, clock.micros(), clock.micros()}},
+                        clock.micros()});
+
+  // Toggle arrangement sync off and on. The client arrangement is folded away.
+  controller.enableArrangementSync(false);
+  controller.enableArrangementSync(true);
+  REQUIRE(!controller.clientState().arrangementTimeline);
+
+  // Jump to beat 50. The app computes the new origin in the folded frame it just read,
+  // exactly like SessionState::setArrangementBeatAtTime:
+  //   origin = clientTimeline.toBeats(time) - beat
+  clock.advance(milliseconds{500});
+  const auto jumpTime = clock.micros();
+  const auto targetBeat = Beats{50.};
+  const auto folded = controller.clientState();
+  const auto jumpOrigin = folded.timeline.toBeats(jumpTime) - targetBeat;
+
+  controller.setClientState(IncomingClientState{
+    std::optional<Timeline>{},
+    std::optional<ClientStartStopState>{},
+    std::optional<ClientArrangementTimeline>{{jumpOrigin, jumpTime, jumpTime}},
+    jumpTime});
+
+  // Read back: the arrangement beat at jumpTime must equal the requested beat.
+  const auto after = controller.clientState();
+  REQUIRE(after.arrangementTimeline);
+  const auto arrangementBeat =
+    after.timeline.toBeats(jumpTime) - after.arrangementTimeline->beatOrigin;
+  CHECK(arrangementBeat.floating() == Approx(targetBeat.floating()).margin(1e-6));
+}
+
+TEST_CASE("ArrangementMessageDoesNotAdoptStaleStartStop")
+{
+  using namespace std::chrono;
+
+  auto clock = MockClock{};
+  ObservableController controller(
+    Tempo{120.0}, [](std::size_t) {}, [](Tempo) {}, [](bool) {}, clock);
+  clock.advance(milliseconds{1});
+
+  controller.enableArrangementSync(true);
+
+  controller.setClientState(
+    IncomingClientState{std::optional<Timeline>{},
+                        std::optional<ClientStartStopState>{
+                          ClientStartStopState{true, clock.micros(), clock.micros()}},
+                        {},
+                        clock.micros()});
+
+  const auto currentStartStop = controller.sessionState().startStopState;
+  REQUIRE(currentStartStop.isPlaying);
+  REQUIRE(!controller.sessionState().arrangementTimeline);
+
+  const auto staleTimestamp = currentStartStop.timestamp - microseconds{1};
+  controller.handleStartStopStateFromSession(
+    controller.sessionId(),
+    StartStopState{false, Beats{0.}, staleTimestamp},
+    ArrangementTimeline{Beats{12.}, Beats{0.}, staleTimestamp});
+
+  CHECK(controller.sessionState().startStopState == currentStartStop);
+  CHECK(controller.clientState().startStopState.isPlaying);
 }
 
 } // namespace link

@@ -251,6 +251,10 @@ public:
       mStartStopSyncEnabled = true;
     }
 
+    if (mArrangementSyncEnabled && !bEnable)
+    {
+      mClientState.invalidateArrangement();
+    }
     mArrangementSyncEnabled = bEnable;
   }
 
@@ -260,7 +264,7 @@ public:
 
   // Get the current Link client state. Thread-safe but may block, so
   // it cannot be used from audio thread.
-  ClientState clientState() const { return mClientState.get(); }
+  ClientState clientState() const { return mClientState.resolve(mClientState.get()); }
 
   // Set the client state to be used, starting at the given time.
   // Thread-safe but may block, so it cannot be used from audio thread.
@@ -281,10 +285,7 @@ public:
             clientState.startStopState, *newClientState.startStopState);
           clientState.startStopState = *newClientState.startStopState;
         }
-        if (newClientState.arrangementTimeline)
-        {
-          clientState.arrangementTimeline = *newClientState.arrangementTimeline;
-        }
+        applyArrangement(clientState, newClientState);
       });
     mIo->async([this, newClientState] { handleClientState(newClientState); });
   }
@@ -312,6 +313,23 @@ public:
           || arrangementTimelineGracePeriodOver)
       {
         const auto clientState = mClientState.getRt();
+        const auto shouldMirrorArrangement = [&]
+        {
+          const auto isClientArrangementValid =
+            mClientState.isArrangementValid(clientState);
+          const auto isClientArrangementStale =
+            mClientState.isArrangementStale(clientState);
+          const auto isRtArrangementStale =
+            mClientState.isArrangementStale(mRtClientState);
+          const auto mustRtArrangementFollowTimeline =
+            isRtArrangementStale && !isClientArrangementValid;
+          const auto isArrangementRefreshCoupled =
+            isClientArrangementStale || mustRtArrangementFollowTimeline;
+          const auto isArrangementRefreshDueAndIndependent =
+            arrangementTimelineGracePeriodOver && !isArrangementRefreshCoupled;
+          return (timelineGracePeriodOver && isArrangementRefreshCoupled)
+                 || isArrangementRefreshDueAndIndependent;
+        }();
 
         if (timelineGracePeriodOver)
         {
@@ -324,17 +342,14 @@ public:
           mRtClientState.startStopState = clientState.startStopState;
         }
 
-        if (arrangementTimelineGracePeriodOver)
+        if (shouldMirrorArrangement)
         {
-          mRtClientState.arrangementTimeline = clientState.arrangementTimeline;
+          mClientState.mirrorArrangement(mRtClientState, clientState);
         }
       }
     }
 
-    return {mRtClientState.timeline,
-            mRtClientState.timelineSessionId,
-            mRtClientState.startStopState,
-            mRtClientState.arrangementTimeline};
+    return mClientState.resolve(mRtClientState);
   }
 
   // should only be called from the audio thread
@@ -377,12 +392,24 @@ public:
     }
     if (newClientState.arrangementTimeline)
     {
-      mRtClientState.arrangementTimeline = *newClientState.arrangementTimeline;
+      mClientState.stampArrangement(mRtClientState, *newClientState.arrangementTimeline);
       mRtClientState.arrangementTimelineTimestamp = makeRtTimestamp(now);
+    }
+    else if (newClientState.timeline && mClientState.isArrangementStale(mRtClientState))
+    {
+      // New timeline arrives session-relative (client read it via resolve()). The
+      // stale arrangement must be cleared so resolve() doesn't fold it again.
+      mRtClientState.arrangementTimeline = std::nullopt;
     }
   }
 
 protected:
+  SessionState sessionState() const
+  {
+    std::lock_guard<std::mutex> lock(mSessionStateGuard);
+    return mSessionState;
+  }
+
   std::chrono::microseconds makeRtTimestamp(const std::chrono::microseconds now) const
   {
     return isEnabled() ? now : std::chrono::microseconds(0);
@@ -458,15 +485,11 @@ protected:
                                                            mSessionState.ghostXForm);
           }
 
-          if (mSessionState.arrangementTimeline && clientState.arrangementTimeline)
+          if (mClientState.isArrangementValid(clientState)
+              && mSessionState.arrangementTimeline)
           {
             std::lock_guard<std::mutex> arrangementLock(mSessionStateGuard);
-            clientState.arrangementTimeline =
-              detail::mapArrangementTimelineFromSessionToClient(
-                *mSessionState.arrangementTimeline,
-                mSessionState.timeline,
-                clientState.timeline,
-                mSessionState.ghostXForm);
+            stampArrangementFromSession(clientState, *mSessionState.arrangementTimeline);
           }
         });
 
@@ -553,11 +576,7 @@ protected:
           }
           if (isNewArrangementTimeline && mArrangementSyncEnabled)
           {
-            clientState.arrangementTimeline =
-              detail::mapArrangementTimelineFromSessionToClient(*arrangementTimeline,
-                                                                mSessionState.timeline,
-                                                                clientState.timeline,
-                                                                mSessionState.ghostXForm);
+            stampArrangementFromSession(clientState, *arrangementTimeline);
           }
         });
 
@@ -669,6 +688,38 @@ protected:
     invokeStartStopStateCallbackIfChanged();
   }
 
+  void stampArrangementFromSession(ClientState& clientState,
+                                   const ArrangementTimeline& sessionArrangement)
+  {
+    mClientState.stampArrangement(
+      clientState,
+      detail::mapArrangementTimelineFromSessionToClient(sessionArrangement,
+                                                        mSessionState.timeline,
+                                                        clientState.timeline,
+                                                        mSessionState.ghostXForm));
+  }
+
+  // Apply an incoming arrangement to the stored state, folding a stale origin into the
+  // timeline before stamping — or clearing it when only a new timeline arrives — so
+  // resolve() never folds the same origin twice.
+  void applyArrangement(ClientState& clientState,
+                        const IncomingClientState& newClientState)
+  {
+    if (newClientState.arrangementTimeline)
+    {
+      if (mClientState.isArrangementStale(clientState))
+      {
+        clientState.timeline.beatOrigin =
+          clientState.timeline.beatOrigin - clientState.arrangementTimeline->beatOrigin;
+      }
+      mClientState.stampArrangement(clientState, *newClientState.arrangementTimeline);
+    }
+    else if (newClientState.timeline && mClientState.isArrangementStale(clientState))
+    {
+      clientState.arrangementTimeline = std::nullopt;
+    }
+  }
+
   void handleRtClientState(IncomingClientState clientState)
   {
     mClientState.update(
@@ -685,10 +736,7 @@ protected:
             currentClientState.startStopState, *clientState.startStopState);
           currentClientState.startStopState = *clientState.startStopState;
         }
-        if (clientState.arrangementTimeline)
-        {
-          currentClientState.arrangementTimeline = *clientState.arrangementTimeline;
-        }
+        applyArrangement(currentClientState, clientState);
       });
 
     handleClientState(clientState);
