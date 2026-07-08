@@ -98,10 +98,26 @@ extern "C"
   bool abl_link_is_start_stop_sync_enabled(struct abl_link link);
 
   /*! @brief: Enable start/stop synchronization.
+   *
+   *  Disabling start/stop synchronization also disables arrangement synchronization.
    *  Thread-safe: yes
    *  Realtime-safe: yes
    */
   void abl_link_enable_start_stop_sync(struct abl_link link, bool enabled);
+
+  /*! @brief: Is arrangement synchronization enabled?
+   *  Thread-safe: yes
+   *  Realtime-safe: yes
+   */
+  bool abl_link_is_arrangement_sync_enabled(struct abl_link link);
+
+  /*! @brief: Enable arrangement synchronization.
+   *
+   *  Enabling arrangement synchronization also enables start/stop synchronization.
+   *  Thread-safe: yes
+   *  Realtime-safe: yes
+   */
+  void abl_link_enable_arrangement_sync(struct abl_link link, bool enabled);
 
   /*! @brief How many peers are currently connected in a Link session?
    *  Thread-safe: yes
@@ -315,6 +331,12 @@ extern "C"
    *  a Link session. Much care must be taken at the application layer when implementing
    *  such a feature so that users do not accidentally disrupt Link sessions that they may
    *  join.
+   *
+   *  This always re-maps the local timeline. When arrangement synchronization is enabled
+   *  it additionally moves the shared arrangement beat to the same position, so peers
+   *  with arrangement sync follow the jump. The arrangement jump is immediate and
+   *  non-quantized and preserves the current launch time, so it does not restart
+   *  transport.
    */
   void abl_link_force_beat_at_time(
     abl_link_session_state session_state, double beat, int64_t time, double quantum);
@@ -330,6 +352,33 @@ extern "C"
 
   /*! @brief: Get the time at which a transport start/stop occurs */
   int64_t abl_link_time_for_is_playing(abl_link_session_state session_state);
+
+  /*! @brief: Get the time at which arrangement transport actually starts.
+   *
+   *  Only meaningful when arrangement synchronization is enabled. Unlike
+   *  abl_link_time_for_is_playing (the raw start-command time), this is the quantized
+   *  launch time at which this peer, and all peers with arrangement sync and the same
+   *  quantum, begin playing. It is shared across peers, so it enables the same deferred
+   *  start behaviour as start/stop synchronization. When no arrangement is present it
+   *  falls back to abl_link_time_for_is_playing.
+   */
+  int64_t abl_link_time_for_arrangement_is_playing(abl_link_session_state session_state);
+
+  /*! @brief: Map the given arrangement beat to the given time.
+   *
+   *  Only meaningful when arrangement synchronization is enabled; it is a no-op on the
+   *  values reported by beatAtTime/phaseAtTime/timeAtBeat while arrangement sync is
+   *  disabled.
+   *
+   *  DANGER: Arrangement synchronization lets peers share an absolute beat time. This
+   *  function performs an immediate, non-quantized jump: after it is called,
+   *  abl_link_beat_at_time(time) == beat. It is intended for beat-time jumps while
+   *  transport is playing, where peers should follow even off the quantum grid. To start
+   *  transport quantized, use abl_link_set_is_playing_and_request_beat_at_time, which
+   *  snaps the start onto the shared session phase grid.
+   */
+  void abl_link_set_arrangement_beat_at_time(
+    abl_link_session_state session_state, double beat, int64_t time);
 
   /*! @brief: Convenience function to attempt to map the given beat to the time
    *  when transport is starting to play in context of the given quantum.

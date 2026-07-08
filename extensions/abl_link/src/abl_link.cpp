@@ -116,6 +116,16 @@ extern "C"
     reinterpret_cast<ableton::LinkAudio *>(link.impl)->enableStartStopSync(enabled);
   }
 
+  bool abl_link_is_arrangement_sync_enabled(struct abl_link link)
+  {
+    return reinterpret_cast<ableton::LinkAudio *>(link.impl)->isArrangementSyncEnabled();
+  }
+
+  void abl_link_enable_arrangement_sync(struct abl_link link, bool enabled)
+  {
+    reinterpret_cast<ableton::LinkAudio *>(link.impl)->enableArrangementSync(enabled);
+  }
+
   uint64_t abl_link_num_peers(struct abl_link link)
   {
     return reinterpret_cast<ableton::LinkAudio *>(link.impl)->numPeers();
@@ -256,6 +266,21 @@ extern "C"
       reinterpret_cast<ableton::Link::SessionState *>(session_state.impl)
         ->timeForIsPlaying()
         .count());
+  }
+
+  int64_t abl_link_time_for_arrangement_is_playing(abl_link_session_state session_state)
+  {
+    return static_cast<int64_t>(
+      reinterpret_cast<ableton::Link::SessionState *>(session_state.impl)
+        ->timeForArrangementIsPlaying()
+        .count());
+  }
+
+  void abl_link_set_arrangement_beat_at_time(
+    abl_link_session_state session_state, double beat, int64_t time)
+  {
+    reinterpret_cast<ableton::Link::SessionState *>(session_state.impl)
+      ->setArrangementBeatAtTime(beat, std::chrono::microseconds{time});
   }
 
   void abl_link_request_beat_at_start_playing_time(

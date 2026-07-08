@@ -136,13 +136,16 @@ void print_help(void)
   printf("  decrease / increase tempo: w / e\n");
   printf("  decrease / increase quantum: r / t\n");
   printf("  enable / disable start stop sync: s\n");
+  printf("  enable / disable arrangement sync: d\n");
+  printf("  jump arrangement beat time to 0: j\n");
   printf("  quit: q\n");
 }
 
 void print_state_header(void)
 {
   printf(
-    "\nenabled | num peers | quantum | start stop sync | tempo   | beats   | metro\n");
+    "\nenabled | num peers | quantum | start stop sync | arr sync | tempo   | beats  "
+    " | metro\n");
 }
 
 void print_state(state *state)
@@ -153,6 +156,7 @@ void print_state(state *state)
   const uint64_t num_peers = abl_link_num_peers(state->link);
   const char *start_stop =
     abl_link_is_start_stop_sync_enabled(state->link) ? "yes" : " no";
+  const char *arr_sync = abl_link_is_arrangement_sync_enabled(state->link) ? "yes" : "no";
   const char *playing =
     abl_link_is_playing(state->session_state) ? "[playing]" : "[stopped]";
   const double tempo = abl_link_tempo(state->session_state);
@@ -162,6 +166,7 @@ void print_state(state *state)
   printf("%9" PRIu64 " | ", num_peers);
   printf("%7.f | ", state->quantum);
   printf("%3s %11s | ", start_stop, playing);
+  printf("%8s | ", arr_sync);
   printf("%7.2f | ", tempo);
   printf("%7.2f | ", beats);
   for (int i = 0; i < ceil(state->quantum); ++i)
@@ -224,6 +229,13 @@ void input(state *state)
   case 's':
     abl_link_enable_start_stop_sync(
       state->link, !abl_link_is_start_stop_sync_enabled(state->link));
+    break;
+  case 'd':
+    abl_link_enable_arrangement_sync(
+      state->link, !abl_link_is_arrangement_sync_enabled(state->link));
+    break;
+  case 'j':
+    abl_link_set_arrangement_beat_at_time(state->session_state, 0, timestamp);
     break;
   case ' ':
     if (abl_link_is_playing(state->session_state))
