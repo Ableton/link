@@ -42,7 +42,7 @@ class Context
     // This task used to exclusively poll ASIO with `poll_one()`, with an
     // interval of 100 microseconds. Since ASIO uses `select()` internally to
     // implement `poll_one()`, we might as well use an event based approach and
-    // save some CPU cycles by using `io_service::run()` instead.
+    // save some CPU cycles by using `io_context::run()` instead.
     static void run(void* userParams)
     {
       auto runner = static_cast<ServiceRunner*>(userParams);
@@ -60,8 +60,9 @@ class Context
 
   public:
     ServiceRunner()
-      : mpService(new ::asio::io_service())
-      , mpWork(new ::asio::io_service::work(*mpService))
+      : mpService(new ::asio::io_context())
+      , mpWork(new ::asio::executor_work_guard<::asio::io_context::executor_type>(
+          mpService->get_executor()))
     {
       xTaskCreatePinnedToCore(run,
                               "link",
@@ -77,15 +78,16 @@ class Context
     template <typename Handler>
     void async(Handler handler)
     {
-      mpService->post(std::move(handler));
+      ::asio::post(*mpService, std::move(handler));
     }
 
-    ::asio::io_service& service() const { return *mpService; }
+    ::asio::io_context& service() const { return *mpService; }
 
   private:
     TaskHandle_t mTaskHandle;
-    std::unique_ptr<::asio::io_service> mpService;
-    std::unique_ptr<::asio::io_service::work> mpWork;
+    std::unique_ptr<::asio::io_context> mpService;
+    std::unique_ptr<::asio::executor_work_guard<::asio::io_context::executor_type>>
+      mpWork;
   };
 
 public:
@@ -197,7 +199,7 @@ public:
   template <typename Handler>
   void async(Handler handler)
   {
-    serviceRunner().service().post(std::move(handler));
+    ::asio::post(serviceRunner().service(), std::move(handler));
   }
 
 private:
