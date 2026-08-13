@@ -1,5 +1,13 @@
 function(ConfigureAsioStandalone PATH_TO_LINK)
 
+  option(LINK_USE_BUNDLED_ASIO "Use Link's bundled asio standalone library" ON)
+
+  add_library(AsioStandalone::AsioStandalone IMPORTED INTERFACE)
+
+  if(NOT LINK_USE_BUNDLED_ASIO)
+    return()
+  endif()
+
   set(asio_INCLUDE_DIR ${PATH_TO_LINK}/modules/asio-standalone/include)
 
   # Derive the inline namespace name from the bundled Asio version
@@ -22,8 +30,6 @@ function(ConfigureAsioStandalone PATH_TO_LINK)
   set(asio_NAMESPACE
     link_asio_${asio_VERSION_MAJOR}_${asio_VERSION_MINOR}_${asio_VERSION_SUB})
   message(STATUS "Link: using bundled Asio with ASIO_VERSION_NAMESPACE=${asio_NAMESPACE}")
-
-  add_library(AsioStandalone::AsioStandalone IMPORTED INTERFACE)
 
   set_property(TARGET AsioStandalone::AsioStandalone APPEND PROPERTY
     INTERFACE_INCLUDE_DIRECTORIES

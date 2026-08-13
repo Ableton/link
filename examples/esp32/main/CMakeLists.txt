@@ -9,5 +9,6 @@ target_compile_definitions(${COMPONENT_LIB} PRIVATE LINK_ESP_TASK_CORE_ID=${LINK
 
 target_compile_options(${COMPONENT_LIB} PRIVATE -fexceptions)
 
+set(LINK_USE_BUNDLED_ASIO OFF)
 include(../../../AbletonLinkConfig.cmake)
 target_link_libraries(${COMPONENT_TARGET} Ableton::Link)
