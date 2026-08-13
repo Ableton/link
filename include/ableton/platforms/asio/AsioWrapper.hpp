@@ -20,32 +20,20 @@
 #pragma once
 
 /*!
- * \brief Wrapper file for AsioStandalone library
+ * \brief Includes the Asio headers used by Link, with warnings suppressed.
  *
- * This file includes all necessary headers from the AsioStandalone library which are used
- * by Link.
+ * This file must not configure Asio. ASIO_VERSION_NAMESPACE, ASIO_NO_TYPEID,
+ * ASIO_STANDALONE, INCL_EXTRA_HTON_FUNCTIONS and _WIN32_WINNT all have to be in effect
+ * before the first Asio or Winsock header is preprocessed, which a header cannot
+ * guarantee: in a translation unit that includes <asio.hpp> before any Link header, a
+ * definition made here arrives too late and is silently ignored. They are therefore
+ * defined by the build system. See cmake_include/ConfigureAsioStandalone.cmake, and the
+ * "Other Build Systems" section of the README for non-CMake projects.
+ *
+ * Warning suppression is the one thing that has to live here rather than in the build
+ * system, because it must apply to the Asio headers only and not to the rest of the
+ * translation unit.
  */
-
-#if !defined(ESP_PLATFORM)
-
-#pragma push_macro("ASIO_STANDALONE")
-
-#pragma push_macro("ASIO_NO_TYPEID")
-#define ASIO_NO_TYPEID 1
-#define ASIO_VERSION_NAMESPACE link_asio_1_38_2
-#define ASIO_STANDALONE 1
-#endif
-
-#if defined(LINK_PLATFORM_WINDOWS)
-#pragma push_macro("INCL_EXTRA_HTON_FUNCTIONS")
-#define INCL_EXTRA_HTON_FUNCTIONS 1
-#endif
-
-#if defined(WIN32) || defined(_WIN32)
-#if !defined(_WIN32_WINNT)
-#define _WIN32_WINNT 0x0501
-#endif
-#endif
 
 #if defined(__clang__)
 #pragma clang diagnostic push
@@ -72,10 +60,6 @@
 
 #include <asio.hpp>
 #include <asio/system_timer.hpp>
-
-#if defined(LINK_PLATFORM_WINDOWS)
-#pragma pop_macro("INCL_EXTRA_HTON_FUNCTIONS")
-#endif
 
 #if defined(_MSC_VER)
 #pragma warning(pop)
