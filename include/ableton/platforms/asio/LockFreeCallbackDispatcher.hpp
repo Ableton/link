@@ -27,7 +27,7 @@ namespace ableton
 {
 namespace platforms
 {
-namespace LINK_ASIO_NAMESPACE
+namespace asio
 {
 
 // Utility to signal invocation of a callback on another thread in a lock free manner.
@@ -100,6 +100,6 @@ private:
   std::thread mThread;
 };
 
-} // namespace LINK_ASIO_NAMESPACE
+} // namespace asio
 } // namespace platforms
 } // namespace ableton

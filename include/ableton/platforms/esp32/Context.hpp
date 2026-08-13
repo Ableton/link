@@ -132,16 +132,14 @@ public:
     {
       socket.mpImpl->mSocket.set_option(
         ::asio::ip::multicast::outbound_interface(addr.to_v4()));
-      socket.mpImpl->mSocket.bind(
-        ::LINK_ASIO_NAMESPACE::ip::udp::endpoint{addr.to_v4(), 0});
+      socket.mpImpl->mSocket.bind(::asio::ip::udp::endpoint{addr.to_v4(), 0});
     }
     else if (addr.is_v6())
     {
       const auto scopeId = addr.to_v6().scope_id();
       socket.mpImpl->mSocket.set_option(
         ::asio::ip::multicast::outbound_interface(static_cast<unsigned int>(scopeId)));
-      socket.mpImpl->mSocket.bind(
-        ::LINK_ASIO_NAMESPACE::ip::udp::endpoint{addr.to_v6(), 0});
+      socket.mpImpl->mSocket.bind(::asio::ip::udp::endpoint{addr.to_v6(), 0});
     }
     else
     {

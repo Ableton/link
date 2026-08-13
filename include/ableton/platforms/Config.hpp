@@ -63,22 +63,19 @@ using Clock = platforms::windows::Clock;
 using Random = platforms::stl::Random;
 using ThreadPriority = platforms::windows::ThreadPriority;
 #if defined(LINK_WINDOWS_SETTHREADDESCRIPTION)
-using IoContext =
-  platforms::LINK_ASIO_NAMESPACE::Context<platforms::windows::ScanIpIfAddrs,
-                                          util::NullLog,
-                                          platforms::windows::ThreadFactory>;
+using IoContext = platforms::asio::Context<platforms::windows::ScanIpIfAddrs,
+                                           util::NullLog,
+                                           platforms::windows::ThreadFactory>;
 #else
 using IoContext =
-  platforms::LINK_ASIO_NAMESPACE::Context<platforms::windows::ScanIpIfAddrs,
-                                          util::NullLog>;
+  platforms::asio::Context<platforms::windows::ScanIpIfAddrs, util::NullLog>;
 #endif
 
 #elif defined(LINK_PLATFORM_MACOSX)
 using Clock = platforms::darwin::Clock;
-using IoContext =
-  platforms::LINK_ASIO_NAMESPACE::Context<platforms::posix::ScanIpIfAddrs,
-                                          util::NullLog,
-                                          platforms::darwin::ThreadFactory>;
+using IoContext = platforms::asio::Context<platforms::posix::ScanIpIfAddrs,
+                                           util::NullLog,
+                                           platforms::darwin::ThreadFactory>;
 using Random = platforms::stl::Random;
 using ThreadPriority = platforms::darwin::ThreadPriority;
 
@@ -87,13 +84,12 @@ using Clock = platforms::linux_::ClockMonotonicRaw;
 using Random = platforms::stl::Random;
 using ThreadPriority = platforms::linux_::ThreadPriority;
 #ifdef __linux__
-using IoContext =
-  platforms::LINK_ASIO_NAMESPACE::Context<platforms::posix::ScanIpIfAddrs,
-                                          util::NullLog,
-                                          platforms::linux_::ThreadFactory>;
+using IoContext = platforms::asio::Context<platforms::posix::ScanIpIfAddrs,
+                                           util::NullLog,
+                                           platforms::linux_::ThreadFactory>;
 #else
 using IoContext =
-  platforms::LINK_ASIO_NAMESPACE::Context<platforms::posix::ScanIpIfAddrs, util::NullLog>;
+  platforms::asio::Context<platforms::posix::ScanIpIfAddrs, util::NullLog>;
 #endif
 
 #elif defined(ESP_PLATFORM)
