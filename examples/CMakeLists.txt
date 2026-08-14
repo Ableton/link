@@ -97,6 +97,7 @@ source_group("Audio Sources" FILES ${linkhut_audio_SOURCES})
 
 function(configure_linkhut_executable target)
   target_link_libraries(${target} Ableton::Link)
+  link_pin_win32_winnt(${target})
 endfunction()
 
 function(configure_linkhut_audio_sources target)

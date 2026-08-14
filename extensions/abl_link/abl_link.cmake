@@ -11,3 +11,5 @@ target_include_directories(abl_link PUBLIC
 set_property(TARGET abl_link PROPERTY C_STANDARD 11)
 
 target_link_libraries(abl_link Ableton::Link)
+
+link_pin_win32_winnt(abl_link)

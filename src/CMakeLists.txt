@@ -109,6 +109,7 @@ source_group("Test Utils" FILES
 function(configure_link_test_executable target)
   target_link_libraries(${target} Catch::Catch Ableton::Link)
   target_compile_definitions(${target} PRIVATE -DCATCH_CONFIG_ENABLE_BENCHMARKING=1)
+  link_pin_win32_winnt(${target})
   if(ANDROID)
     target_link_libraries(${target} log) # Needed by Catch
   endif()

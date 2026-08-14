@@ -1,5 +1,11 @@
 cmake_minimum_required(VERSION 3.16)
 
+function(link_pin_win32_winnt target)
+  if(WIN32)
+    target_compile_definitions(${target} PRIVATE _WIN32_WINNT=0x0601)
+  endif()
+endfunction()
+
 function(ConfigureAbletonLink PATH_TO_LINK)
   add_library(Ableton::Link IMPORTED INTERFACE)
   set_property(TARGET Ableton::Link APPEND PROPERTY
