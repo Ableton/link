@@ -66,14 +66,33 @@ You can optionally have your build target depend on `${link_HEADERS}`, which wil
 the Link headers visible in your IDE. This variable exported to the `PARENT_SCOPE` by
 Link's CMakeLists.txt.
 
+On Windows, define `_WIN32_WINNT`, uniformly for the whole project. Link's own targets
+pin the value for this reason — see `link_pin_win32_winnt` in
+[cmake_include/ConfigureAbletonLink.cmake](cmake_include/ConfigureAbletonLink.cmake).
+
+#### Using your own Asio
+
+By default Link uses the Asio copy in its `Asio-standalone` submodule and configures it
+itself, adding the include directory and the required definitions to every target that
+links `Ableton::Link`. Part of that configuration is `ASIO_VERSION_NAMESPACE`, which
+compiles Asio's symbols into an inline namespace so that Link's copy cannot clash with
+another Asio elsewhere in your process.
+
+If your project already provides Asio and you want Link to use that copy instead, set
+`LINK_USE_BUNDLED_ASIO` to `OFF` before including `AbletonLinkConfig.cmake`. Configure
+Asio by defining `ASIO_STANDALONE=1` and `ASIO_NO_TYPEID=1`. We recommend defining
+`ASIO_VERSION_NAMESPACE=my_project_link_Asio` to prevent ODR violations.
+
 ### Other Build Systems
 
 To include the Link library in your non CMake project, you must do the following:
 
- - Add the `include` and `modules/asio-standalone/asio/include` directories to your
-   list of include paths
+ - Add the `include` and `modules/Asio-standalone/include` directories to your list of
+   include paths.
  - Define `LINK_PLATFORM_MACOSX=1`, `LINK_PLATFORM_LINUX=1`, or `LINK_PLATFORM_WINDOWS=1`,
    depending on which platform you are building on.
+ - Configure Asio as described in [**Using your own Asio**](#using-your-own-Asio).
+ - On Windows, additionally define `INCL_EXTRA_HTON_FUNCTIONS=1` and `_WIN32_WINNT`
 
 If you get any compiler errors/warnings, have a look at
 [compile-flags.cmake](cmake_include/ConfigureCompileFlags.cmake), which might provide some
