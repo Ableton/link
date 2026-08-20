@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.16)
 
 function(ConfigureAbletonLink PATH_TO_LINK)
   add_library(Ableton::Link IMPORTED INTERFACE)
