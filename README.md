@@ -1,11 +1,16 @@
 # Ableton Link
 
 This is the codebase for Ableton Link, a technology that synchronizes musical beat, tempo,
-and phase across multiple applications running on one or more devices. Applications on
-devices connected to a local network discover each other automatically and form a musical
-session in which each participant can perform independently: anyone can start or stop
-while still staying in time. Anyone can change the tempo, the others will follow. Anyone
-can join or leave without disrupting the session.
+phase, and optionally start/stop state and arrangement position across multiple applications
+running on one or more devices. Applications on devices connected to a local network
+discover each other automatically and form a musical session in which each participant can
+perform independently. Anyone can change the tempo, and the others will follow.
+Participants can optionally synchronize starting and stopping, as well as their position
+in an arrangement. Anyone can join or leave without disrupting the session.
+
+Link also supports sharing audio between applications in a Link session. Applications can
+announce and discover audio channels and exchange audio aligned to the shared musical
+timeline.
 
 # License
 
