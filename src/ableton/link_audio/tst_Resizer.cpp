@@ -23,6 +23,7 @@
 #include <ableton/util/Injected.hpp>
 #include <algorithm>
 #include <cmath>
+#include <numeric>
 #include <utility>
 #include <vector>
 
@@ -103,6 +104,48 @@ struct Successor
 TEST_CASE("Resizer")
 {
   constexpr auto sampleRate = 100u;
+
+  SECTION("InputTimingChanges")
+  {
+    constexpr auto numChannels = 2u;
+    auto successor = Successor<numChannels>{};
+    auto resizer =
+      Resizer<SampleFormat, Successor<numChannels>&, 512>(util::injectRef(successor));
+    auto samples = Samples(128);
+    std::iota(samples.begin(), samples.end(), SampleFormat{0});
+
+    const auto firstBegin = Beats{10.0};
+    const auto firstTempo = Tempo{120.0};
+    auto checkTiming = [&](Beats nextBegin, Tempo nextTempo)
+    {
+      resizer(samples.data(), 32, numChannels, sampleRate, firstBegin, firstTempo, {});
+      resizer(samples.data() + 64, 32, numChannels, sampleRate, nextBegin, nextTempo, {});
+      resizer(samples.data(), 0, numChannels, sampleRate + 1, {}, {}, {});
+
+      CHECK(successor.receivedSamples == samples);
+      REQUIRE(successor.receivedChunks.size() == 2);
+      CHECK(successor.receivedChunks[0].numFrames == 32);
+      CHECK(successor.receivedChunks[0].beginBeats == firstBegin);
+      CHECK(successor.receivedChunks[0].tempo == firstTempo);
+      CHECK(successor.receivedChunks[1].numFrames == 32);
+      CHECK(successor.receivedChunks[1].beginBeats == nextBegin);
+      CHECK(successor.receivedChunks[1].tempo == nextTempo);
+    };
+
+    SECTION("ForwardGapAtUnchangedTempo")
+    {
+      checkTiming(Beats{12.64}, firstTempo);
+    }
+    SECTION("BackwardJumpAtUnchangedTempo")
+    {
+      checkTiming(Beats{8.64}, firstTempo);
+    }
+    SECTION("TempoChangeAtContinuousBeatTime")
+    {
+      // The first 32 frames at 100 Hz and 120 BPM end at beat 10.64.
+      checkTiming(Beats{10.64}, Tempo{90.0});
+    }
+  }
 
   SECTION("Monotonic")
   {

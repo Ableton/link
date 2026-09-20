@@ -60,9 +60,12 @@ struct Resizer
         && (numChannels != mNumChannels || sampleRate != mSampleRate
             || sessionId != mSessionId))
     {
-      (*mSuccessor)(mCache.data(), mChunks, mNumChannels, mSampleRate, mSessionId);
-      mCachedFrames = 0;
-      mChunks.clear();
+      flush();
+    }
+
+    if (numFrames == 0)
+    {
+      return;
     }
 
     if (mCachedFrames == 0)
@@ -73,7 +76,7 @@ struct Resizer
       assert(mChunks.empty());
       newChunk(beginBeats, tempo);
     }
-    else if (tempo != mChunks.back().tempo && beginBeats != chunkEndBeats(mChunks.back()))
+    else if (tempo != mChunks.back().tempo || beginBeats != chunkEndBeats(mChunks.back()))
     {
       newChunk(beginBeats, tempo);
     }
@@ -89,12 +92,10 @@ struct Resizer
       ++mChunks.back().numFrames;
 
 
-      if (mCachedFrames >= ((kMaxNumSamples / mNumChannels)))
+      if (mCachedFrames >= mAvailableFrames)
       {
-        (*mSuccessor)(mCache.data(), mChunks, mNumChannels, mSampleRate, mSessionId);
-        mCachedFrames = 0;
         const auto nextChunkBeginBeats = chunkEndBeats(mChunks.back());
-        mChunks.clear();
+        flush();
 
         // Always create a new chunk when needed - don't lose data
         if (frame + 1 < numFrames) // Only if there are more frames to process
@@ -118,19 +119,33 @@ private:
   uint32_t mCachedFrames = 0;
   uint32_t mAvailableFrames = 0;
 
-  void updateAvailableFrames()
+  void flush()
   {
-    const auto availableBytes =
-      kMaxNumSamples * kSampleFormatSize - discovery::sizeInByteStream(mChunks);
-    const auto bytesPerFrame = mNumChannels * kSampleFormatSize;
-    const auto offsetBytes = availableBytes % bytesPerFrame;
-    mAvailableFrames = (availableBytes - offsetBytes) / bytesPerFrame;
+    (*mSuccessor)(mCache.data(), mChunks, mNumChannels, mSampleRate, mSessionId);
+    mCachedFrames = 0;
+    mChunks.clear();
   }
 
   void newChunk(Beats beats, Tempo tempo)
   {
-    mChunks.emplace_back(AudioBuffer::Chunk{++mCount, 0, beats, tempo});
-    updateAvailableFrames();
+    const auto chunk = AudioBuffer::Chunk{++mCount, 0, beats, tempo};
+    const auto chunkBytes = sizeInByteStream(chunk);
+    const auto bytesPerFrame = mNumChannels * kSampleFormatSize;
+    const auto audioBytes = KMaxNumBytes;
+
+    // The audio allowance already accounts for one chunk. Additional chunks share
+    // that allowance with samples, including at least one frame for the new chunk.
+    if ((static_cast<size_t>(mCachedFrames) + 1) * bytesPerFrame
+          + mChunks.size() * chunkBytes
+        > audioBytes)
+    {
+      flush();
+    }
+
+    mChunks.push_back(chunk);
+    const auto extraChunkBytes = (mChunks.size() - 1) * chunkBytes;
+    mAvailableFrames =
+      static_cast<uint32_t>((audioBytes - extraChunkBytes) / bytesPerFrame);
   }
 
   std::array<SampleFormat, kMaxNumSamples> mCache;

@@ -83,6 +83,7 @@ TEST_CASE("Encoder")
     inputBuffer.mSampleRate = sampleRate;
     inputBuffer.mBeginBeats = beginBeats;
     inputBuffer.mTempo = tempo;
+    inputBuffer.mSessionId = {};
     return inputBuffer;
   };
 
@@ -109,6 +110,44 @@ TEST_CASE("Encoder")
     kStereoSamples, kEngineSampleRate, 2, Beats{kBeginBeats}, Tempo{kTempo});
 
   auto sender = Sender{};
+
+  SECTION("PacketSizeWithFrequentTimingChanges")
+  {
+    const auto numChannels = GENERATE(1u, 2u);
+    const auto numFrames = GENERATE(4u, 120u);
+    auto numPackets = 0u;
+    auto send = [&](const AudioBuffer& buffer)
+    {
+      ++numPackets;
+      v1::MessageBuffer message;
+      const auto end = v1::audioBufferMessage({}, buffer, message.begin());
+      CHECK(std::distance(message.begin(), end) <= 576);
+      sender(buffer);
+    };
+    auto encoder = Encoder<decltype(send)&, SampleFormat>(util::injectRef(send), {});
+    const auto samples = buildSamples(numFrames, numChannels);
+    auto expected = Samples{};
+
+    for (auto i = 0u; i < 32; ++i)
+    {
+      const auto input = buildInputBuffer(samples,
+                                          48000,
+                                          numChannels,
+                                          Beats{static_cast<double>(i)},
+                                          Tempo{i % 2 == 0 ? 120.0 : 121.0});
+      encoder(input);
+      expected.insert(expected.end(), samples.begin(), samples.end());
+    }
+
+    // Flush the remaining samples by changing sample rate without adding audio.
+    encoder(buildInputBuffer({}, 44100, numChannels, {}, {}));
+    encoder(buildInputBuffer(samples, 44100, numChannels, Beats{32.0}, kTempo));
+    expected.insert(expected.end(), samples.begin(), samples.end());
+    encoder(buildInputBuffer({}, 48000, numChannels, {}, {}));
+
+    CHECK(numPackets > 0);
+    CHECK(sender.sent == expected);
+  }
 
   SECTION("NoProcessingMono")
   {
