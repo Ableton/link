@@ -76,7 +76,8 @@ struct Resizer
       assert(mChunks.empty());
       newChunk(beginBeats, tempo);
     }
-    else if (tempo != mChunks.back().tempo || beginBeats != chunkEndBeats(mChunks.back()))
+    else if (tempo != mChunks.back().tempo
+             || abs(beginBeats - chunkEndBeats(mChunks.back())) > link::Beats{int64_t{1}})
     {
       newChunk(beginBeats, tempo);
     }
