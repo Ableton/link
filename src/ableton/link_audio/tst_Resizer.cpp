@@ -147,6 +147,44 @@ TEST_CASE("Resizer")
     }
   }
 
+  SECTION("BeatTimingRoundingTolerance")
+  {
+    constexpr auto numChannels = 1u;
+    constexpr auto testSampleRate = 44100u;
+    constexpr auto numFrames = 128u;
+    auto successor = Successor<numChannels>{};
+    auto resizer =
+      Resizer<SampleFormat, Successor<numChannels>&, 1024>(util::injectRef(successor));
+    auto samples = Samples(2 * numFrames, SampleFormat{1});
+
+    const auto beginBeats = link::Beats{10.0};
+    const auto tempo = link::Tempo{120.0};
+
+    // Calc beat time from tempo
+    const auto microsPerBeat = tempo.microsPerBeat().count();
+    const auto hostTimeDelta =
+      std::llround(static_cast<double>(numFrames) * 1e6 / testSampleRate);
+    const auto nextBeginBeats = beginBeats
+                                + link::Beats{static_cast<double>(hostTimeDelta)
+                                              / static_cast<double>(microsPerBeat)};
+
+    resizer(
+      samples.data(), numFrames, numChannels, testSampleRate, beginBeats, tempo, {});
+    resizer(samples.data() + numFrames,
+            numFrames,
+            numChannels,
+            testSampleRate,
+            nextBeginBeats,
+            tempo,
+            {});
+    resizer(
+      samples.data(), 0, numChannels, testSampleRate + 1, {}, {}, {}); // force flush
+
+    REQUIRE(successor.receivedChunks.size() == 1);
+    CHECK(successor.receivedChunks[0].numFrames == 2 * numFrames);
+    CHECK(successor.receivedSamples == samples);
+  }
+
   SECTION("Monotonic")
   {
     platforms::stl::Random random;
