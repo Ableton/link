@@ -117,7 +117,14 @@ struct Sink
     }
   }
 
-  void requestMaxNumSamples(size_t numSamples) { mMaxNumSamples = numSamples; }
+  void requestMaxNumSamples(size_t numSamples)
+  {
+    size_t current = mMaxNumSamples.load();
+    while (numSamples > current
+           && !mMaxNumSamples.compare_exchange_weak(current, numSamples))
+    {
+    }
+  }
 
   size_t maxNumSamples() const { return mMaxNumSamples; }
 
