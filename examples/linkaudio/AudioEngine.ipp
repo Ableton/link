@@ -19,8 +19,7 @@
 
 #pragma once
 
-// Make sure to define this before <cmath> is included for
-// Wihttps://github.com/AbletonAppDev/link/pull/664ndows
+// Make sure to define this before <cmath> is included on Windows
 #ifdef LINK_PLATFORM_WINDOWS
 #define _USE_MATH_DEFINES
 #endif
