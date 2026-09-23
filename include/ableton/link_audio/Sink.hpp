@@ -64,18 +64,16 @@ struct Sink
       return nullptr;
     }
 
-    if (!queueWriter.retainSlot())
+    while (queueWriter.retainSlot())
     {
-      return nullptr;
-    }
-
-    if (queueWriter[0]->mSamples.size() < mMaxNumSamples)
-    {
+      if (queueWriter[0]->mSamples.size() >= mMaxNumSamples)
+      {
+        return queueWriter[0];
+      }
       queueWriter.releaseSlot();
-      return retainBuffer();
     }
 
-    return queueWriter[0];
+    return nullptr;
   }
 
   void releaseAndCommitBuffer(const link::Timeline& timeline,
