@@ -70,7 +70,7 @@ struct Sink
       {
         return queueWriter[0];
       }
-      queueWriter.releaseSlot();
+      releaseSlot(queueWriter);
     }
 
     return nullptr;
@@ -109,9 +109,7 @@ struct Sink
 
     if (queueWriter.numRetainedSlots() > 0)
     {
-      queueWriter[0]->mBeginBeats = link::Beats{0.};
-      queueWriter[0]->mTempo = link::Tempo{0};
-      queueWriter.releaseSlot();
+      releaseSlot(queueWriter);
     }
   }
 
@@ -137,6 +135,13 @@ struct Sink
   void setIsConnected(bool isConnected) { mIsConnected = isConnected; }
 
 private:
+  void releaseSlot(Queue<Buffer<int16_t>>::Writer& writer)
+  {
+    writer[0]->mBeginBeats = link::Beats{0.};
+    writer[0]->mTempo = link::Tempo{0};
+    writer.releaseSlot();
+  }
+
   util::Locked<std::string> mName;
   std::atomic_flag mNameIsUpToDate = ATOMIC_FLAG_INIT;
   Id mId;
