@@ -22,6 +22,8 @@ set(link_audio_test_SOURCES
   ableton/link_audio/tst_Queue.cpp
   ableton/link_audio/tst_Receivers.cpp
   ableton/link_audio/tst_Resizer.cpp
+  ableton/link_audio/tst_SinkProcessor.cpp
+  ableton/link_audio/tst_SourceProcessor.cpp
   ableton/link_audio/tst_UdpMessenger.cpp
   ableton/link_audio/tst_MainProcessor.cpp
   ableton/link_audio/v1/tst_Messages.cpp
