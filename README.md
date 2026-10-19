@@ -47,7 +47,7 @@ The output binaries for the example applications and the unit-tests will be plac
 To make sure users have the best possible experience using Link it is important all apps
 supporting Link behave consistently. This includes for example playing in sync with other
 apps as well as not hijacking a jams tempo when joining. To make sure your app behaves as
-intended make sure it complies to the [Test Plan](TEST-PLAN.md).
+intended make sure it complies to the [Test Plan](https://ableton.github.io/link/test-plan).
 
 ## Building Link
 
