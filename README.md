@@ -57,6 +57,10 @@ When using the basic version of Link, you should include `Link.hpp`. If you want
 Audio support, include `LinkAudio.hpp`. The library does not follow the IWYU principles, so
 you will have to include the respective header in every compilation unit.
 
+**Important Note on Header Inclusion:** The Link headers do not follow Include-What-You-Use
+(IWYU) principles. If your application uses Link Audio anywhere, replace every direct
+`Link.hpp` include with `LinkAudio.hpp`.
+
 ### CMake-based Projects
 
 If you are using CMake, then you can simply add the following to your CMakeLists.txt file:
