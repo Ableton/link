@@ -72,6 +72,25 @@ struct Socket
     Impl(::asio::io_context& io, ::asio::ip::udp protocol)
       : mSocket(io, protocol)
     {
+#if defined(_WIN32)
+      // Windows reports an ICMP port unreachable, caused by sending a datagram to a port
+      // with no listener, as WSAECONNRESET on the socket's next receive. That would end
+      // the receive loop below, so turn this reporting off.
+#ifndef SIO_UDP_CONNRESET
+#define SIO_UDP_CONNRESET _WSAIOW(IOC_VENDOR, 12)
+#endif
+      BOOL reportConnReset = FALSE;
+      DWORD bytesReturned = 0;
+      ::WSAIoctl(mSocket.native_handle(),
+                 SIO_UDP_CONNRESET,
+                 &reportConnReset,
+                 sizeof(reportConnReset),
+                 nullptr,
+                 0,
+                 &bytesReturned,
+                 nullptr,
+                 nullptr);
+#endif
     }
 
     ~Impl()
