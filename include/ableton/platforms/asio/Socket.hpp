@@ -67,7 +67,7 @@ struct Socket
 
   discovery::UdpEndpoint endpoint() const { return mpImpl->mSocket.local_endpoint(); }
 
-  struct Impl
+  struct Impl : std::enable_shared_from_this<Impl>
   {
     Impl(::asio::io_context& io, ::asio::ip::udp protocol)
       : mSocket(io, protocol)
@@ -89,6 +89,16 @@ struct Socket
       {
         const auto bufBegin = begin(mReceiveBuffer);
         mHandler(mSenderEndpoint, bufBegin, bufBegin + static_cast<ptrdiff_t>(numBytes));
+      }
+      else if (error == ::asio::error::connection_reset
+               || error == ::asio::error::connection_refused)
+      {
+        // An ICMP error caused by an earlier send to a port with no listener (reported as
+        // WSAECONNRESET on Windows) says nothing about this socket, so keep receiving.
+        // Other errors still end the receive loop.
+        mSocket.async_receive_from(::asio::buffer(mReceiveBuffer, MaxPacketSize),
+                                   mSenderEndpoint,
+                                   util::makeAsyncSafe(this->shared_from_this()));
       }
     }
 
