@@ -126,7 +126,9 @@ jobs:
       - name: Test
         run: |
           .\build\bin\${{ matrix.configuration }}\LinkCoreTest.exe
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
           .\build\bin\${{ matrix.configuration }}\LinkDiscoveryTest.exe
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
           .\build\bin\${{ matrix.configuration }}\LinkAudioTest.exe
 
   android:
