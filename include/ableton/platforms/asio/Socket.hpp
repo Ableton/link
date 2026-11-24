@@ -23,6 +23,7 @@
 #include <ableton/util/SafeAsyncHandler.hpp>
 #include <array>
 #include <cassert>
+#include <memory>
 
 namespace ableton
 {
@@ -59,15 +60,12 @@ struct Socket
   void receive(Handler handler)
   {
     mpImpl->mHandler = std::move(handler);
-    mpImpl->mSocket.async_receive_from(
-      ::asio::buffer(mpImpl->mReceiveBuffer, MaxPacketSize),
-      mpImpl->mSenderEndpoint,
-      util::makeAsyncSafe(mpImpl));
+    mpImpl->receive();
   }
 
   discovery::UdpEndpoint endpoint() const { return mpImpl->mSocket.local_endpoint(); }
 
-  struct Impl
+  struct Impl : std::enable_shared_from_this<Impl>
   {
     Impl(::asio::io_context& io, ::asio::ip::udp protocol)
       : mSocket(io, protocol)
@@ -83,12 +81,25 @@ struct Socket
       mSocket.close(ec);
     }
 
+    void receive()
+    {
+      mSocket.async_receive_from(::asio::buffer(mReceiveBuffer, MaxPacketSize),
+                                 mSenderEndpoint,
+                                 util::makeAsyncSafe(this->shared_from_this()));
+    }
+
     void operator()(const ::asio::error_code& error, const std::size_t numBytes)
     {
       if (!error && numBytes > 0 && numBytes <= MaxPacketSize)
       {
         const auto bufBegin = begin(mReceiveBuffer);
         mHandler(mSenderEndpoint, bufBegin, bufBegin + static_cast<ptrdiff_t>(numBytes));
+      }
+      else if (error != ::asio::error::operation_aborted && mSocket.is_open())
+      {
+        // A receive can fail with a transient error without the socket being unusable.
+        // Keep listening unless the socket was closed.
+        receive();
       }
     }
 
