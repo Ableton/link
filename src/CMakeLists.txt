@@ -37,6 +37,7 @@ set(link_discovery_test_SOURCES
   ableton/discovery/tst_PeerGateways.cpp
   ableton/discovery/tst_UdpMessenger.cpp
   ableton/discovery/v1/tst_Messages.cpp
+  ableton/platforms/asio/tst_Socket.cpp
 )
 
 set(link_core_test_SOURCES
