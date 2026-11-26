@@ -60,8 +60,6 @@ public:
    */
   BasicLinkAudio(double bpm, std::string name);
 
-  ~BasicLinkAudio();
-
   /*! @brief Is audio currently enabled?
    *  Thread-safe: yes
    *  Realtime-safe: yes
@@ -132,8 +130,6 @@ public:
 
 private:
   using Controller = ableton::link::ApiController<Clock>;
-
-  link_audio::ChannelsChangedCallback mChannelsChangedCallback = []() {};
 };
 
 class LinkAudio : public BasicLinkAudio<link::platform::Clock>

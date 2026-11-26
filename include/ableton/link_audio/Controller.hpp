@@ -32,6 +32,7 @@
 #include <algorithm>
 #include <atomic>
 #include <functional>
+#include <mutex>
 #include <optional>
 #include <set>
 #include <vector>
@@ -150,8 +151,8 @@ public:
 
   void setChannelsChangedCallback(ChannelsChangedCallback callback)
   {
-    this->mIo->async([&, callback = std::move(callback)]()
-                     { mChannelsChangedCallback = callback; });
+    std::lock_guard<std::mutex> lock(mChannelsChangedCallbackMutex);
+    mChannelsChangedCallback = std::move(callback);
   }
 
   auto channels() const { return mApiChannels.read(); }
@@ -276,6 +277,7 @@ protected:
 
     if (channelsChanged)
     {
+      std::lock_guard<std::mutex> lock(mChannelsChangedCallbackMutex);
       mChannelsChangedCallback();
     }
   }
@@ -374,6 +376,7 @@ protected:
     mProcessor.stop();
   }
 
+  std::mutex mChannelsChangedCallbackMutex;
   ChannelsChangedCallback mChannelsChangedCallback;
   util::Locked<std::vector<typename ControllerChannels::Channel>> mApiChannels;
   std::atomic_bool mIsLinkAudioEnabledByUser;

@@ -59,18 +59,6 @@ inline BasicLinkAudio<Clock>::BasicLinkAudio(const double bpm, std::string name)
   : BasicLink<Clock>(bpm)
 {
   setPeerName(name);
-  this->mController.setChannelsChangedCallback(
-    [&]()
-    {
-      std::lock_guard<std::mutex> lock(this->mCallbackMutex);
-      mChannelsChangedCallback();
-    });
-}
-
-template <typename Clock>
-inline BasicLinkAudio<Clock>::~BasicLinkAudio()
-{
-  this->mController.setChannelsChangedCallback([]() {});
 }
 
 template <typename Clock>
@@ -105,8 +93,7 @@ template <typename Clock>
 template <typename Callback>
 inline void BasicLinkAudio<Clock>::setChannelsChangedCallback(Callback callback)
 {
-  std::lock_guard<std::mutex> lock(this->mCallbackMutex);
-  mChannelsChangedCallback = callback;
+  this->mController.setChannelsChangedCallback(callback);
 }
 
 template <typename Clock>
